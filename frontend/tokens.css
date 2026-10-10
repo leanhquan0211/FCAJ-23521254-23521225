@@ -1,0 +1,50 @@
+:root {
+  --color-paper: oklch(0.975 0.009 95);
+  --color-card-paper: oklch(0.992 0.005 95);
+  --color-ink: oklch(0.245 0.024 166);
+  --color-ink-muted: oklch(0.45 0.018 166);
+  --color-rule: oklch(0.855 0.016 150);
+  --color-accent: oklch(0.43 0.105 169);
+  --color-accent-ink: oklch(0.985 0.005 95);
+  --color-focus: oklch(0.37 0.12 169);
+  --color-open-paper: oklch(0.92 0.04 166);
+  --color-full-paper: oklch(0.94 0.035 84);
+  --color-full-ink: oklch(0.37 0.065 65);
+  --color-ended-paper: oklch(0.93 0.008 95);
+  --color-ended-ink: oklch(0.42 0.012 95);
+
+  --font-display: 'Be Vietnam Pro', system-ui, sans-serif;
+  --font-body: 'Geist Variable', system-ui, sans-serif;
+
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+
+  --radius-control: 0.625rem;
+  --radius-card: 0.75rem;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+}
+
+html:root {
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
+  --card: var(--color-card-paper);
+  --card-foreground: var(--color-ink);
+  --popover: var(--color-card-paper);
+  --popover-foreground: var(--color-ink);
+  --primary: var(--color-accent);
+  --primary-foreground: var(--color-accent-ink);
+  --secondary: var(--color-open-paper);
+  --secondary-foreground: var(--color-ink);
+  --muted: var(--color-ended-paper);
+  --muted-foreground: var(--color-ink-muted);
+  --border: var(--color-rule);
+  --input: var(--color-rule);
+  --ring: var(--color-focus);
+  --radius: var(--radius-control);
+}

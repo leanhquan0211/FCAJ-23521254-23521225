@@ -1,0 +1,9 @@
+{
+  "scannedAt": "2026-10-09",
+  "framework": "Vite 8 + React 19 + TypeScript 6",
+  "fontStack": "Geist Variable from @fontsource-variable/geist",
+  "palette": "shadcn/ui OKLCH variables in src/index.css",
+  "spacing": "Tailwind CSS v4 default 4px scale",
+  "motion": "No motion library installed",
+  "preserve": ["Vite configuration", "shadcn/ui components", "Geist body font", "Tailwind v4 imports"]
+}
