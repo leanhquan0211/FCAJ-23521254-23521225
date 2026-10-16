@@ -1,4 +1,4 @@
-"""Create and seed only a configured DynamoDB Local table; never replace existing items."""
+"""Create a DynamoDB Local table; add demo events only with --seed-demo."""
 import argparse
 import json
 import sys
@@ -11,7 +11,7 @@ from botocore.exceptions import BotoCoreError, ClientError
 from configuration import ConfigurationError, local_table
 
 
-def initialize(table, now=None):
+def initialize(table, now=None, *, seed_demo=False):
     client = table.meta.client
     try:
         client.describe_table(TableName=table.name)
@@ -26,6 +26,9 @@ def initialize(table, now=None):
         except client.exceptions.ResourceInUseException:
             pass
     client.get_waiter("table_exists").wait(TableName=table.name, WaiterConfig={"Delay": 1, "MaxAttempts": 30})
+
+    if not seed_demo:
+        return {"created": 0, "preserved": 0}
 
     vietnam = timezone(timedelta(hours=7))
     today = (now or datetime.now(vietnam)).astimezone(vietnam).date()
@@ -52,9 +55,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--endpoint-url", required=True)
     parser.add_argument("--table-name", default="fcaj-event-workshop-local")
+    parser.add_argument("--seed-demo", action="store_true", help="Add sample events with simulated occupied seats (optional)")
     args = parser.parse_args()
     try:
-        result = initialize(local_table(args.endpoint_url, args.table_name))
+        result = initialize(local_table(args.endpoint_url, args.table_name), seed_demo=args.seed_demo)
         print(json.dumps(result))
     except (ConfigurationError, BotoCoreError, ClientError) as exc:
         print(f"Local initialization failed: {type(exc).__name__}", file=sys.stderr)

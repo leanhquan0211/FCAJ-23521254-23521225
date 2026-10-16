@@ -60,7 +60,8 @@ Build lần đầu cần tải image từ public ECR và dependency từ PyPI. C
 ```bash
 curl.exe http://127.0.0.1:3001/health
 curl.exe http://127.0.0.1:3001/events
-curl.exe http://127.0.0.1:3001/events/thiet-ke-de-dung
+# Sau khi admin tạo sự kiện, thay <eventId> bằng ID của sự kiện đó:
+curl.exe "http://127.0.0.1:3001/events/<eventId>"
 curl.exe -i http://127.0.0.1:3001/events/no-such-event
 ```
 
@@ -70,7 +71,15 @@ PowerShell cũng có thể dùng `Invoke-RestMethod`. `curl.exe` dùng được 
 
 ## Khởi tạo và kiểm tra dữ liệu
 
-Seed giữ tám ID/nội dung/số chỗ từ Frontend. Ngày được tạo tương đối theo ngày seed đầu tiên ở múi giờ `+07:00`: có sự kiện tương lai còn chỗ, hết chỗ và quá khứ đã kết thúc. Chạy lại lệnh seed ở trên chỉ thêm ID còn thiếu, không ghi đè dữ liệu hoặc dời ngày của bản ghi đã tồn tại. Kết quả in số `created` và `preserved`.
+Lệnh `init_db.py` ở trên chỉ tạo bảng nếu chưa có; không tự thêm sự kiện mẫu và không xóa dữ liệu cũ. Database mới có danh sách sự kiện trống: tạo tài khoản admin rồi thêm sự kiện qua giao diện quản trị. Chạy lại lệnh khởi tạo vẫn giữ dữ liệu đã có. Hai số `created` và `preserved` chỉ đếm sự kiện mẫu được thêm hoặc bỏ qua; mặc định đều bằng 0.
+
+Nếu chủ động cần dữ liệu demo, thêm `--seed-demo` (nên dùng bảng test riêng):
+
+```bash
+docker compose -f backend/compose.yaml run --rm tools backend/dynamodb_setup/init_db.py --endpoint-url http://fcaj-dynamodb-local:8000 --table-name fcaj-event-workshop-local-test-demo --seed-demo
+```
+
+Demo có tám sự kiện, gồm còn chỗ, hết chỗ và đã kết thúc. Số chỗ đã dùng là số giả lập, không có người đăng ký tương ứng, nên một số sự kiện demo sẽ bị chặn xóa theo quy tắc bảo vệ chỗ. Ngày tính tương đối theo lần seed đầu ở múi giờ `+07:00`. Seed lại chỉ thêm ID còn thiếu, không ghi đè hoặc dời ngày bản ghi cũ. Chế độ mock của frontend vẫn giữ dữ liệu mẫu riêng, không phải dữ liệu trong database.
 
 Đọc trạng thái bảng trực tiếp từ container tools:
 
@@ -94,7 +103,7 @@ Smoke test chỉ GET/OPTIONS, dùng Python chuẩn trên Windows, cần SAM còn
 python backend/tools/check_api.py --base-url http://127.0.0.1:3001
 ```
 
-Script kiểm tra health, JSON/schema/số và timezone, danh sách/chi tiết, 404, validation, CORS và in fingerprint của danh sách để đối chiếu trước/sau seed hoặc restart. Seed/restart là thao tác riêng có chủ đích; smoke test không thực hiện chúng.
+Script kiểm tra health, JSON/schema/số và timezone, danh sách/chi tiết, 404, validation, CORS và in fingerprint của danh sách để đối chiếu trước/sau seed hoặc restart. Chấp nhận danh sách trống; khi có sự kiện sẽ kiểm tra chi tiết bằng ID thật trong danh sách. Seed/restart là thao tác riêng có chủ đích; smoke test không thực hiện chúng.
 
 Test ghi/tranh chỗ chỉ dùng bảng riêng. Từ repo root trong PowerShell, sau khi DB đã chạy và SAM đã build:
 
@@ -138,7 +147,7 @@ Tham chiếu: [DynamoDB Local và Docker Compose](https://docs.aws.amazon.com/am
 - Dừng SAM bằng **Ctrl+C tại Terminal 1**. Dừng DB bằng `docker compose -f backend/compose.yaml stop dynamodb`. Khởi động lại DB dùng `docker compose -f backend/compose.yaml up -d dynamodb`.
 - Kiểm tra volume vẫn giữ dữ liệu: `docker compose -f backend/compose.yaml restart dynamodb`, sau khi DB sẵn sàng chạy lại health/smoke test. Không dùng `down -v` hoặc xóa volume.
 - Docker pipe/permission lỗi: kiểm tra Docker Desktop và Linux engine đang chạy; môi trường agent có thể cần quyền truy cập Docker ngoài sandbox.
-- Lỗi 503: kiểm tra container DB, network, bảng đã seed và endpoint trong env file. Thiếu endpoint không fallback sang AWS.
+- Lỗi 503: kiểm tra container DB, network, bảng đã khởi tạo và endpoint trong env file. Thiếu endpoint không fallback sang AWS.
 - Lỗi 502/timeout lúc gọi đầu: local bind mount trên Windows/OneDrive có thể tải model boto3 chậm. Đã đặt timeout local 60 giây và cache client cho container ấm. Giữ `--warm-containers LAZY`; sau khi sửa Python, build và restart SAM để dùng artifact mới.
 - Port đã dùng: kiểm tra tiến trình đang nghe 3001/8000 trước khi đổi cổng; nếu đổi DB host port thì endpoint container vẫn dùng port 8000.
 
@@ -146,7 +155,7 @@ Bước tiếp theo: kiểm soát truy cập kết quả đăng ký và kiểm t
 
 ## Tạo tài khoản admin và dùng quản trị
 
-Sau khi DynamoDB đã chạy, backend đã build và bảng ứng dụng đã được seed, mở terminal PowerShell tương tác tại repo root:
+Sau khi DynamoDB đã chạy, backend đã build và bảng ứng dụng đã được khởi tạo, mở terminal PowerShell tương tác tại repo root:
 
 ```powershell
 docker compose -f backend/compose.yaml run --rm -it tools backend/tools/create_admin.py --endpoint-url http://fcaj-dynamodb-local:8000 --username phuc

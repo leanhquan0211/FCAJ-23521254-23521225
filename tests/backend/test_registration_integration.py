@@ -22,7 +22,7 @@ class TransactionIntegrationTests(unittest.TestCase):
         if not name.startswith("fcaj-event-workshop-local-test-"):
             raise RuntimeError("A dedicated test table is required")
         cls.table = local_table(os.environ["DYNAMODB_ENDPOINT"], name)
-        initialize(cls.table)
+        initialize(cls.table, seed_demo=True)
         cls.repo = EventRepository(cls.table)
         local_client(cls.table.meta.client.meta.endpoint_url, cls.table.name)
         base = cls.repo.get_event("thiet-ke-de-dung")

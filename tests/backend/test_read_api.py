@@ -142,6 +142,13 @@ class ConfigurationTests(unittest.TestCase):
 
 
 class SeedTests(unittest.TestCase):
+    def test_default_initialization_does_not_add_demo_events(self):
+        table = Mock()
+        self.assertEqual(initialize(table), {"created": 0, "preserved": 0})
+        table.meta.client.get_waiter.return_value.wait.assert_called_once()
+        table.put_item.assert_not_called()
+        table.delete_item.assert_not_called()
+
     def test_reseed_preserves_modified_records(self):
         class Missing(Exception):
             pass
@@ -164,11 +171,11 @@ class SeedTests(unittest.TestCase):
             items[key] = Item
         table.put_item.side_effect = put_item
         now = datetime(2026, 10, 16, tzinfo=timezone.utc)
-        self.assertEqual(initialize(table, now), {"created": 8, "preserved": 0})
+        self.assertEqual(initialize(table, now, seed_demo=True), {"created": 8, "preserved": 0})
         key = ("EVENTS", "EVENT#thiet-ke-de-dung")
         items[key]["remainingSeats"] = 3
         previous = json.dumps(items[key], sort_keys=True)
-        self.assertEqual(initialize(table, now), {"created": 0, "preserved": 8})
+        self.assertEqual(initialize(table, now, seed_demo=True), {"created": 0, "preserved": 8})
         self.assertEqual(json.dumps(items[key], sort_keys=True), previous)
         self.assertEqual(len(items), 8)
 

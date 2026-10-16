@@ -27,9 +27,11 @@ Các test ghi và tranh chỗ chạy trên bảng riêng `fcaj-event-workshop-lo
 
 ## Seed và dữ liệu bền vững
 
+`init_db.py` mặc định chỉ tạo bảng nếu thiếu, không tự thêm sự kiện hoặc xóa bản ghi cũ. Admin tự tạo sự kiện để dùng thử với dữ liệu thật. Dữ liệu demo chỉ được thêm khi chủ động truyền `--seed-demo`; test integration bật tùy chọn này trên bảng test riêng.
+
 `backend/dynamodb_setup/events.json` giữ tám ID, nội dung, sức chứa và số chỗ gốc theo Frontend. Số chỗ đã chiếm trong mock gốc là dữ liệu nền, không có bản ghi đăng ký tương ứng. Khi seed lần đầu, `seedDayOffset` tạo ngày có timezone `+07:00` tương đối với ngày hiện tại ở Việt Nam: các sự kiện tương lai còn chỗ/hết chỗ và hai sự kiện quá khứ đã kết thúc. Ví dụ trong contract là minh họa; ngày thực tế phụ thuộc lần seed đầu.
 
-Mọi Put dùng `attribute_not_exists(PK) AND attribute_not_exists(SK)`. Chạy lại chỉ bổ sung ID thiếu, không đổi ngày, chỗ hoặc dữ liệu đã chỉnh. Vì không tự dời ngày khi chạy lại, các sự kiện sẽ kết thúc theo thời gian thật; cần tạo sự kiện mới có chủ đích ở mốc quản trị sau này thay vì âm thầm reset dữ liệu.
+Mọi Put khi seed demo dùng `attribute_not_exists(PK) AND attribute_not_exists(SK)`. Chạy lại với `--seed-demo` chỉ bổ sung ID thiếu, không đổi ngày, chỗ hoặc dữ liệu đã chỉnh. Vì không tự dời ngày khi chạy lại, các sự kiện sẽ kết thúc theo thời gian thật; admin có thể tạo sự kiện mới thay vì âm thầm reset dữ liệu.
 
 Compose dùng volume `fcaj-event-workshop-dynamodb-data` và `-sharedDb -dbPath /data`, không dùng in-memory. Restart/stop/start vẫn giữ dữ liệu; không dùng `down -v`. Port DB chỉ bind `127.0.0.1:8000`; Lambda vào cùng network `fcaj-event-workshop-local` và truy cập `http://fcaj-dynamodb-local:8000`.
 

@@ -77,9 +77,9 @@ Ví dụ: sự kiện sức chứa 50, còn 24 chỗ là mô phỏng 26 chỗ đ
 
 Trong lần đọc trực tiếp DB ngày **16/10/2026** sau khi người dùng bật lại ứng dụng, bảng `fcaj-event-workshop-local` có **tám sự kiện và 0 bản ghi REGISTRATION**. Đây là kết quả tại lần đọc đó, không phải số liệu cố định cho các lần dùng sau. Đăng ký thành công qua API sẽ tạo bản ghi thật trong DynamoDB Local.
 
-Vì quy tắc bảo vệ chỗ đã dùng, sự kiện mẫu có capacity lớn hơn remainingSeats cũng đang bị chặn xóa. Điểm dữ liệu mẫu này đã được giải thích nhưng **chưa sửa/reset**. Không tự ghi rằng đã khắc phục hoặc tự xóa dữ liệu khi tiếp nhận bối cảnh.
+Vì quy tắc bảo vệ chỗ đã dùng, sự kiện mẫu có capacity lớn hơn remainingSeats từng bị chặn xóa. **Cập nhật sau đó ngày 16/10/2026:** theo yêu cầu người dùng, đã xác minh lại không có đăng ký thực tế và xóa đúng tám sự kiện mẫu khỏi bảng ứng dụng. Kiểm tra sau dọn: 0 sự kiện, 0 đăng ký; một tài khoản admin và dữ liệu đăng nhập được giữ nguyên. Chi tiết tại [worklog dọn dữ liệu mẫu](2026-10-16-don-du-lieu-mau.md).
 
-Seed chạy lại chỉ thêm bản ghi thiếu, không ghi đè dữ liệu cũ. Volume Docker giữ dữ liệu qua các lần stop/start. Không dùng `down -v` nếu muốn giữ dữ liệu.
+Khởi tạo mặc định hiện chỉ tạo bảng, không thêm dữ liệu mẫu trở lại. Chỉ khi truyền `--seed-demo` mới thêm các ID mẫu còn thiếu, không ghi đè dữ liệu cũ; frontend mock vẫn có mẫu riêng. Volume Docker giữ dữ liệu qua các lần stop/start. Không dùng `down -v` nếu muốn giữ dữ liệu.
 
 ## 7. Tình trạng kiểm thử đã được ghi nhận
 
