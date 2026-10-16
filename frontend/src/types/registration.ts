@@ -9,13 +9,13 @@ export interface Registration {
 
 export type RegistrationInput = Pick<Registration, 'eventId' | 'fullName' | 'email' | 'phone'>
 
-export type RegistrationErrorCode = 'not-found' | 'closed' | 'full' | 'duplicate' | 'invalid' | 'storage' | 'simulated' | 'unavailable' | 'internal' | 'configuration'
+export type RegistrationErrorCode = 'not-found' | 'closed' | 'full' | 'duplicate' | 'invalid' | 'storage' | 'simulated' | 'unavailable' | 'internal' | 'configuration' | 'unauthorized' | 'forbidden' | 'conflict' | 'rate-limited'
 
 export class RegistrationError extends Error {
   code: RegistrationErrorCode
-  details?: Partial<Record<'fullName' | 'email' | 'phone', string>>
+  details?: Record<string, string>
 
-  constructor(code: RegistrationErrorCode, message: string, details?: Partial<Record<'fullName' | 'email' | 'phone', string>>) {
+  constructor(code: RegistrationErrorCode, message: string, details?: Record<string, string>) {
     super(message)
     this.name = 'RegistrationError'
     this.code = code

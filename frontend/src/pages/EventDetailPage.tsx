@@ -19,7 +19,7 @@ export function EventDetailPage() {
     <h1 className="font-display mt-5 text-3xl font-bold leading-tight tracking-tight sm:text-4xl">{event.title}</h1>
     <p className="mt-5 max-w-2xl text-lg leading-relaxed text-muted-foreground">{event.summary}</p>
     <div className="mt-10 border-y border-border py-8"><EventFacts event={event} /></div>
-    <section className="mt-10 max-w-2xl"><h2 className="font-display text-xl font-semibold">Về sự kiện</h2><p className="mt-4 text-base leading-relaxed text-muted-foreground">{event.description}</p></section>
+    <section className="mt-10 max-w-2xl"><h2 className="font-display text-xl font-semibold">Về sự kiện</h2><p className="mt-4 whitespace-pre-line text-base leading-relaxed text-muted-foreground">{event.description}</p></section>
     <div className="mt-10 border-t border-border pt-8">
       {event.status === 'open' ? <Button asChild className="min-h-11"><Link to={`/events/${event.id}/register`}>Đăng ký tham gia <ArrowRight aria-hidden="true" /></Link></Button> : <p role="status" className="font-medium text-muted-foreground">{event.status === 'full' ? 'Sự kiện đã hết chỗ, hiện không thể đăng ký.' : event.status === 'closed' ? 'Sự kiện đã đóng đăng ký.' : 'Sự kiện đã kết thúc, hiện không thể đăng ký.'}</p>}
     </div>

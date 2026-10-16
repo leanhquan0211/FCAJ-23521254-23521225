@@ -64,10 +64,10 @@ Terraform sẽ quản lý hạ tầng AWS.
 
 ## Trạng thái hiện tại
 
-- Frontend có luồng danh sách/tìm kiếm/lọc → chi tiết → form → kết quả, đã tích hợp HTTP API. Chọn API hoặc mock rõ ràng bằng `VITE_DATA_MODE`; xem [Frontend README](frontend/README.md).
+- Frontend có trang chọn vai trò User/Admin; khách xem/tìm kiếm/đăng ký sự kiện, admin đăng nhập để thêm/sửa/xóa hoặc mở/đóng đăng ký. Luồng khách đã tích hợp HTTP API. Chọn API hoặc mock rõ ràng bằng `VITE_DATA_MODE`; xem [Frontend README](frontend/README.md).
 - Backend SAM Python 3.13 có `GET /health`, `GET /events`, `GET /events/{eventId}`, `POST /events/{eventId}/registrations`, `GET /registrations/{registrationId}`. Đăng ký giữ chỗ và chống trùng bằng DynamoDB transaction; xem [Backend README](backend/README.md).
 - Có [API contract](docs/api-contract.md), [mô hình dữ liệu](docs/data-model.md), seed không ghi đè, unit test, kiểm tra transaction đồng thời và HTTP smoke test local. Dữ liệu ứng dụng và dữ liệu kiểm thử dùng bảng riêng.
-- Chưa có Admin Dashboard, xác thực quản trị, email hoặc tài nguyên AWS. API đọc kết quả local dùng UUID v4 khó đoán, chưa có đăng nhập/ủy quyền.
+- Đã có quản trị sự kiện, session admin HttpOnly, CSRF và giới hạn đăng nhập; xem [quy tắc bảo mật](docs/security.md). Chặn xóa sự kiện có chỗ đã dùng. Chưa có email hoặc tài nguyên AWS; link kết quả khách vẫn dùng UUID, chưa có tài khoản khách.
 
 ## Chạy toàn bộ local
 

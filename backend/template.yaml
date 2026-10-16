@@ -11,8 +11,9 @@ Resources:
         AllowOrigins:
           - http://localhost:5173
           - http://127.0.0.1:5173
-        AllowMethods: [GET, POST, OPTIONS]
-        AllowHeaders: [Content-Type]
+        AllowMethods: [GET, POST, PUT, DELETE, OPTIONS]
+        AllowHeaders: [Content-Type, X-CSRF-Token]
+        AllowCredentials: true
         MaxAge: 600
 
   EventsFunction:
@@ -31,6 +32,7 @@ Resources:
           DYNAMODB_TABLE: fcaj-event-workshop-local
           DYNAMODB_REGION: us-east-1
           ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+          COOKIE_SECURE: "false"
       Events:
         Health:
           Type: HttpApi
@@ -66,4 +68,53 @@ Resources:
             ApiId: !Ref LocalHttpApi
             Path: /registrations/{registrationId}
             Method: GET
+            PayloadFormatVersion: "2.0"
+        AdminLogin:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/login
+            Method: POST
+            PayloadFormatVersion: "2.0"
+        AdminSession:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/session
+            Method: GET
+            PayloadFormatVersion: "2.0"
+        AdminLogout:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/logout
+            Method: POST
+            PayloadFormatVersion: "2.0"
+        AdminEvents:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/events
+            Method: GET
+            PayloadFormatVersion: "2.0"
+        AdminCreateEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/events
+            Method: POST
+            PayloadFormatVersion: "2.0"
+        AdminUpdateEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/events/{eventId}
+            Method: PUT
+            PayloadFormatVersion: "2.0"
+        AdminDeleteEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/events/{eventId}
+            Method: DELETE
             PayloadFormatVersion: "2.0"
