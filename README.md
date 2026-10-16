@@ -20,7 +20,8 @@ Quản trị viên:
 - Mở hoặc đóng đăng ký.
 - Xem số lượt đăng ký.
 
-Chống trùng dựa trên mã người tham gia, không xác minh một người thật.
+Chống trùng bằng `eventId` và email đã trim/chuyển chữ thường. `registrationId`
+là mã xác nhận riêng của mỗi đăng ký thành công, không dùng làm điều kiện chống trùng.
 
 ## Ngoài phạm vi
 
@@ -63,8 +64,13 @@ Terraform sẽ quản lý hạ tầng AWS.
 
 ## Trạng thái hiện tại
 
-Đã kiểm tra công cụ, tạo bộ khung dự án và môi trường Python riêng.
-Chưa chạy DynamoDB Local, API hoặc frontend.
-Chưa triển khai tài nguyên AWS.
+- Frontend có luồng danh sách/tìm kiếm/lọc → chi tiết → form → kết quả, đã tích hợp HTTP API. Chọn API hoặc mock rõ ràng bằng `VITE_DATA_MODE`; xem [Frontend README](frontend/README.md).
+- Backend SAM Python 3.13 có `GET /health`, `GET /events`, `GET /events/{eventId}`, `POST /events/{eventId}/registrations`, `GET /registrations/{registrationId}`. Đăng ký giữ chỗ và chống trùng bằng DynamoDB transaction; xem [Backend README](backend/README.md).
+- Có [API contract](docs/api-contract.md), [mô hình dữ liệu](docs/data-model.md), seed không ghi đè, unit test, kiểm tra transaction đồng thời và HTTP smoke test local. Dữ liệu ứng dụng và dữ liệu kiểm thử dùng bảng riêng.
+- Chưa có Admin Dashboard, xác thực quản trị, email hoặc tài nguyên AWS. API đọc kết quả local dùng UUID v4 khó đoán, chưa có đăng nhập/ủy quyền.
 
-Hướng dẫn bật và tắt hệ thống sẽ được bổ sung sau khi chạy thử thành công.
+## Chạy toàn bộ local
+
+Từ repo root: bật DynamoDB bằng `docker compose -f backend/compose.yaml up -d dynamodb`, build bằng `sam build --use-container --template-file backend/template.yaml`, rồi chạy SAM trên cổng 3001 theo [lệnh cấu hình đầy đủ](backend/README.md#chạy-từ-thư-mục-gốc-repository). Giữ terminal SAM chạy.
+
+Trong terminal khác, tạo `frontend/.env.local` từ `frontend/.env.example` nếu chưa có, chạy `cd frontend`, `npm ci` (khi cần cài dependency), `npm run dev`. Mở địa chỉ Vite in ra, thường là `http://localhost:5173`. Khi cập nhật code/template Backend phải build và restart phiên SAM đang chạy.

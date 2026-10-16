@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useEvent } from '@/hooks/useEvent'
-import { registerForEvent } from '@/services/mock-events'
+import { registerForEvent } from '@/services/events'
 import { RegistrationError } from '@/types/registration'
 
 type Fields = { fullName: string; email: string; phone: string }
@@ -31,8 +31,11 @@ export function RegistrationPage() {
     const fullName = fields.fullName.trim()
     const email = fields.email.trim().toLowerCase()
     if (!fullName) nextErrors.fullName = 'Vui lòng nhập họ và tên.'
+    else if (fullName.length > 120) nextErrors.fullName = 'Vui lòng nhập tối đa 120 ký tự.'
     if (!email) nextErrors.email = 'Vui lòng nhập email.'
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) nextErrors.email = 'Email chưa đúng định dạng.'
+    else if (email.length > 254) nextErrors.email = 'Vui lòng nhập tối đa 254 ký tự.'
+    if (fields.phone.trim().length > 32) nextErrors.phone = 'Vui lòng nhập tối đa 32 ký tự.'
     setErrors(nextErrors)
     setSubmitError('')
     if (Object.keys(nextErrors).length) return
@@ -43,6 +46,7 @@ export function RegistrationPage() {
       navigate(`/registrations/${registration.id}`, { replace: true })
     } catch (cause) {
       setSubmitError(cause instanceof RegistrationError ? cause.message : 'Có lỗi khi xử lý đăng ký. Vui lòng thử lại.')
+      if (cause instanceof RegistrationError && cause.details) setErrors(cause.details)
     } finally {
       sending.current = false
       setSubmitting(false)
@@ -52,7 +56,7 @@ export function RegistrationPage() {
   if (loading) return <p role="status" className="pt-16">Đang tải sự kiện…</p>
   if (error) return <PageState title="Không thể tải sự kiện" message={error} />
   if (!event) return <PageState title="Không tìm thấy sự kiện" message="Đường dẫn hoặc mã sự kiện không tồn tại." />
-  if (event.status !== 'open') return <PageState title="Không thể đăng ký" message={event.status === 'full' ? 'Sự kiện đã hết chỗ.' : 'Sự kiện đã kết thúc.'} />
+  if (event.status !== 'open') return <PageState title="Không thể đăng ký" message={event.status === 'full' ? 'Sự kiện đã hết chỗ.' : event.status === 'closed' ? 'Sự kiện đã đóng đăng ký.' : 'Sự kiện đã kết thúc.'} />
 
   return <div className="pt-12 sm:pt-16">
     <Link to={`/events/${event.id}`} className="inline-flex min-h-11 items-center gap-2 text-sm font-medium text-primary hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"><ArrowLeft aria-hidden="true" className="size-4" />Chi tiết sự kiện</Link>
@@ -62,7 +66,7 @@ export function RegistrationPage() {
         <form noValidate onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2"><Label htmlFor="fullName">Họ và tên <span aria-hidden="true">*</span></Label><Input id="fullName" name="fullName" autoComplete="name" required value={fields.fullName} aria-invalid={!!errors.fullName} aria-describedby={errors.fullName ? 'fullName-error' : undefined} onChange={(e) => setFields({ ...fields, fullName: e.target.value })} className="h-11 bg-background text-base" />{errors.fullName && <p id="fullName-error" className="text-sm text-destructive">{errors.fullName}</p>}</div>
           <div className="space-y-2"><Label htmlFor="email">Email <span aria-hidden="true">*</span></Label><Input id="email" name="email" type="email" autoComplete="email" required value={fields.email} aria-invalid={!!errors.email} aria-describedby={errors.email ? 'email-error' : undefined} onChange={(e) => setFields({ ...fields, email: e.target.value })} className="h-11 bg-background text-base" />{errors.email && <p id="email-error" className="text-sm text-destructive">{errors.email}</p>}</div>
-          <div className="space-y-2"><Label htmlFor="phone">Số điện thoại <span className="font-normal text-muted-foreground">(không bắt buộc)</span></Label><Input id="phone" name="phone" type="tel" autoComplete="tel" value={fields.phone} onChange={(e) => setFields({ ...fields, phone: e.target.value })} className="h-11 bg-background text-base" /></div>
+          <div className="space-y-2"><Label htmlFor="phone">Số điện thoại <span className="font-normal text-muted-foreground">(không bắt buộc)</span></Label><Input id="phone" name="phone" type="tel" autoComplete="tel" value={fields.phone} aria-invalid={!!errors.phone} aria-describedby={errors.phone ? 'phone-error' : undefined} onChange={(e) => setFields({ ...fields, phone: e.target.value })} className="h-11 bg-background text-base" />{errors.phone && <p id="phone-error" className="text-sm text-destructive">{errors.phone}</p>}</div>
           {submitError && <p role="alert" className="rounded-md border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">{submitError}</p>}
           <Button type="submit" disabled={submitting} className="min-h-11 w-full sm:w-auto">{submitting ? 'Đang gửi đăng ký…' : 'Xác nhận đăng ký'}</Button>
         </form>

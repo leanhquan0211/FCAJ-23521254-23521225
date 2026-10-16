@@ -21,7 +21,7 @@ export function EventDetailPage() {
     <div className="mt-10 border-y border-border py-8"><EventFacts event={event} /></div>
     <section className="mt-10 max-w-2xl"><h2 className="font-display text-xl font-semibold">Về sự kiện</h2><p className="mt-4 text-base leading-relaxed text-muted-foreground">{event.description}</p></section>
     <div className="mt-10 border-t border-border pt-8">
-      {event.status === 'open' ? <Button asChild className="min-h-11"><Link to={`/events/${event.id}/register`}>Đăng ký tham gia <ArrowRight aria-hidden="true" /></Link></Button> : <p role="status" className="font-medium text-muted-foreground">{event.status === 'full' ? 'Sự kiện đã hết chỗ, hiện không thể đăng ký.' : 'Sự kiện đã kết thúc, hiện không thể đăng ký.'}</p>}
+      {event.status === 'open' ? <Button asChild className="min-h-11"><Link to={`/events/${event.id}/register`}>Đăng ký tham gia <ArrowRight aria-hidden="true" /></Link></Button> : <p role="status" className="font-medium text-muted-foreground">{event.status === 'full' ? 'Sự kiện đã hết chỗ, hiện không thể đăng ký.' : event.status === 'closed' ? 'Sự kiện đã đóng đăng ký.' : 'Sự kiện đã kết thúc, hiện không thể đăng ký.'}</p>}
     </div>
   </div>
 }

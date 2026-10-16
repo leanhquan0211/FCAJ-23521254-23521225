@@ -39,7 +39,7 @@ Spacing theo nhịp 4 px: 4, 8, 12, 16, 24, 40, 64 px. Card và Input bo 10–12
 | Button | Chữ hành động cụ thể, hit target tối thiểu 44 px; hover đổi sắc độ nhẹ | Viền focus nhìn rõ, không animate viền | Disabled giảm độ nhấn và chặn thao tác; nút xóa lọc chỉ hiện khi có lọc |
 | Input | Nhãn hiển thị rõ; border 1 px cố định, hover tăng tương phản | Viền focus ngoài, không đổi độ dày border | Disabled có nền nhạt và chữ đọc được; tìm kiếm không cần trạng thái lỗi |
 | Card | Nền sáng, đường viền mảnh; hover chỉ nâng nhẹ bằng viền/bóng | `focus-within` làm rõ ranh giới Card | Card hết chỗ/kết thúc vẫn mở được chi tiết, không giả vờ có hành động đăng ký |
-| Badge | Chữ ngắn và màu nền nhẹ | Không nhận focus vì không tương tác | Ba nhãn: “Còn chỗ”, “Hết chỗ”, “Đã kết thúc” |
+| Badge | Chữ ngắn và màu nền nhẹ | Không nhận focus vì không tương tác | Bốn nhãn: “Còn chỗ”, “Hết chỗ”, “Đã kết thúc”, “Đã đóng đăng ký”; đóng đăng ký dùng cùng sắc trung tính với đã kết thúc |
 
 Nút “Xem chi tiết” mở trang chi tiết riêng. Trang chi tiết dùng cùng header, nhịp chữ, bảng màu và đường kẻ; khối thông tin thời gian, địa điểm, đơn vị tổ chức và sức chứa được trình bày thành các cặp nhãn/giá trị. Trạng thái hết chỗ hoặc đã kết thúc có giải thích rõ và không có CTA đăng ký. Form dùng một Card cho trường nhập và một Card tóm tắt sự kiện, xếp dọc trên mobile; lỗi hiển thị cạnh trường hoặc ngay trước nút gửi. Trang kết quả dùng cùng ngôn ngữ thị giác, nhấn vào mã đăng ký và thông tin sự kiện. Chuyển động chỉ giới hạn ở hover/nhấn và tôn trọng `prefers-reduced-motion`.
 

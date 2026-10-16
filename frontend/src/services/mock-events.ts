@@ -32,7 +32,7 @@ function withCurrentSeats(event: EventItem, registrations: Registration[]): Even
   return {
     ...event,
     remainingSeats,
-    status: ended ? 'ended' : remainingSeats === 0 ? 'full' : 'open',
+    status: ended ? 'ended' : event.status === 'closed' ? 'closed' : remainingSeats === 0 ? 'full' : 'open',
   }
 }
 
@@ -65,14 +65,14 @@ export async function registerForEvent(input: RegistrationInput): Promise<Regist
   const fullName = input.fullName.trim()
   const email = input.email.trim().toLowerCase()
   const phone = input.phone.trim()
-  if (!fullName || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!fullName || fullName.length > 120 || email.length > 254 || phone.length > 32 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new RegistrationError('invalid', 'Vui lòng kiểm tra họ tên và email.')
   }
 
   // Đọc lại ngay trước khi lưu. Mock này không bảo đảm giao dịch giữa nhiều tab hoặc thiết bị.
   const registrations = readRegistrations()
   const current = withCurrentSeats(event, registrations)
-  if (current.status === 'ended') throw new RegistrationError('closed', 'Sự kiện đã kết thúc đăng ký.')
+  if (current.status === 'ended' || current.status === 'closed') throw new RegistrationError('closed', 'Sự kiện đã đóng hoặc đã kết thúc đăng ký.')
   if (registrations.some((item) => item.eventId === event.id && item.email.toLowerCase() === email)) {
     throw new RegistrationError('duplicate', 'Email này đã đăng ký sự kiện. Vui lòng dùng email khác.')
   }

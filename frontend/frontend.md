@@ -1,6 +1,6 @@
 # Frontend prototype (tuần 2)
 
-Ứng dụng chạy trên localhost với dữ liệu sự kiện mẫu. Đã có luồng danh sách → chi tiết → đăng ký → kết quả, tìm kiếm/lọc và lưu đăng ký trong localStorage. Tài liệu trạng thái, routes, cách kiểm thử và hướng phát triển nằm tại [README.md](README.md). Chưa kết nối Backend hoặc AWS.
+Ứng dụng chạy trên localhost với luồng danh sách → chi tiết → đăng ký → kết quả và tìm kiếm/lọc. Đã tích hợp Backend local qua HTTP; chọn API hoặc mock bằng `VITE_DATA_MODE` trong `.env.local` theo `.env.example`. Chỉ chế độ mock lưu đăng ký trong localStorage. Tài liệu cấu hình và kiểm thử nằm tại [README.md](README.md). Chưa triển khai AWS.
 
 ## Công nghệ đã cài
 

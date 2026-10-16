@@ -5,13 +5,13 @@ import { EventFilters } from '@/components/EventFilters'
 import { PageState } from '@/components/PageState'
 import { Button } from '@/components/ui/button'
 import { filterEvents, type CategoryFilter, type StatusFilter } from '@/lib/event-listing'
-import { getEvents } from '@/services/mock-events'
+import { getEvents } from '@/services/events'
 import type { EventItem } from '@/types/event'
 
 export function EventListPage() {
   const [events, setEvents] = useState<EventItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const [error, setError] = useState('')
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<CategoryFilter>('all')
   const [status, setStatus] = useState<StatusFilter>('all')
@@ -22,7 +22,7 @@ export function EventListPage() {
   useEffect(() => {
     let active = true
     getEvents().then((items) => { if (active) { setEvents(items); setLoading(false) } })
-      .catch(() => { if (active) { setError(true); setLoading(false) } })
+      .catch((cause) => { if (active) { setError(cause instanceof Error ? cause.message : 'Không thể tải danh sách sự kiện.'); setLoading(false) } })
     return () => { active = false }
   }, [])
   useEffect(() => {
@@ -31,7 +31,7 @@ export function EventListPage() {
   }, [visibleEvents.length])
 
   function clearFilters() { setQuery(''); setCategory('all'); setStatus('all') }
-  if (error) return <PageState title="Không thể tải danh sách" message="Dữ liệu trình duyệt có thể đã bị lỗi. Vui lòng kiểm tra hoặc tải lại trang." />
+  if (error) return <PageState title="Không thể tải danh sách" message={error} />
 
   return <>
     <div className="max-w-3xl pt-12 pb-10 sm:pt-16 sm:pb-14">

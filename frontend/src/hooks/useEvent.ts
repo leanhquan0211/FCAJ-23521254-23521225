@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getEvent } from '@/services/mock-events'
+import { getEvent } from '@/services/events'
 import type { EventItem } from '@/types/event'
 
 export function useEvent(eventId: string | undefined) {
@@ -9,8 +9,8 @@ export function useEvent(eventId: string | undefined) {
     if (!eventId) return
     getEvent(eventId).then((event) => {
       if (active) setState({id: eventId, event, loading: false, error: ''})
-    }).catch(() => {
-      if (active) setState({id: eventId, event: null, loading: false, error: 'Không thể tải sự kiện. Vui lòng tải lại trang.'})
+    }).catch((cause) => {
+      if (active) setState({id: eventId, event: null, loading: false, error: cause instanceof Error ? cause.message : 'Không thể tải sự kiện. Vui lòng tải lại trang.'})
     })
     return () => { active = false }
   }, [eventId])

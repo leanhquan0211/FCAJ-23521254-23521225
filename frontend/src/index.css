@@ -189,7 +189,8 @@ h3 {
   color: var(--color-full-ink);
 }
 
-.status-badge[data-status='ended'] {
+.status-badge[data-status='ended'],
+.status-badge[data-status='closed'] {
   background: var(--color-ended-paper);
   color: var(--color-ended-ink);
 }

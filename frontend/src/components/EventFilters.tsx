@@ -76,6 +76,7 @@ export function EventFilters({
           <option value="open">{STATUS_LABELS.open}</option>
           <option value="full">{STATUS_LABELS.full}</option>
           <option value="ended">{STATUS_LABELS.ended}</option>
+          <option value="closed">{STATUS_LABELS.closed}</option>
         </select>
       </div>
 

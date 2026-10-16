@@ -1,0 +1,69 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: Local event registration API. Not a deployment template for this milestone.
+
+Resources:
+  LocalHttpApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      StageName: $default
+      CorsConfiguration:
+        AllowOrigins:
+          - http://localhost:5173
+          - http://127.0.0.1:5173
+        AllowMethods: [GET, POST, OPTIONS]
+        AllowHeaders: [Content-Type]
+        MaxAge: 600
+
+  EventsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: lambda/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures: [x86_64]
+      # Local bind mounts on Windows/OneDrive can make SDK model loading slow.
+      Timeout: 60
+      MemorySize: 256
+      Environment:
+        Variables:
+          DYNAMODB_ENDPOINT: ""
+          DYNAMODB_TABLE: fcaj-event-workshop-local
+          DYNAMODB_REGION: us-east-1
+          ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      Events:
+        Health:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /health
+            Method: GET
+            PayloadFormatVersion: "2.0"
+        Events:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /events
+            Method: GET
+            PayloadFormatVersion: "2.0"
+        EventDetail:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /events/{eventId}
+            Method: GET
+            PayloadFormatVersion: "2.0"
+        CreateRegistration:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /events/{eventId}/registrations
+            Method: POST
+            PayloadFormatVersion: "2.0"
+        RegistrationResult:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /registrations/{registrationId}
+            Method: GET
+            PayloadFormatVersion: "2.0"

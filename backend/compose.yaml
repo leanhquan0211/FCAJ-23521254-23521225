@@ -1,0 +1,35 @@
+name: fcaj-event-workshop
+
+services:
+  dynamodb:
+    image: amazon/dynamodb-local@sha256:ff89bd48ff32cd8d9be5fee8873b65b8854dc408f1afe881be6eb00247bc0dab
+    user: "0:0"
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-dbPath", "/data"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - dynamodb-data:/data
+    networks:
+      local:
+        aliases: [fcaj-dynamodb-local]
+
+  tools:
+    profiles: [tools]
+    image: public.ecr.aws/sam/build-python3.13:latest-x86_64
+    entrypoint: [python3.13]
+    working_dir: /workspace
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      PYTHONPATH: /workspace/backend/lambda:/workspace/.aws-sam/build/EventsFunction
+      AWS_EC2_METADATA_DISABLED: "true"
+    volumes:
+      - ..:/workspace:ro
+    networks: [local]
+
+volumes:
+  dynamodb-data:
+    name: fcaj-event-workshop-dynamodb-data
+
+networks:
+  local:
+    name: fcaj-event-workshop-local
