@@ -4,10 +4,11 @@ export function SiteLayout() {
   return <div id="dau-trang" className="min-h-svh bg-background text-foreground flex flex-col">
     <header className="border-b border-border">
       <div className="mx-auto flex min-h-18 max-w-7xl items-center justify-between gap-4 px-5 sm:px-8">
-        <Link to="/events" className="font-display inline-flex min-h-11 items-center gap-3 text-lg font-bold whitespace-nowrap focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+        <Link to="/" className="font-display inline-flex min-h-11 items-center gap-3 text-lg font-bold whitespace-nowrap focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
           <span aria-hidden="true" className="size-2.5 bg-primary" />Sự kiện
         </Link>
-        <nav aria-label="Điều hướng chính">
+        <nav aria-label="Điều hướng chính" className="flex flex-wrap justify-end gap-x-4">
+          <Link to="/" className="inline-flex min-h-11 items-center text-sm font-medium whitespace-nowrap text-muted-foreground hover:text-primary hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">Vai trò</Link>
           <Link to="/events" className="inline-flex min-h-11 items-center text-sm font-medium whitespace-nowrap text-muted-foreground underline-offset-4 hover:text-primary hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">Danh sách sự kiện</Link>
         </nav>
       </div>

@@ -11,6 +11,9 @@ from botocore.exceptions import BotoCoreError, ClientError
 from configuration import ConfigurationError, local_table
 from repository import EventRepository
 from service import ApiError, EventService, RegistrationService
+from admin_events import AdminEventService
+from auth import AuthService, session_output
+from auth_repository import AuthRepository
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +24,20 @@ def json_number(value):
     raise TypeError(f"Cannot serialize {type(value).__name__}")
 
 
-def response(status, body, event, extra_headers=None):
-    headers = {"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store"}
+def response(status, body, event, extra_headers=None, cookies=None):
+    headers = {"Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store",
+               "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer"}
     headers.update(extra_headers or {})
     origin = next((v for k, v in (event.get("headers") or {}).items() if k.lower() == "origin"), None)
     allowed = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
     if origin in allowed:
         headers["Access-Control-Allow-Origin"] = origin
+        headers["Access-Control-Allow-Credentials"] = "true"
         headers["Vary"] = "Origin"
-    return {"statusCode": status, "headers": headers, "body": json.dumps(body, ensure_ascii=False, default=json_number)}
+    result = {"statusCode": status, "headers": headers, "body": json.dumps(body, ensure_ascii=False, default=json_number)}
+    if cookies:
+        result["cookies"] = cookies
+    return result
 
 
 def registration_body(event):
@@ -40,6 +48,8 @@ def registration_body(event):
         body = event.get("body") or ""
         if event.get("isBase64Encoded"):
             body = base64.b64decode(body, validate=True).decode("utf-8")
+        if len(body.encode("utf-8")) > 32768:
+            raise ApiError(413, "PAYLOAD_TOO_LARGE", "Dữ liệu gửi lên quá lớn.")
         return json.loads(body)
     except (ValueError, TypeError, UnicodeError, binascii.Error):
         raise ApiError(400, "VALIDATION_ERROR", "Nội dung JSON không hợp lệ.") from None
@@ -52,9 +62,34 @@ def lambda_handler(event, context):
     try:
         if event.get("queryStringParameters"):
             raise ApiError(400, "VALIDATION_ERROR", "API này chưa hỗ trợ tham số truy vấn.")
-        if route not in {"GET /health", "GET /events", "GET /events/{eventId}", "POST /events/{eventId}/registrations", "GET /registrations/{registrationId}"}:
+        if route not in {"GET /health", "GET /events", "GET /events/{eventId}", "POST /events/{eventId}/registrations", "GET /registrations/{registrationId}",
+                         "POST /admin/login", "GET /admin/session", "POST /admin/logout", "GET /admin/events", "POST /admin/events",
+                         "PUT /admin/events/{eventId}", "DELETE /admin/events/{eventId}"}:
             raise ApiError(404, "ROUTE_NOT_FOUND", "Không tìm thấy API.")
-        repository = EventRepository(local_table())
+        table = local_table()
+        repository = EventRepository(table)
+        if "/admin/" in route:
+            auth = AuthService(AuthRepository(table))
+            if route == "POST /admin/login":
+                session, cookie = auth.login(event, registration_body(event))
+                return response(200, session_output(session), event, cookies=[cookie])
+            if route == "POST /admin/logout":
+                cookie = auth.logout(event)
+                return response(200, {"loggedOut": True}, event, cookies=[cookie])
+            session = auth.require_admin(event, mutation=not route.startswith("GET "))
+            if route == "GET /admin/session":
+                return response(200, session_output(session), event)
+            admin = AdminEventService(repository)
+            event_id = (event.get("pathParameters") or {}).get("eventId")
+            if route == "GET /admin/events":
+                body = admin.list_events()
+            elif route == "POST /admin/events":
+                return response(201, admin.create(registration_body(event)), event)
+            elif route == "PUT /admin/events/{eventId}":
+                body = admin.update(event_id, registration_body(event))
+            else:
+                body = admin.delete(event_id, registration_body(event))
+            return response(200, body, event)
         if route == "GET /health":
             table_name = repository.health()
             body = {"status": "ok", "database": {"status": "ready", "table": table_name}}

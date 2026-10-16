@@ -1,6 +1,6 @@
 # Frontend website đăng ký sự kiện
 
-Frontend của Workshop chạy cục bộ với luồng **danh sách → chi tiết sự kiện → form đăng ký → kết quả đăng ký**. Đã tích hợp Backend SAM + DynamoDB Local qua HTTP; có thể chọn mock để phát triển UI. Chưa có email hoặc AWS. Quy tắc giao diện nằm trong [DESIGN.md](DESIGN.md). Ghi chú thiết lập nằm trong [frontend.md](frontend.md).
+Frontend chạy local: **chọn vai trò → User xem/tìm kiếm/đăng ký; Admin đăng nhập → quản lý sự kiện**. Luồng khách vẫn là danh sách → chi tiết → form → kết quả. Đã tích hợp Backend SAM + DynamoDB Local qua HTTP; có thể chọn mock để phát triển UI. Chưa có email hoặc AWS. Quy tắc giao diện nằm trong [DESIGN.md](DESIGN.md). Ghi chú thiết lập nằm trong [frontend.md](frontend.md).
 
 ## Tiến độ
 
@@ -14,8 +14,8 @@ Frontend của Workshop chạy cục bộ với luồng **danh sách → chi ti�
 | Registration Form | Hoàn thành | Kiểm tra tên/email, chặn sự kiện đóng, giữ form khi service báo lỗi. |
 | Registration Result | Hoàn thành | API mode đọc kết quả từ DynamoDB nên tải lại vẫn xem được; mock mode dùng localStorage. |
 | Mock service và localStorage | Hoàn thành | Giữ để phát triển UI, chỉ chạy khi chọn `mock`. |
-| Admin Dashboard | Chưa thực hiện | Chưa có trang quản trị hoặc xác thực. |
-| API contract | Hoàn thành | Có [contract v1](../docs/api-contract.md), HTTP adapter và trạng thái `closed`. |
+| Admin Dashboard | Hoàn thành local | Đăng nhập/session/đăng xuất, tìm kiếm và thêm/sửa/xóa sự kiện; chặn xóa nếu đã có chỗ dùng. |
+| API contract | Hoàn thành | Có [contract v2](../docs/api-contract.md), HTTP adapter và trạng thái `closed`. |
 | Kết nối Backend | Hoàn thành | Danh sách, chi tiết, đăng ký và đọc kết quả gọi HTTP ở API mode. |
 | Triển khai AWS | Chưa thực hiện | Chưa có hosting hay hạ tầng cho Frontend. |
 
@@ -66,10 +66,10 @@ Trong `frontend/.env.local` (các biến `VITE_` được đưa vào client, kh�
 
 ```dotenv
 VITE_DATA_MODE=api
-VITE_API_BASE_URL=http://127.0.0.1:3001
+VITE_API_BASE_URL=/api
 ```
 
-API mode cần DynamoDB Local và SAM chạy theo [Backend README](../backend/README.md). Frontend lấy số chỗ và kết quả từ Backend, không tự trừ chỗ, không dùng localStorage cho đăng ký và không fallback khi API lỗi. Nếu thiếu/sai cấu hình URL, giao diện báo lỗi. Chưa có `.env.local` thì mode mặc định là `api` nhưng vẫn cần `VITE_API_BASE_URL`.
+API mode cần DynamoDB Local và SAM chạy theo [Backend README](../backend/README.md). Frontend lấy số chỗ và kết quả từ Backend, không tự trừ chỗ, không dùng localStorage cho đăng ký và không fallback khi API lỗi. Nếu thiếu/sai cấu hình URL, giao diện báo lỗi. Mặc định là api với URL /api; Vite chuyển tiếp đến SAM cổng 3001.
 
 CORS Backend hiện cho origin cổng 5173. Có thể dùng `npm run dev -- --port 5173 --strictPort` để tránh Vite tự chuyển cổng; nếu chủ động đổi cổng, cần cập nhật cả CORS template và `ALLOWED_ORIGINS` rồi build/restart SAM.
 
@@ -79,7 +79,11 @@ Muốn phát triển UI độc lập, đổi `VITE_DATA_MODE=mock`; mode này kh
 
 | Đường dẫn | Chức năng |
 | --- | --- |
-| `/` | Chuyển đến `/events`. |
+| `/` | Chọn Người tham gia hoặc Quản trị viên. |
+| `/admin/login` | Đăng nhập quản trị viên. |
+| `/admin` | Danh sách/tìm kiếm sự kiện cho admin. |
+| `/admin/events/new` | Tạo sự kiện. |
+| `/admin/events/:eventId/edit` | Sửa thông tin, sức chứa và mở/đóng. |
 | `/events` | Danh sách, tìm kiếm và lọc. |
 | `/events/:eventId` | Chi tiết; ví dụ `/events/thiet-ke-de-dung`. |
 | `/events/:eventId/register` | Form đăng ký; chặn ID sai, hết chỗ, đóng đăng ký hoặc đã kết thúc. |
@@ -112,9 +116,21 @@ Thử luồng: mở `/events`, chọn sự kiện còn chỗ như **Thiết kế
 ## Kiểm thử và giới hạn
 
 - **Đã đạt:** `npm run build`; `npm run lint` (2 cảnh báo Fast Refresh). Chrome headless đã thử luồng HTTP với Backend thật trên bảng local test: đăng ký hợp lệ, reload kết quả, thiếu tên/email, email sai, email trùng khác hoa/thường, bấm gửi liên tiếp, lỗi API không fallback, loading và chặn sự kiện hết chỗ/đóng/kết thúc. Danh sách, form và kết quả không cuộn ngang ở 320/375/414/768/1280 px; đã xem ảnh form mobile và kết quả desktop. Tìm kiếm/lọc kết hợp và xóa lọc vẫn đạt.
-- **Chưa kiểm tra:** trình duyệt ngoài Chrome, trình đọc màn hình và nhiều thiết bị người dùng. Backend đã có kiểm tra transaction đồng thời riêng; mock localStorage vẫn không cung cấp giao dịch.
-- **Chưa triển khai:** email xác nhận, Admin Dashboard/xác thực quản trị và AWS. Backend local đã tích hợp; API đọc kết quả chưa có đăng nhập/ủy quyền.
+- **Chưa kiểm tra:** Firefox/Safari, trình đọc màn hình và nhiều thiết bị người dùng. Backend đã có kiểm tra transaction đồng thời riêng; mock localStorage vẫn không cung cấp giao dịch.
+- **Chưa triển khai:** email xác nhận và AWS. Quản trị viên đã có xác thực phía backend. Backend local đã tích hợp; API đọc kết quả chưa có đăng nhập/ủy quyền.
 
-Backend đã có transaction và năm API trong [contract](../docs/api-contract.md). Bước tiếp theo: Admin Dashboard, quyết định kiểm soát truy cập dữ liệu đăng ký và kiểm thử rộng hơn. AWS vẫn nằm ngoài mốc local hiện tại.
+Backend đã có transaction và năm API trong [contract](../docs/api-contract.md). Bước tiếp theo: quyết định kiểm soát truy cập dữ liệu đăng ký khách và kiểm thử rộng hơn. AWS vẫn nằm ngoài mốc local hiện tại.
 
 Script trình duyệt nằm tại `tests/frontend/check-registration-browser.mjs`, dùng Node WebSocket và Chrome DevTools Protocol, không cài thêm framework test. Chỉ cho phép tạo đăng ký khi API đang trỏ bảng có prefix `fcaj-event-workshop-local-test-`. Xem [Backend README](../backend/README.md#kiểm-thử) để chuẩn bị bảng/API test. Ví dụ mở Chrome headless bằng profile riêng, remote debugging port 9240, rồi từ repo root chạy `node tests/frontend/check-registration-browser.mjs`. Mặc định script dùng Frontend 5173 và API 3002; có thể đổi bằng `FRONTEND_TEST_URL`, `API_TEST_URL`, `CHROME_DEBUG_PORT`.
+
+## Vai trò và quản trị
+
+Trang `/` có hai lựa chọn. Người tham gia vào thẳng danh sách; Quản trị viên được kiểm tra session ở backend rồi vào dashboard hoặc chuyển sang `/admin/login`. URL admin trực tiếp cũng phải kiểm tra session. Không lưu quyền hoặc session token trong localStorage/sessionStorage. Mock không cấp quyền admin.
+
+Tạo tài khoản bằng [CLI backend](../backend/README.md#tạo-tài-khoản-admin-và-dùng-quản-trị), không có mật khẩu mặc định. Dashboard có tìm kiếm không dấu, thêm/sửa thông tin, điều chỉnh sức chứa, mở/đóng và xóa sự kiện chưa có chỗ dùng. Backend kiểm tra lại tất cả quy tắc.
+
+`services/http-client.ts` xử lý HTTP chung; `services/admin.ts` giữ contract quản trị; `pages/admin/` là màn hình. `AdminLayout` chặn trang theo session, `useAdminSession` cung cấp session/CSRF trong bộ nhớ. Phiên hết hạn sẽ quay về đăng nhập. Giao diện chỉ cập nhật dữ liệu sau khi API xác nhận thành công.
+
+Vite dev/preview có proxy `/api` đến `127.0.0.1:3001`, cổng dev cố định 5173. `npm run preview` ở cổng 4173 không nằm trong allowlist Origin cho login; để thử đầy đủ dùng `npm run dev`, hoặc cấu hình allowlist rồi restart SAM. Khi hosting thật cần reverse proxy/API URL và HTTPS phù hợp; cấu hình Vite không tự trở thành cấu hình hosting.
+
+Kiểm tra mốc quản trị: build/lint đạt (giữ hai cảnh báo Fast Refresh cũ). Edge headless đạt chọn vai trò, khách tìm kiếm, URL admin trực tiếp bị chặn, sai mật khẩu, login/reload/logout, thêm/sửa, đăng ký sự kiện vừa tạo, đóng đăng ký, chặn giảm sức chứa và khóa nút xóa khi đã có chỗ dùng. Nội dung `<script>` hiển thị như văn bản. Các trang chọn vai trò, login, danh sách và form quản trị không cuộn ngang hoặc xuống dòng chữ nút ở 320/375/414/768/1280 px; đã xem ảnh form mobile. Chưa kiểm tra Firefox/Safari hoặc trình đọc màn hình.

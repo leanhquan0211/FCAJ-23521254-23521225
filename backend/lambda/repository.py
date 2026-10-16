@@ -30,6 +30,23 @@ class EventRepository:
             Key={"PK": "EVENTS", "SK": f"EVENT#{event_id}"}, ConsistentRead=True,
         ).get("Item")
 
+    def insert_event(self, item):
+        self.table.put_item(Item=item, ConditionExpression="attribute_not_exists(PK) AND attribute_not_exists(SK)")
+
+    def event_guard(self, current):
+        # Both seats and admin version must still match: never overwrite a concurrent booking.
+        return {
+            "ConditionExpression": "#capacity = :capacity AND remainingSeats = :seats AND (attribute_not_exists(#version) OR #version = :version)",
+            "ExpressionAttributeNames": {"#version": "version", "#capacity": "capacity"},
+            "ExpressionAttributeValues": {":capacity": current["capacity"], ":seats": current["remainingSeats"], ":version": current.get("version", 0)},
+        }
+
+    def replace_event(self, current, item):
+        self.table.put_item(Item=item, **self.event_guard(current))
+
+    def delete_event(self, current):
+        self.table.delete_item(Key={"PK": "EVENTS", "SK": current["SK"]}, **self.event_guard(current))
+
     def get_registration(self, registration_id):
         return self.table.get_item(
             Key={"PK": f"REGISTRATION#{registration_id}", "SK": "METADATA"}, ConsistentRead=True,

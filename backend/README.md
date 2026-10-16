@@ -1,6 +1,6 @@
 # Backend local — sự kiện và đăng ký
 
-Backend dùng Lambda **Python 3.13**, API Gateway **HTTP API payload v2** do SAM giả lập, và **DynamoDB Local 3.3.1** trong Docker. Đã có năm API trong [contract](../docs/api-contract.md): health, danh sách/chi tiết sự kiện, tạo đăng ký và đọc kết quả. Frontend đã có HTTP adapter, đồng thời giữ chế độ mock độc lập.
+Backend dùng Lambda **Python 3.13**, API Gateway **HTTP API payload v2** do SAM giả lập, và **DynamoDB Local 3.3.1** trong Docker. Có API người tham gia và API đăng nhập/session/đăng xuất, quản lý sự kiện cho admin trong [contract v2](../docs/api-contract.md). Frontend đã có HTTP adapter, đồng thời giữ chế độ mock độc lập.
 
 ## Kiến trúc và cấu hình
 
@@ -64,7 +64,7 @@ curl.exe http://127.0.0.1:3001/events/thiet-ke-de-dung
 curl.exe -i http://127.0.0.1:3001/events/no-such-event
 ```
 
-Frontend: trong terminal riêng ở repo root, copy `frontend/.env.example` thành `frontend/.env.local` nếu chưa có, giữ `VITE_DATA_MODE=api` và `VITE_API_BASE_URL=http://127.0.0.1:3001`, rồi chạy `cd frontend`, `npm ci` (nếu cần), `npm run dev`. Giữ cả terminal SAM và Vite chạy. Trên giao diện, chọn sự kiện còn chỗ và hoàn thành form; kết quả được lưu trong DynamoDB, không nằm trong localStorage. Đổi sang `VITE_DATA_MODE=mock` và restart Vite để phát triển UI không cần Backend.
+Frontend: trong terminal riêng ở repo root, copy `frontend/.env.example` thành `frontend/.env.local` nếu chưa có, giữ `VITE_DATA_MODE=api` và `VITE_API_BASE_URL=/api`, rồi chạy `cd frontend`, `npm ci` (nếu cần), `npm run dev`. Giữ cả terminal SAM và Vite chạy. Trên giao diện, chọn sự kiện còn chỗ và hoàn thành form; kết quả được lưu trong DynamoDB, không nằm trong localStorage. Đổi sang `VITE_DATA_MODE=mock` và restart Vite để phát triển UI không cần Backend.
 
 PowerShell cũng có thể dùng `Invoke-RestMethod`. `curl.exe` dùng được trong cả PowerShell và Git Bash trên Windows. Health thành công chỉ khi bảng ACTIVE và Query đọc thử thành công. Xem [contract](../docs/api-contract.md) cho response/lỗi. API không trả stack trace cho client.
 
@@ -113,7 +113,7 @@ python backend/tools/check_registration_api.py --base-url http://127.0.0.1:3002
 
 Smoke test ghi tự xác nhận `/health` trả bảng test trước khi gửi POST. Nó thử tạo/đọc đăng ký, email trùng và đăng ký sự kiện khác, validation, đóng/hết chỗ và nhiều request HTTP tranh chỗ cuối. Lệnh này có tạo dữ liệu trên bảng test, khác `check_api.py` chỉ đọc.
 
-Kết quả đã chạy trong mốc này:
+Kết quả đã chạy trước nâng cấp quản trị (mốc API người tham gia):
 
 | Kiểm tra | Kết quả |
 | --- | --- |
@@ -129,7 +129,7 @@ Kết quả đã chạy trong mốc này:
 | Stop/start DB, không xóa volume | Đạt: health trả 503 khi DB dừng, API phục hồi sau start, fingerprint của 8 sự kiện giữ nguyên |
 | Lần gọi Lambda đầu | Ban đầu timeout 15 giây; đã sửa cache client và timeout 60 giây, kiểm thử HTTP sau sửa đạt |
 
-Chưa có Admin, email, xác thực/ủy quyền khi đọc kết quả và AWS. Mã UUID ngẫu nhiên không thay thế quyền truy cập. Chưa có HTTP idempotency key để khôi phục kết quả khi client mất response sau commit; Frontend không tự retry POST, gửi lại email trùng sẽ trả 409. Chưa chạy các lệnh tài liệu bằng Git Bash thực tế; Docker/SAM đã chạy từ PowerShell. Chưa kiểm thử trình duyệt ngoài Chrome hoặc nhiều thiết bị.
+Đã có admin và quản lý sự kiện; chưa có email, tài khoản khách/ủy quyền theo tài khoản khi đọc kết quả và AWS. Mã UUID ngẫu nhiên không thay thế quyền truy cập. Chưa có HTTP idempotency key để khôi phục kết quả khi client mất response sau commit; Frontend không tự retry POST, gửi lại email trùng sẽ trả 409. Chưa chạy các lệnh tài liệu bằng Git Bash thực tế; Docker/SAM đã chạy từ PowerShell. Chưa kiểm thử Firefox/Safari hoặc nhiều thiết bị.
 
 Tham chiếu: [DynamoDB Local và Docker Compose](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html), [SAM HTTP API](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-httpapi.html).
 
@@ -142,4 +142,38 @@ Tham chiếu: [DynamoDB Local và Docker Compose](https://docs.aws.amazon.com/am
 - Lỗi 502/timeout lúc gọi đầu: local bind mount trên Windows/OneDrive có thể tải model boto3 chậm. Đã đặt timeout local 60 giây và cache client cho container ấm. Giữ `--warm-containers LAZY`; sau khi sửa Python, build và restart SAM để dùng artifact mới.
 - Port đã dùng: kiểm tra tiến trình đang nghe 3001/8000 trước khi đổi cổng; nếu đổi DB host port thì endpoint container vẫn dùng port 8000.
 
-Bước tiếp theo: Admin Dashboard, kiểm soát truy cập kết quả đăng ký và kiểm thử rộng hơn. Mốc local người đăng ký đã có luồng hai phía; không đồng nghĩa dự án hoặc phần triển khai AWS đã hoàn tất.
+Bước tiếp theo: kiểm soát truy cập kết quả đăng ký và kiểm thử rộng hơn. Mốc local người đăng ký đã có luồng hai phía; không đồng nghĩa dự án hoặc phần triển khai AWS đã hoàn tất.
+
+## Tạo tài khoản admin và dùng quản trị
+
+Sau khi DynamoDB đã chạy, backend đã build và bảng ứng dụng đã được seed, mở terminal PowerShell tương tác tại repo root:
+
+```powershell
+docker compose -f backend/compose.yaml run --rm -it tools backend/tools/create_admin.py --endpoint-url http://fcaj-dynamodb-local:8000 --username phuc
+```
+
+Nhập mật khẩu 15–128 ký tự hai lần (terminal không hiện ký tự). Có thể thay `phuc` bằng tên đăng nhập 3–64 ký tự. Lệnh không ghi mật khẩu ra file/log và từ chối ghi đè tài khoản đã có. Không có tài khoản admin mặc định hoặc API tự đăng ký admin. Không cần tạo lại mỗi lần khởi động.
+
+Chạy SAM như trên. Frontend dùng `VITE_DATA_MODE=api`, `VITE_API_BASE_URL=/api`, rồi `npm.cmd --prefix frontend run dev`. Truy cập `http://127.0.0.1:5173/`, chọn Quản trị viên và đăng nhập. Proxy `/api` của Vite chuyển đến SAM cổng 3001; không trộn localhost/127.0.0.1 giữa các địa chỉ khi dùng URL API tuyệt đối cũ.
+
+Quản trị cho phép thêm/sửa tên, danh mục, thời gian (giờ Việt Nam), địa điểm, đơn vị tổ chức, sức chứa, giới thiệu, nội dung và mở/đóng đăng ký. Sự kiện đã có chỗ dùng không được xóa; không giảm sức chứa xuống dưới số chỗ đã dùng. Chỗ nền trong dữ liệu seed cũng được giữ nguyên.
+
+Session trong cookie HttpOnly, hạn 8 giờ; thao tác ghi kiểm tra Origin và CSRF. Đăng xuất thu hồi session ở server. Chi tiết tại [contract](../docs/api-contract.md) và [bảo mật](../docs/security.md). Khách không cần đăng nhập.
+
+### Kiểm tra quản trị trên bảng riêng
+
+Tạo bảng/API test theo mục kiểm thử phía trên. Khi SAM test đã chạy, có thể dùng Python host với PYTHONPATH gồm `backend/lambda` và `.aws-sam/build/EventsFunction` để chạy:
+
+```powershell
+python backend/tools/check_admin_api.py --base-url http://127.0.0.1:3002
+```
+
+Script kiểm tra health trỏ bảng test trước khi ghi, tạo admin với mật khẩu ngẫu nhiên chỉ trong bộ nhớ, rồi kiểm tra quyền, login/logout, cookie, CSRF và CRUD. Không tạo admin thật trong bảng ứng dụng. Các test bổ sung nằm tại `tests/backend/test_admin.py`.
+
+Mốc nâng cấp quản trị: 45 unit test đạt trên Python 3.13 container; hai integration test tranh chỗ/trùng email đạt trên DynamoDB Local (lượt integration chạy bằng Python host 3.11). SAM build và validate/lint đạt. HTTP admin đạt thêm/sửa/xóa, chống CSRF, giữ chỗ, chặn xóa có đăng ký, logout và hai lượt sửa cùng version chỉ một lượt thành công. Edge headless đã kiểm tra toàn bộ luồng vai trò/quản trị và responsive 320/375/414/768/1280 px. Frontend build/lint đạt; hai cảnh báo Fast Refresh cũ không đổi.
+
+Để kiểm tra UI, dùng browser profile riêng có remote-debugging port 9241, frontend proxy trỏ cùng API test, đặt `API_TEST_URL` theo cổng API rồi thêm `--browser`. Script truyền credentials test trực tiếp qua stdin cho `tests/frontend/check-admin-browser.mjs`, không ghi mật khẩu vào file.
+
+### Giảm tài nguyên sau dùng thử
+
+Ctrl+C ở SAM và Vite, rồi `docker compose -f backend/compose.yaml down` để gỡ container/network của dự án và giữ volume. Nếu muốn tiết kiệm đĩa hơn, sau khi không còn container SAM dùng image, có thể gỡ riêng image `public.ecr.aws/sam/build-python3.13:latest-x86_64` và các image Lambda Python 3.13 đã dùng. Lần build/chạy sau cần tải lại. Không dùng `docker system prune -a --volumes` vì ảnh hưởng dự án khác và dữ liệu.

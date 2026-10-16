@@ -1,0 +1,123 @@
+"""Local admin authentication: scrypt passwords, opaque sessions, origin + CSRF checks."""
+import hashlib
+import hmac
+import os
+import re
+import secrets
+import time
+from http.cookies import CookieError, SimpleCookie
+
+from service import ApiError
+
+SESSION_SECONDS = 8 * 60 * 60
+COOKIE_NAME = "event_admin_session"
+SCRYPT_N, SCRYPT_R, SCRYPT_P = 2 ** 15, 8, 3
+
+
+def password_digest(password, salt):
+    # OWASP's 32 MiB scrypt profile; standard library, no extra runtime package.
+    return hashlib.scrypt(password.encode("utf-8"), salt=bytes.fromhex(salt),
+                          n=SCRYPT_N, r=SCRYPT_R, p=SCRYPT_P, maxmem=64 * 1024 * 1024).hex()
+
+
+def password_record(password):
+    if not isinstance(password, str) or not 15 <= len(password) <= 128:
+        raise ValueError("Mật khẩu cần từ 15 đến 128 ký tự.")
+    salt = secrets.token_hex(16)
+    return {"passwordSalt": salt, "passwordHash": password_digest(password, salt)}
+
+
+def username_value(value):
+    if not isinstance(value, str) or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{2,63}", value.strip()):
+        raise ApiError(400, "VALIDATION_ERROR", "Tên đăng nhập cần 3–64 ký tự chữ, số, dấu chấm, gạch ngang hoặc gạch dưới.")
+    return value.strip().lower()
+
+
+def request_headers(event):
+    return {key.lower(): value for key, value in (event.get("headers") or {}).items()}
+
+
+def verify_origin(event):
+    allowed = {origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")}
+    if request_headers(event).get("origin") not in allowed:
+        raise ApiError(403, "FORBIDDEN_ORIGIN", "Nguồn gửi yêu cầu không được phép.")
+
+
+def session_token(event):
+    headers = request_headers(event)
+    raw = "; ".join(event.get("cookies") or []) or headers.get("cookie", "")
+    try:
+        cookies = SimpleCookie()
+        cookies.load(raw)
+        value = cookies[COOKIE_NAME].value if COOKIE_NAME in cookies else ""
+        return value if re.fullmatch(r"[a-zA-Z0-9_-]{43}", value) else ""
+    except CookieError:
+        return ""
+
+
+def session_key(token):
+    return "SESSION#" + hashlib.sha256(token.encode()).hexdigest()
+
+
+def session_cookie(token, clear=False):
+    # HTTP is permitted only for this explicitly local application. Enable Secure for HTTPS.
+    secure = "; Secure" if os.getenv("COOKIE_SECURE", "false").lower() == "true" else ""
+    return f"{COOKIE_NAME}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if clear else SESSION_SECONDS}{secure}"
+
+
+class AuthService:
+    def __init__(self, repository):
+        self.repository = repository
+
+    def login(self, event, body):
+        verify_origin(event)
+        if not isinstance(body, dict) or set(body) != {"username", "password"}:
+            raise ApiError(400, "VALIDATION_ERROR", "Vui lòng nhập tên đăng nhập và mật khẩu.")
+        username = username_value(body["username"])
+        password = body["password"]
+        if not isinstance(password, str) or not 1 <= len(password) <= 128:
+            raise ApiError(400, "VALIDATION_ERROR", "Mật khẩu không hợp lệ.")
+        now = int(time.time())
+        bucket = now // 900
+        source_ip = (event.get("requestContext", {}).get("http") or {}).get("sourceIp", "local")
+        for kind, value, limit in [("ip", source_ip, 30), ("account", username, 10)]:
+            digest = hashlib.sha256(value.encode()).hexdigest()
+            self.repository.count_login(f"LOGIN#{kind}#{digest}#{bucket}", limit, (bucket + 1) * 900)
+        account = self.repository.get("ADMIN#" + username)
+        # Do comparable work even for an unknown account. Never reveal which field was wrong.
+        salt = account["passwordSalt"] if account else "0" * 32
+        actual = password_digest(password, salt)
+        expected = account["passwordHash"] if account else "0" * 128
+        if not hmac.compare_digest(actual, expected) or not account or account.get("role") != "admin":
+            raise ApiError(401, "INVALID_CREDENTIALS", "Tên đăng nhập hoặc mật khẩu không đúng.")
+        previous = session_token(event)
+        if previous:
+            self.repository.delete(session_key(previous))
+        token = secrets.token_urlsafe(32)
+        session = {"username": username, "role": "admin", "csrfToken": secrets.token_urlsafe(32), "expiresAt": now + SESSION_SECONDS}
+        self.repository.create(session_key(token), session)
+        return session, session_cookie(token)
+
+    def require_admin(self, event, mutation=False):
+        token = session_token(event)
+        session = self.repository.get(session_key(token)) if token else None
+        if not session or int(session["expiresAt"]) <= int(time.time()):
+            raise ApiError(401, "AUTH_REQUIRED", "Vui lòng đăng nhập quản trị viên.")
+        # Re-read the account, so removing its role immediately removes access.
+        account = self.repository.get("ADMIN#" + session["username"])
+        if session.get("role") != "admin" or not account or account.get("role") != "admin":
+            raise ApiError(403, "FORBIDDEN", "Tài khoản không có quyền quản trị.")
+        if mutation:
+            verify_origin(event)
+            if not hmac.compare_digest(request_headers(event).get("x-csrf-token", "").encode(), session["csrfToken"].encode()):
+                raise ApiError(403, "CSRF_FAILED", "Phiên thao tác không hợp lệ. Vui lòng tải lại trang.")
+        return session
+
+    def logout(self, event):
+        self.require_admin(event, mutation=True)
+        self.repository.delete(session_key(session_token(event)))
+        return session_cookie("", clear=True)
+
+
+def session_output(session):
+    return {key: session[key] for key in ("username", "role", "csrfToken", "expiresAt")}

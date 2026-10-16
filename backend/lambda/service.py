@@ -41,7 +41,7 @@ class EventService:
 
     def list_events(self):
         items = self.repository.list_events()
-        items.sort(key=lambda item: datetime.fromisoformat(item["dateTime"]))
+        items.sort(key=lambda item: (datetime.fromisoformat(item["dateTime"]), item["id"]))
         return {"events": [event_output(item) for item in items]}
 
     def get_event(self, event_id):

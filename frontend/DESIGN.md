@@ -2,7 +2,7 @@
 
 ## Mục tiêu và định hướng
 
-Người dùng cần tìm một sự kiện phù hợp, đọc nhanh thời gian/địa điểm và biết ngay còn đăng ký được hay không. Màn hình dùng tiếng Việt, nội dung ngắn và trạng thái bằng cả chữ lẫn màu. Dữ liệu hiện là mock cho prototype local; không đưa kiến trúc kỹ thuật vào giao diện.
+Người dùng cần tìm một sự kiện phù hợp, đọc nhanh thời gian/địa điểm và biết ngay còn đăng ký được hay không. Màn hình dùng tiếng Việt, nội dung ngắn và trạng thái bằng cả chữ lẫn màu. Dữ liệu lấy từ API local hoặc mock tùy cấu hình; không đưa kiến trúc kỹ thuật vào giao diện.
 
 Hallmark: **Catalogue** làm cấu trúc chính vì các sự kiện là những mục ngang hàng cần so sánh và lọc. Phong cách **Almanac** dùng nền giấy sáng, chữ mực đậm, đường kẻ mảnh và một điểm nhấn xanh thông. Header theo **N9 Edge-aligned minimal**, footer theo **Ft2 Inline rule**. Không dùng hero chiếm màn hình, ảnh giả, thống kê quảng cáo hay hiệu ứng cuộn. Bộ lọc đứng ngay trước lưới để hành động tìm sự kiện luôn rõ ràng.
 
@@ -42,6 +42,12 @@ Spacing theo nhịp 4 px: 4, 8, 12, 16, 24, 40, 64 px. Card và Input bo 10–12
 | Badge | Chữ ngắn và màu nền nhẹ | Không nhận focus vì không tương tác | Bốn nhãn: “Còn chỗ”, “Hết chỗ”, “Đã kết thúc”, “Đã đóng đăng ký”; đóng đăng ký dùng cùng sắc trung tính với đã kết thúc |
 
 Nút “Xem chi tiết” mở trang chi tiết riêng. Trang chi tiết dùng cùng header, nhịp chữ, bảng màu và đường kẻ; khối thông tin thời gian, địa điểm, đơn vị tổ chức và sức chứa được trình bày thành các cặp nhãn/giá trị. Trạng thái hết chỗ hoặc đã kết thúc có giải thích rõ và không có CTA đăng ký. Form dùng một Card cho trường nhập và một Card tóm tắt sự kiện, xếp dọc trên mobile; lỗi hiển thị cạnh trường hoặc ngay trước nút gửi. Trang kết quả dùng cùng ngôn ngữ thị giác, nhấn vào mã đăng ký và thông tin sự kiện. Chuyển động chỉ giới hạn ở hover/nhấn và tôn trọng `prefers-reduced-motion`.
+
+## Luồng vai trò và quản trị (tuần 3)
+
+Giữ nguyên Almanac, font, màu và component hiện có. Trang `/` dùng hai lựa chọn rõ ràng: Người tham gia và Quản trị viên. Login là form một cột. Trang quản lý dùng danh sách có đường phân cách, tìm kiếm ở đầu và hành động cạnh từng sự kiện; form chỉnh sửa chia nhóm thông tin, một cột trên mobile. Không thêm ảnh hoặc thư viện giao diện.
+
+Các thao tác có loading, lỗi cụ thể và trạng thái disabled; phiên hết hạn quay về đăng nhập. Xóa cần xác nhận, nút bị khóa kèm giải thích khi đã có chỗ dùng. Đây là thao tác không có Undo nên dùng hộp xác nhận. Mọi nội dung admin nhập được render như văn bản.
 
 ## Exports
 
