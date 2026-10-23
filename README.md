@@ -88,4 +88,4 @@ Nhánh `phuc`, API contract 4.1: Admin quản lý User (tìm tên/email, sửa, 
 - [AI_RULE.md](phuc-worklog/AI_RULE.md): luật cộng tác, ghi chép và bàn giao cho AI.
 - [PROJECT_CONTEXT.md](phuc-worklog/PROJECT_CONTEXT.md): bối cảnh, kiến trúc và trạng thái hiện tại.
 - [WORKLOG.md](phuc-worklog/WORKLOG.md): công việc chính và kết quả theo ngày để viết báo cáo tiến độ.
-- `phuc-worklog/handoffs/`: chưa có nội dung bàn giao; chỉ tạo khi có yêu cầu.
+- `phuc-worklog/handoffs/`: bản bàn giao cho cửa sổ AI mới, được tạo khi nhận lệnh “Kết phiên” hoặc yêu cầu bàn giao cụ thể.

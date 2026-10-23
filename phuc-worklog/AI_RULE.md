@@ -5,7 +5,7 @@
 ## 1. Bắt đầu một nhiệm vụ
 
 1. Đọc file này, [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md) và phần ngày gần nhất trong [WORKLOG.md](WORKLOG.md).
-2. Nếu có nhiệm vụ bàn giao được chỉ định, đọc đúng file trong handoffs/. Thư mục này hiện chưa có bàn giao; không tự suy ra đang có nhiệm vụ đã được giao.
+2. Đọc file bàn giao được chỉ định trong handoffs/. Nếu không có tên cụ thể, kiểm tra bản bàn giao mới nhất liên quan đến nhiệm vụ; nếu thư mục trống thì tiếp tục từ PROJECT_CONTEXT/WORKLOG, không tự suy ra đã có nhiệm vụ được giao.
 3. Kiểm tra Git status/branch và mã nguồn liên quan. Tài liệu là bối cảnh, không thay kiểm tra process/health hoặc bằng chứng hiện tại.
 
 ## 2. Giải thích và duyệt trước khi code
@@ -33,16 +33,37 @@
 | PROJECT_CONTEXT.md | Mục tiêu, phạm vi, kiến trúc, luồng dữ liệu, code liên quan, trạng thái đã xác minh và điểm còn lại. Cập nhật khi bối cảnh thay đổi, không chép timeline hoặc lệnh dài. |
 | AI_RULE.md | Luật cộng tác và quy cách ghi chép/bàn giao được người dùng thống nhất. Chỉ thay quy tắc khi có căn cứ từ yêu cầu mới. |
 
-- Mặc định **không tự ghi nhật ký** nếu chưa được yêu cầu. Một lần yêu cầu tổng kết không bật tự ghi cho mọi lượt sau.
+- Mặc định **không tự ghi nhật ký** nếu chưa được yêu cầu. Hai lệnh **Checkpoint** và **Kết phiên** là yêu cầu cập nhật rõ ràng theo mục 5; không cần xin xác nhận lại việc ghi chép/bàn giao đó. Sau khi hoàn tất lệnh, không bật tự ghi cho mọi lượt sau.
 - Nhật ký phục vụ báo cáo đóng góp, viết trung tính, không gọi tên người dùng, không ghi các lần xin duyệt/lỗi dán lệnh hoặc quy công việc bên đồng hành thành phần ứng dụng.
 - Không lặp kiến trúc/trạng thái vào WORKLOG; dẫn PROJECT_CONTEXT. Schema/lệnh khởi động chi tiết giữ trong docs/README tương ứng. Phiên bản cũ tra Git, không tạo bản lưu trùng trong thư mục.
 - Không ghi password, cookie, token, credential hoặc dữ liệu cá nhân vào tài liệu/Git.
 
-## 5. Bàn giao trong handoffs/
+## 5. Hai lệnh cập nhật và kết phiên
 
-Chỉ tạo file khi được yêu cầu bàn giao nhiệm vụ; hiện để trống nội dung bàn giao. Khi có yêu cầu, dùng tên ngắn theo nhiệm vụ và ghi đủ:
+Nhận diện theo ý định người dùng: yêu cầu thực hiện **Checkpoint** hoặc **Kết phiên** kích hoạt quy trình tương ứng, kể cả khi có thêm nội dung đi kèm. Việc trích dẫn từ khóa để giải thích, sửa rule hoặc đưa ví dụ không phải lệnh thực hiện.
+
+### Checkpoint — cập nhật tiến độ hiện tại
+
+1. Rà công việc và các quyết định đến thời điểm nhận lệnh, đối chiếu nhật ký hiện có với code và bằng chứng kiểm tra; không chỉ ghi lại tin nhắn cuối.
+2. Cập nhật mục ngày tương ứng trong WORKLOG.md: công việc chính, thay đổi trước–sau, phần hoàn thành/đang dở và kết quả kiểm tra đúng thực tế. Bổ sung phần còn thiếu, sửa trạng thái đã lỗi thời, không ghi trùng hoặc xóa lịch sử công việc ngày trước.
+3. Nếu bối cảnh, kiến trúc hoặc điểm tiếp tục đã thay đổi, cập nhật PROJECT_CONTEXT.md cho khớp. Không đổi AI_RULE.md khi chưa có yêu cầu thay quy tắc.
+4. Kiểm tra nội dung/liên kết và tóm tắt ngắn những phần đã cập nhật. Checkpoint không tự tạo file bàn giao hoặc kết thúc công việc đang thực hiện.
+
+### Kết phiên — rà toàn bộ cuộc trò chuyện và bàn giao
+
+1. Nhìn lại **toàn bộ cuộc trò chuyện từ đầu đến thời điểm nhận lệnh**, gồm mục tiêu ban đầu, các yêu cầu bổ sung, quyết định đã duyệt, thay đổi hướng làm, việc đã thực hiện và phần còn dở. Không chỉ tổng kết từ Checkpoint gần nhất.
+2. Đối chiếu với code, Git và các kết quả có bằng chứng; cập nhật WORKLOG/PROJECT_CONTEXT nếu còn thiếu hoặc không khớp tiến độ cuối phiên. Không tự dựng lại phần hội thoại thiếu căn cứ; ghi rõ điểm chưa xác minh.
+3. Tạo một file bàn giao trong handoffs/ để cửa sổ AI mới tiếp tục được công việc. Dùng tên `YYYY-MM-DD-HHmm.md` theo giờ Việt Nam, không ghi đè bản bàn giao cũ nếu tên đã tồn tại.
+4. Kiểm tra bản bàn giao đủ mục ở phần 6, dẫn liên kết tài liệu/code liên quan và báo lại đường dẫn file. Không tự bắt đầu tính năng mới khi đang kết phiên.
+
+Hai lệnh chỉ cho phép công việc ghi chép/bàn giao tương ứng, không thay quy tắc duyệt code hoặc quyền thao tác Git, dữ liệu và hạ tầng. Kết phiên không mặc định là yêu cầu tắt hoặc dọn môi trường.
+
+## 6. Nội dung bàn giao trong handoffs/
+
+Tạo file khi nhận lệnh **Kết phiên** hoặc yêu cầu bàn giao rõ ràng khác. Bản bàn giao cần ngắn gọn, đủ để AI mới làm tiếp, gồm:
 
 - Mục tiêu, phạm vi đã duyệt và kết quả mong muốn.
+- Các quyết định và ràng buộc còn hiệu lực trong toàn cuộc trò chuyện; phân biệt nội dung đã duyệt với ý tưởng mới đề xuất.
 - Đã làm, đang dở, chưa làm; file/branch/commit liên quan, thay đổi chưa commit nếu có.
 - Kiểm tra đã chạy, kết quả, lỗi còn lại và giới hạn bằng chứng.
 - Bước tiếp theo cụ thể; quyết định cần người dùng; lệnh/điều kiện tái hiện nếu cần.
@@ -50,7 +71,7 @@ Chỉ tạo file khi được yêu cầu bàn giao nhiệm vụ; hiện để tr
 
 Không viết lại toàn bộ bối cảnh dự án trong từng handoff; dẫn tới PROJECT_CONTEXT/WORKLOG. AI nhận bàn giao kiểm tra lại code/status trước khi tiếp tục, không coi đề xuất trong handoff là đã được duyệt nếu chưa có bằng chứng.
 
-## 6. Git, dữ liệu và môi trường
+## 7. Git, dữ liệu và môi trường
 
 - Làm trên nhánh phuc theo [git-workflow.md](../docs/git-workflow.md). Cùng nhánh không có nghĩa sửa đồng thời cùng folder/file an toàn; kiểm tra thay đổi cửa sổ khác, không reset/clean/discard/force-push để lấy bản mới.
 - App và test lab có trách nhiệm riêng; thống nhất contract/data model trước thay đổi ảnh hưởng bên kia. Gộp Git không chứng minh đã tích hợp chức năng.
