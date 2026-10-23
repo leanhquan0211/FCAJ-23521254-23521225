@@ -36,10 +36,10 @@ Trong đợt này không chạy lại SAM HTTP server, kiểm thử trình duy�
 
 ## Nguồn tham khảo và bằng chứng
 
-- [Dữ liệu mẫu gốc](../../../backend/dynamodb_setup/events.json): đối chiếu đúng tám ID, nội dung và số chỗ trước khi xóa.
-- [Script khởi tạo](../../../backend/dynamodb_setup/init_db.py), [unit test khởi tạo](../../../tests/backend/test_read_api.py) và [integration fixture](../../../tests/backend/test_registration_integration.py): xác định hành vi mặc định, tùy chọn demo và việc bảo toàn bản ghi cũ.
-- [Quy tắc quản trị](../../../backend/lambda/admin_events.py) và [repository](../../../backend/lambda/repository.py): cách tính chỗ đã dùng, chặn xóa và điều kiện bảo vệ khi có thay đổi đồng thời.
-- [Công cụ kiểm tra API](../../../backend/tools/check_api.py): kiểm tra danh sách trống và chi tiết theo ID thực tế.
+- [Dữ liệu mẫu gốc](../../backend/dynamodb_setup/events.json): đối chiếu đúng tám ID, nội dung và số chỗ trước khi xóa.
+- [Script khởi tạo](../../backend/dynamodb_setup/init_db.py), [unit test khởi tạo](../../tests/backend/test_read_api.py) và [integration fixture](../../tests/backend/test_registration_integration.py): xác định hành vi mặc định, tùy chọn demo và việc bảo toàn bản ghi cũ.
+- [Quy tắc quản trị](../../backend/lambda/admin_events.py) và [repository](../../backend/lambda/repository.py): cách tính chỗ đã dùng, chặn xóa và điều kiện bảo vệ khi có thay đổi đồng thời.
+- [Công cụ kiểm tra API](../../backend/tools/check_api.py): kiểm tra danh sách trống và chi tiết theo ID thực tế.
 - [AWS — DynamoDB Transactions: How it works](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html), đã đọc ngày 16/10/2026: tham khảo transaction thực hiện toàn bộ hoặc không thực hiện khi một điều kiện không đạt.
 
 Các số lượng database ở trên là kết quả đọc local trong lần thực hiện này, không phải số liệu lấy từ tài liệu AWS hoặc số liệu cố định cho những lần dùng sau. Không ghi mật khẩu, token hoặc dữ liệu cá nhân vào worklog.

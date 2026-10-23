@@ -1,8 +1,8 @@
-# Nhật ký Phúc — ứng dụng và phối hợp kiểm thử
+# Lịch sử triển khai ứng dụng 23/10 — Phúc
 
-> Đính chính theo xác nhận trực tiếp của Phúc: toàn bộ công việc ứng dụng từ lúc nhận yêu cầu bên ngoài trong cuộc trò chuyện thuộc Phúc. Bản ghi cũ được chuyển từ quan-worklog sang đây; giữ lịch sử và bằng chứng, không coi tên thư mục cũ là phân công cho Quân.
+> **Đọc [tổng kết toàn phiên](23-10.md) trước.** Code cuối là API 4.1, `feat/admin-accounts-sidebar@9d47cff`. Mục 1–7 giữ khảo sát/bản nháp, 8–13 là triển khai v3, 14 là tách UI, 15 là v4, 16 là quản lý User/sidebar v4.1. Câu “chưa làm/chờ duyệt”, PID, cổng proxy và contract trong từng mục chỉ đúng tại mốc đó; không dùng như trạng thái mới nhất.
 
-> **Mốc lịch sử v3:** người dùng đã duyệt toàn plan và cho phép tự hoàn tất. Mã v3 được triển khai trên `feat/buyer-flow`, worktree `.worktrees/buyer-flow`; API/account/booking/UI đã qua kiểm tra local. Đọc **mục8 trở đi** để tiếp tục công việc. Đây là bản ghi các mốc trước, không tự ghi tiến độ mới. Contract hiện hành xem [API contract](../../docs/api-contract.md). Các mục1–7 giữ lịch sử khảo sát/bản nháp trước khi code, nên các câu “chưa làm/chưa duyệt” ở đó không mô tả trạng thái cuối ngày.
+> Theo xác nhận trực tiếp của Phúc, toàn bộ công việc ứng dụng từ khi nhận biên bản bên ngoài thuộc Phúc. Bản ghi này chuyển từ quan-worklog về đây; giữ bằng chứng và lịch sử, không quy tác giả từ tên thư mục. Lần kết phiên được Phúc yêu cầu tổng hợp, ngoài đó vẫn không tự ghi nhật ký.
 
 - Tuần 4, giờ Việt Nam. Nhánh lúc rà soát: `phuc`, commit `c13f4a9`.
 - Yêu cầu: đọc biên bản bên đồng hành, chuẩn bị cách làm song song ít xung đột Git; mở `quan-worklog` và giữ nguyên văn hóa làm việc.
@@ -365,3 +365,43 @@ Tool HTTP đã tự tắt ghi bytecode trước khi import SDK để tránh SAM 
 Đã dừng browser profile test9241, SAM test3002 và Vite test5175 sau khi hoàn tất. Giữ API ứng dụng3001/frontend5173 và DB8000. Bảng test được giữ để đối chiếu, không xóa bảng/volume. Không merge main/phuc; nhánh mới dành cho review và tích hợp có kiểm soát.
 
 **Mốc code v4 đã lấy được trên GitHub:** [`feat/unified-account@a10907f0287acd7c664b3902b55968565e66042b`](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/a10907f0287acd7c664b3902b55968565e66042b). Commit chứa code, contract4.0, data model, security, hướng dẫn và các bài hồi quy nói trên. Đã push non-force và đối chiếu `git ls-remote`: remote nhánh mới khớp SHA; main vẫn f4e20b9, feat/buyer-flow vẫn a6ba0f2, feat/role-navigation vẫn e9e9bff. Working tree sạch sau commit code. Nhật ký xác minh này được commit riêng sau mốc code, không thay hành vi ứng dụng; HEAD nhánh mới có thêm phần ghi chép bàn giao cuối.
+
+## 16. Quản lý User, thu gọn sidebar và kết phiên — API 4.1
+
+### Yêu cầu con người đã chốt
+
+Phúc duyệt Admin xem danh sách User có cả tên/email, tìm theo tên/email, chỉnh sửa và xóa. Khi xóa User phải hủy vé và trả chỗ, không ảnh hưởng người khác; tài khoản mất quyền truy cập. Thêm thu gọn sidebar cho cả hai role, giữ giao diện rõ ràng và dễ dùng. Phúc nhắc toàn bộ các thay đổi trong chuỗi yêu cầu này thuộc phuc-worklog. Plan đã được duyệt trước khi thực hiện.
+
+### Đã thực hiện và cách hoạt động
+
+- Thêm GET `/admin/users`, PUT/DELETE `/admin/users/{userId}`; chỉ Admin được gọi, ghi cần Origin/CSRF. Body sửa chỉ fullName/email/version, xóa chỉ version. Chưa quản lý Admin/password/role.
+- Sửa profile và ánh xạ email duy nhất bằng transaction; version chặn ghi đè, vé cũ giữ snapshot. Danh sách không xuất password hash/token/PK/SK.
+- Xóa khóa profile trước; session/login từ chối, booking thêm ConditionCheck profile hoạt động. Hủy vé + xóa reference + hoàn một chỗ cùng transaction, retry không hoàn hai lần. Event mất/đang xóa không được tạo lại hoặc hoàn chỗ. Dọn metadata/session theo lô/cursor, trả 202 nếu cần tiếp tục.
+- Bổ sung dọn Ticket sót nếu event đã xóa reference rồi gián đoạn. Nếu Ticket mất reference mà event vẫn hoạt động, trả ACCOUNT_BUSY để đối chiếu, không tự đoán chỗ.
+- Thêm `/admin/users`, tìm có/không dấu, hiển thị tên/email/ngày tạo, hộp sửa/xác nhận xóa/Tiếp tục xóa. Lỗi version cũ tải lại trạng thái, lỗi thao tác giữ thông báo sau refresh.
+- Sidebar desktop 256→80px, icon có tooltip/focus và vùng bấm ít nhất 44px, lưu boolean lựa chọn; mobile luôn đầy đủ chữ. Đã sửa lỗi Radix tooltip ghép className hàm của NavLink thành chuỗi khiến vùng bấm sai. Giữ tokens/component, không thêm dependency.
+
+Nguồn code: [admin_accounts.py](../../backend/lambda/admin_accounts.py), [account_repository.py](../../backend/lambda/account_repository.py), [booking.py](../../backend/lambda/booking.py), [session.py](../../backend/lambda/session.py), [AdminAccountsPage.tsx](../../frontend/src/pages/admin/AdminAccountsPage.tsx), [AppShell.tsx](../../frontend/src/components/AppShell.tsx), [SidebarHint.tsx](../../frontend/src/components/SidebarHint.tsx). Contract/data model/security đã cập nhật 4.1.
+
+### Bằng chứng cuối đợt
+
+| Kiểm tra | Kết quả và phạm vi |
+| --- | --- |
+| Backend toàn bộ | 75/75 đạt, gồm 63 bài không cần DB và 12 integration, bảng `fcaj-event-workshop-local-test-5e9300b3e585`. Lượt trước 74 đạt rồi thêm regression vé sót, không cộng số hai lượt. |
+| Bài xóa quan trọng | Hoàn đúng một lần; giả lập gián đoạn sau commit rồi retry; profile khóa chặn booking; hai Admin xóa đồng thời với xóa event; giữ vé/account người khác; Ticket sót được dọn đúng điều kiện. |
+| HTTP | Buyer/API đọc/account đạt 4.1. Account thử quyền/CSRF/Origin/schema/email/version/snapshot/hủy vé/trả chỗ/session. Bảng HTTP/browser `fcaj-event-workshop-local-test-7550bc1c02b8`. |
+| Browser | Tìm tên/email/không dấu, email trùng, sửa, stale version tự reload/giữ lỗi, hủy xác nhận, lỗi xóa còn hiện sau refresh, xóa hoàn đúng ghế, role menu, sidebar/tooltip/preference/mobile đạt. |
+| Responsive | 320/375/414/768/1280px, vùng bấm icon 44px; đã mở xem ảnh desktop/collapsed/mobile. Ảnh ở Temp, không chứa credential thật hoặc là tài sản bắt buộc trong Git. |
+| Build | SAM container build và validate--lint đạt; frontend build/lint đạt, hai warning Fast Refresh cũ. |
+
+Các test này là kết quả công cụ, không gán thành Phúc đã dùng thử UI cuối. Đã sửa lỗi harness selector và fixture trùng tên, sau đó kiểm tra browser lại đạt. Chưa có k6 100 người hoặc metric AWS.
+
+### Build, Git và trạng thái lúc bàn giao
+
+Build SAM dùng Python3.13/container và wheel đúng pin đã kiểm hash khi pip/index không tải được theo cách thường; không đổi dependency. Windows cần dừng SAM/container mount artifact trước khi build. Host test dùng SDK artifact đặt PYTHONDONTWRITEBYTECODE=1 để tránh watcher restart/502 do ghi cache. Test không reset/seed bảng ứng dụng.
+
+Code đã commit/push ở **`9d47cff71a8f75e9c42845700d497cf029a56b16`**, nhánh **`feat/admin-accounts-sidebar`**. Đã đối chiếu remote; giữ main/phuc=f4e20b9, buyer-flow=a6ba0f2, role-navigation=e9e9bff, unified-account=9341aef. Working tree sạch sau bàn giao code. Repo gốc giữ nhánh phuc; nhánh mới dùng worktree buyer-flow.
+
+Đã dừng đúng helper test SAM3002/Vite5175/Edge riêng, giữ app SAM3001/Vite5173 và DB. Lượt tổng kết đọc lại hai health lúc 22:12 ngày23/10: ok/ready, contract4.1, bảng ứng dụng; không đếm lại dữ liệu hoặc chạy lại suite. Nhánh test lab lúc này đã có remote `9e00d5a8757f60c6516e1bdbb2b4406bb3d05cad`, chưa được cửa sổ app review/chạy tích hợp. Thông tin chưa push trong trao đổi trước là lịch sử.
+
+Theo yêu cầu kết phiên, [23-10.md](23-10.md) được chuẩn hóa thành bản tổng kết toàn bộ chat, đầu phiên giữ ở [23-10-dau-phien.md](23-10-dau-phien.md), [phối hợp](../../quan-worklog/phoi-hop.md) cập nhật hiện hành. Bước tiếp: Phúc dùng thử UI; bên test đối chiếu 4.1 rồi thử 1–2 User trước các bài 100/200,100/10,100/1. Chưa merge main hoặc triển khai AWS. Nguồn chính là các quyết định Phúc trong chat, code/contract, đầu ra test/Git/health nêu trên.

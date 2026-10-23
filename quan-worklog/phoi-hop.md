@@ -1,98 +1,158 @@
-> Contract ứng dụng hiện hành: **4.1**, nhánh `feat/admin-accounts-sidebar`; xem [API contract](../docs/api-contract.md). Công việc ứng dụng thuộc Phúc. Phần dưới giữ các mốc bàn giao trước để truy vết.
+# Phối hợp hiện hành — ứng dụng và bộ kiểm thử
 
-# Phối hợp song song — ứng dụng và kiểm thử
+Mốc đối chiếu **23/10/2026**, khi kết phiên. Phúc phụ trách chuỗi công việc **ứng dụng**; bên đồng hành phụ trách **k6/runner/dashboard/dữ liệu test**. [Biên bản](yeu-cau.md) giữ nguyên văn nguồn; [nhật ký Phúc](../phuc-worklog/week-4/23-10.md) ghi diễn biến và quyết định sau đó. Tài liệu này là hướng dẫn phối hợp, không thay contract hay nhật ký thực chạy của bên test.
 
-> Mốc v4 đã push ngày23/10: `feat/unified-account@a10907f0287acd7c664b3902b55968565e66042b`, contract4.0 thay hai cookie bằng event_session, /auth/login nhận identifier/password, sai role403; admin xóa kèm ghi danh và có202 tiếp tục. Đã đối chiếu remote SHA. Mốc `feat/buyer-flow@a6ba0f2` API3.0 và `feat/role-navigation@e9e9bff` được giữ nguyên. Phần mô tả các mốc M0–M4 bên dưới thuộc v3; muốn thử v4 phải lấy code/contract cùng commit, không trộn artifact. Xem [nhật ký mục15](../phuc-worklog/week-4/23-10-ung-dung.md) cho kiểm tra, giới hạn và cách clone riêng không ghi đè thay đổi.
+## 1. Bản nào lấy được trên GitHub?
 
-> Bổ sung23/10: sau bàn giao API `feat/buyer-flow@a6ba0f2`, người dùng duyệt tách giao diện User/admin. Phần UI làm trên `feat/role-navigation` tại cùng worktree buyer, không đổi API/schema hoặc nhánh bàn giao. Bên test tiếp tục dùng SHA đã chốt cho tích hợp API; cập nhật selector/điều hướng nếu chọn kiểm tra UI mới. Kết quả mới nằm ở mục14 [nhật ký](../phuc-worklog/week-4/23-10-ung-dung.md).
+Đã kiểm tra bằng `git ls-remote --heads origin` lúc kết phiên:
 
-Cập nhật23/10/2026 sau khi người dùng duyệt toàn plan. Nguồn: [biên bản](yeu-cau.md). Bên ứng dụng là cửa sổ nhận biên bản này; không tự suy người thực hiện từ tên thư mục. Contract tại commit v3 là API3.0; file [contract](../docs/api-contract.md) trên nhánh hiện hành là4.1.
-
-## 1. Trạng thái Git thực tế
-
-- Nền `f4e20b90095e2519b0dfefd212fb1a1146abbe57`, đã chứa quan-worklog trên GitHub main. Đã kiểm tra lại remote main trong lượt triển khai.
-- Worktree ứng dụng: `D:\aws-workshop\event-registration\.worktrees\buyer-flow`, branch `feat/buyer-flow`. Tạo trong writable workspace, không dùng đường dẫn ngoài workspace như ví dụ nháp ban đầu.
-- Repo gốc `D:\aws-workshop\event-registration` được giữ nguyên; lúc kiểm tra cuối đang ở `phuc` tại f4e20b9. Không switch/merge bên dưới cửa sổ khác. Thư mục `.worktrees` và profile browser thử chỉ được exclude cục bộ, không sửa gitignore chung.
-- Chưa tạo nhánh/worktree `feat/test-lab` thay bên kiểm thử; bên đó tự kiểm tra folder/branch hiện có trước khi tạo.
-- Commit code mới sẽ được bàn giao trên feature branch; main chưa tự nhận code mới. Trạng thái commit/push cuối cùng xem nhật ký, không coi thay đổi chưa commit là đã chia sẻ.
-
-Hai cửa sổ cùng máy cần hai worktree hoặc clone. Chỉ đổi branch trong một folder vẫn dùng chung file và có thể làm mất ngữ cảnh cửa sổ kia. Linked worktree có HEAD/index/folder riêng, nhưng Git refs/object chung; không thao tác Git chồng nhau. Không checkout cùng branch ở hai worktree.
-
-## 2. Ai sửa đâu
-
-| Khu vực | Bên ứng dụng | Bên kiểm thử |
+| Nhánh | SHA remote | Phạm vi |
 | --- | --- | --- |
-| frontend/ sản phẩm | UI/routes/service/types/User/Admin | Đọc, báo lỗi |
-| backend/lambda và template/config | Account/session/booking/schedule/transaction | Gọi API, báo bằng chứng; không viết lại auth/schema |
-| docs/api-contract, data-model, security | Một đầu mối cập nhật canonical | Góp ý thay đổi và assertion |
-| tests/backend, tests/frontend, backend/tools/check_* | Test hồi quy ứng dụng, helper app | Tái sử dụng hoặc báo nhu cầu sửa |
-| tests/load | Cung cấp contract/helper | k6, tài khoản thử, fixture, đối chiếu |
-| tests/runner | Không thêm vào Lambda | Runner local riêng |
-| tests/dashboard | Không nhúng vào frontend sản phẩm | Frontend test/package/lock riêng |
-| tests/results | Đọc báo cáo | Kết quả theo runId, không secret |
-| phuc-worklog | Công việc ứng dụng của Phúc; chỉ ghi nhật ký khi được yêu cầu | Đọc |
-| quan-worklog | Giữ biên bản và phối hợp, không quy công việc ứng dụng cho Quân | Đọc |
-| phuc-worklog | Không ghi đè | Theo phân công bên đó |
-| README, Compose, dependency, CI/infra | Một bên sửa mỗi đợt, ghi rõ nhu cầu | Tránh đồng thời sửa cùng file |
+| main, phuc | `f4e20b90095e2519b0dfefd212fb1a1146abbe57` | Nền trước nâng cấp app trong phiên |
+| feat/buyer-flow | `a6ba0f21e41cc73cfadb3242ff9bd9d30e2f234a` | API 3.0, người mua/booking; giữ mốc cũ |
+| feat/role-navigation | `e9e9bffbcd54ebf2238f704802b069e0a0603b91` | Tách UI, API 3.0 |
+| feat/unified-account | `9341aefb69f91587c4d8f782fc66e89f023c3cee` | API 4.0, một cookie/sidebar/xóa ghi danh event |
+| **feat/admin-accounts-sidebar** | **`9d47cff71a8f75e9c42845700d497cf029a56b16`** | **Bản code ứng dụng hiện hành API 4.1** |
+| feat/test-lab | `9e00d5a8757f60c6516e1bdbb2b4406bb3d05cad` | Đã có remote, chưa được cửa sổ app review/chạy tích hợp |
 
-Đợt này bên ứng dụng cập nhật README gốc/backend/frontend và tests/tests.md để lệnh cũ không hướng dẫn body v2. Không đổi dependency/lock/Compose, không tạo k6/runner/dashboard hoặc triển khai AWS. Các thư mục test riêng trong bảng là phạm vi bên đồng hành, không có nghĩa đã tồn tại.
+Sau lượt này nhánh app có thể có thêm commit **tài liệu**; 9d47cff là mốc code đã kiểm tra. Không lấy branch name làm bảo đảm artifact đang đúng SHA. Code, contract, data model và artifact phải cùng mốc. Chưa merge feature/test lab vào main/phuc.
 
-## 3. Bàn giao và tích hợp
+Bên test từng báo đã có bộ tạo dữ liệu, k6, dashboard, scenario/audit và unit/build/lint/đọc API nhỏ; **đây là thông tin bên đó cung cấp**, không phải cửa sổ app đã kiểm lại. Lúc họ báo, code còn local/chưa push. Kết phiên đã thấy remote như bảng trên; chưa biết mức tương thích 4.1 hoặc kết quả 100 người. Cần bên test bàn giao hướng dẫn/run evidence, không tiếp tục ghi “chưa push” như hiện trạng.
 
-| Mốc | Phần ứng dụng | Bên test có thể nối |
+## 2. Mỗi bên sửa đâu để giảm xung đột?
+
+| Khu vực | Bên ứng dụng (Phúc) | Bên kiểm thử |
 | --- | --- | --- |
-| M0 | Contract v3, data model, ownership legacy đã cập nhật theo plan duyệt | Parser/envelope/status/header, manifest và kịch bản |
-| M1 | Register/login/session/logout User, unique email, Origin/CSRF/rate limit | Chuẩn bị100 account/session tự động ngoài khoảng đo |
-| M2 | Schedule, owner-only,4 ghi atomic, replay200/new201 | Tranh chỗ, trùng/key khác nội dung, mất response, audit |
-| M3 | UI người mua và giờ mở bán trong admin | Browser smoke, dùng thử thủ công |
-| M4 | Unit/integration/HTTP/Edge hồi quy ứng dụng và tài liệu | Chạy k6/runner/dashboard thật sau khi tích hợp đúng commit |
+| frontend/ sản phẩm | Routes, UI User/Admin, service/types | Đọc, kiểm browser, báo lỗi |
+| backend/lambda, template/config | Auth/session/event/booking/quản lý User/schema | Gọi API, đối chiếu; không viết lại auth/schema để vượt test |
+| docs/api-contract, data-model, security | Đầu mối cập nhật sau khi thống nhất | Góp ý/assertion và báo khác biệt |
+| tests/backend, tests/frontend, backend/tools/check_* | Hồi quy/helper ứng dụng | Tái sử dụng hoặc đề nghị thay đổi |
+| tests/load, tests/runner, tests/dashboard, tests/results | Đọc kết quả, cung cấp contract | Phạm vi k6/runner/dashboard/audit riêng; kiểm lại đường dẫn thực tế nhánh test trước dùng |
+| phuc-worklog | Nhật ký ứng dụng; chỉ ghi khi Phúc yêu cầu | Đọc để tích hợp |
+| quan-worklog | Giữ biên bản/phối hợp/chuyển tiếp; không ghi thành công việc ứng dụng của Quân | Thêm bằng chứng phía test khi được giao, không ghi đè nguồn gốc |
+| README, Compose, dependency/lock, CI/infra | Thống nhất một bên sửa trong mỗi đợt | Tránh sửa cùng lúc, báo nhu cầu trước |
 
-M0–M3 đã có mã và kiểm tra local. Phần hồi quy ứng dụng của M4 đã chạy; chưa có kết quả k6 100 người hoặc dashboard/runner của bên test. Số lượng và giới hạn bằng chứng trong [nhật ký](../phuc-worklog/week-4/23-10-ung-dung.md).
+Nhánh khác nhau trong **cùng một folder** vẫn thay chung file. Dùng worktree/clone riêng; một branch không checkout ở hai worktree. Worktree tách folder/HEAD/index nhưng refs/object Git vẫn chia sẻ, tránh thao tác Git chồng nhau. Không reset/clean/discard/stash hộ cửa sổ khác. Một người điều phối mỗi lượt merge, xử lý conflict sau khi đọc thay đổi hai phía.
 
-Hai bên không cần chờ toàn dự án: bên test lấy commit bàn giao, tích hợp vào branch riêng rồi build lại API test từ chính branch đó. Trước mỗi run ghi app commit, contract3.0, bảng/env/runId và tham số thực tế. Không dùng artifact `.aws-sam` của branch khác mà không ghi rõ.
+Hiện repo gốc `D:\aws-workshop\event-registration` ở phuc=f4e20b9; worktree app `.worktrees/buyer-flow` ở feat/admin-accounts-sidebar. Không đổi HEAD gốc để “đồng bộ nhanh”. Thư mục .worktrees/browser profile/env/build chỉ local, không đưa vào Git. Cửa sổ app không tạo nhánh test lab hoặc xây runner/dashboard thay bên test.
 
-Mỗi lượt merge vào nhánh tích hợp chỉ một người thực hiện. Feature mới chưa tự merge vào main/phuc. Trước merge kiểm tra status/diff; không reset/clean/discard thay đổi cửa sổ khác. Nếu cần sửa cùng file, bên sau chờ commit bên trước. Chia phạm vi giảm conflict, không bảo đảm tuyệt đối hết conflict.
+## 3. Lấy bản app mà không ghi đè code đang làm
 
-## 4. Cổng và process
+Cách đơn giản: clone vào **folder mới chưa tồn tại**, ghim đúng commit. Các lệnh là hướng dẫn, không được tự chạy đè lên folder đang chứa thay đổi:
 
-| Thành phần | Địa chỉ dự kiến/chạy thử |
+```powershell
+$target = 'D:\aws-workshop\event-registration-app-4-1'
+if (Test-Path -LiteralPath $target) { throw 'Chọn folder mới; không ghi đè folder đang có.' }
+git clone --branch feat/admin-accounts-sidebar https://github.com/leanhquan0211/FCAJ-23521254-23521225.git $target
+if ($LASTEXITCODE -ne 0) { throw 'Clone lỗi; dừng kiểm tra.' }
+Set-Location $target
+git switch --detach 9d47cff71a8f75e9c42845700d497cf029a56b16
+if ($LASTEXITCODE -ne 0) { throw 'Không ghim được commit app.' }
+git status --short
+git rev-parse HEAD
+```
+
+Detached HEAD để đọc/build/test đúng mốc, không sửa feature ở đó. Nếu muốn sửa, tạo branch riêng sau khi status sạch. Bên test giữ folder/branch hiện có; có thể dùng công cụ kiểm thử của mình gọi API ở clone app, chưa cần merge hai nhánh chỉ để kiểm API. Muốn lấy tài liệu kết phiên, xem HEAD nhánh app sau mốc code; không có thay đổi chức năng trong lượt docs này.
+
+## 4. Cổng, database và cách chạy API test
+
+| Thành phần | Cổng và trạng thái/quy ước |
 | --- | --- |
-| Frontend sản phẩm |127.0.0.1:5173, /api →3001 mặc định |
-| SAM ứng dụng |127.0.0.1:3001, bảng ứng dụng |
-| SAM test |127.0.0.1:3002, bảng test mới theo env |
-| Frontend dashboard bên test |127.0.0.1:5174, /runner →3100, chưa do cửa sổ này triển khai |
-| Runner bên test |127.0.0.1:3100, chưa do cửa sổ này triển khai |
-| DynamoDB Local dùng chung |host8000, container fcaj-dynamodb-local:8000 |
+| Web ứng dụng | 5173, /api →3001; cuối phiên health đúng bảng ứng dụng |
+| SAM ứng dụng | 3001, bảng `fcaj-event-workshop-local` |
+| SAM test | 3002, env/bảng test riêng; helper đã dừng sau smoke |
+| Vite thử browser | 5175, /api →3002; Origin5175 chỉ thêm vào env test nếu dùng; đã dừng |
+| DynamoDB Local | Host8000, container fcaj-dynamodb-local:8000; cùng network/volume |
+| Dashboard/runner phía test | Quy ước cũ 5174/3100, chưa xác minh cấu hình trong commit test lab; phải đọc hướng dẫn bên đó |
 
-Lượt kiểm tra buyer dùng frontend5173 với `API_PROXY_TARGET=http://127.0.0.1:3002`, không phải backend ứng dụng3001. Phải kiểm tra health/bảng trước khi dùng hoặc ghi; đừng suy bảng từ cổng. Process nào còn chạy ở lúc bàn giao ghi trong nhật ký. Không dừng/restart process cửa sổ khác.
+Không suy tên bảng từ cổng. Cookie không tách theo cổng: dùng browser profile thử riêng và cookie jar riêng cho mỗi User ảo. Không đưa cookie cá nhân vào dashboard. Chia sẻ một DB Local nhưng tách bảng; không bật hai Compose stack cùng network/volume/cổng cố định từ hai worktree.
 
-Chia sẻ một DB Local nhưng tách bảng. Compose có network/volume/cổng cố định, không chạy hai stack giống nhau từ hai worktree. Không dùng down-v, không reset/chỉnh remainingSeats bằng tay. Test integration tạo bảng/fixture mới; bảng giữ lại để đối chiếu, không tự cleanup.
+Từ clone/worktree app đúng commit, Docker Linux sẵn sàng. Các lệnh dưới tạo **env mới và bảng test riêng**, không reset ứng dụng. Lỗi thì dừng trước lệnh phụ thuộc:
 
-Cookie không tách theo cổng. Dùng profile trình duyệt thử riêng; runner/k6 giữ cookie jar riêng cho từng User, không lấy cookie cá nhân đi kèm browser dashboard. K6 gọi API3002 với Origin5173 hợp lệ, cookie/CSRF thật. Không cần mở origin5174 vào ứng dụng chỉ để k6 gọi API. Vite dashboard chỉ proxy /runner, không trộn /api sản phẩm.
+```powershell
+$env:SAM_CLI_TELEMETRY='0'
+$env:AWS_ACCESS_KEY_ID='local'
+$env:AWS_SECRET_ACCESS_KEY='local'
+$env:AWS_DEFAULT_REGION='us-east-1'
+$env:AWS_EC2_METADATA_DISABLED='true'
+docker compose -f backend/compose.yaml ps
+sam build --use-container --template-file backend/template.yaml
+```
 
-## 5. Kiến trúc và việc còn lại bên kiểm thử
+Chỉ khi Build Succeeded, tạo env và bảng:
+
+```powershell
+$test = python backend/tools/new_test_environment.py | ConvertFrom-Json
+if ($LASTEXITCODE -ne 0) { throw 'Tạo env test lỗi.' }
+docker compose -f backend/compose.yaml run --rm tools backend/dynamodb_setup/init_db.py --endpoint-url http://fcaj-dynamodb-local:8000 --table-name $test.table
+if ($LASTEXITCODE -ne 0) { throw 'Khởi tạo bảng test lỗi.' }
+$test | ConvertTo-Json
+sam local start-api --template .aws-sam/build/template.yaml --env-vars $test.envFile --docker-network fcaj-event-workshop-local --host 127.0.0.1 --port 3002 --warm-containers EAGER
+```
+
+Giữ SAM chạy, terminal khác GET `http://127.0.0.1:3002/health`: phải ok/ready, apiContractVersion=4.1, tên bảng trùng `$test.table` và prefix test. Nếu không đúng, **chưa gửi request ghi**. Script env chỉ tạo file, không tạo bảng; init ở trên tạo bảng trống, không seed. Không dùng down -v, xóa volume, seed đè hoặc sửa remainingSeats.
+
+Bên test dùng seeder đã review để tạo Admin/User/event test qua API/CLI đúng contract; không bỏ auth. Có thể kiểm hồi quy app trên **env mới khác** bằng toàn bộ suite:
+
+```powershell
+docker compose -f backend/compose.yaml run --rm -e RUN_DYNAMODB_INTEGRATION=1 -e DYNAMODB_ENDPOINT=http://fcaj-dynamodb-local:8000 -e "DYNAMODB_TABLE=$($test.table)" tools -m unittest discover -s tests/backend -v
+```
+
+Suite có fixture cố định trong nhóm transaction nên mỗi lượt dùng bảng mới; không chạy vào bảng đã có dữ liệu không rõ nguồn. Bài HTTP app [check_accounts_api.py](../backend/tools/check_accounts_api.py) tự tạo fixture và chặn bảng ngoài prefix test; [check_registration_api.py](../backend/tools/check_registration_api.py) cần fixture integration. Host tools cần SDK đúng requirements/PYTHONPATH; không ghi cache vào artifact (`PYTHONDONTWRITEBYTECODE=1`) khi SAM warm watcher đang chạy.
+
+Trên Windows dừng đúng SAM/container Lambda đang mount artifact trước build lại, không dừng database hoặc process cửa sổ khác. Nếu resolve dependency lỗi, xem [nhật ký tổng kết](../phuc-worklog/week-4/23-10.md) và [Backend README](../backend/README.md); không tự đổi pin để “chạy tạm”. Các bước này là runbook cho lượt mới, không phải log vừa chạy lại khi chuẩn hóa tài liệu.
+
+## 5. Khác biệt contract cần cập nhật trong bộ test
+
+Nguồn duy nhất để assertion hiện hành: [API 4.1](../docs/api-contract.md), [data model](../docs/data-model.md), [security](../docs/security.md), cùng SHA app.
+
+| Điểm | Điều bộ test cần biết |
+| --- | --- |
+| Login | POST /auth/login `{identifier,password}`, identifier là email User hoặc username Admin; backend quyết định role. Email/password cũ vẫn nhận để tương thích. Một cookie HttpOnly `event_session`, không hai cookie như v3. |
+| Session | GET /auth/session trả role/user hoặc admin identity và csrfToken/expiresAt. Cookie jar riêng từng User; same browser/profile thay account chung các tab. Admin không được mua vé như User; sai role403, thiếu/hết hạn/bị xóa401. |
+| CSRF/Origin | Register/login cần Origin allowlist; ghi sau login cần thêm X-CSRF-Token. Mặc định Origin5173/localhost5173; k6 gọi thẳng3002 vẫn đặt Origin hợp lệ. Không cần mở Origin dashboard chỉ vì dashboard điều khiển runner. |
+| Đặt vé | Body chỉ phone tùy chọn; danh tính từ phiên. Idempotency-Key UUID v4;201 mới/200 replay, cùng key khác nội dung409, User/event khác key trùng409. Key không đổi khi timeout chưa rõ commit. |
+| Transaction | 4 ghi + ConditionCheck profile User hoạt động. Seeder cần profile thật từ đăng ký/đúng schema, không chỉ userId tự tạo hoặc session giả. |
+| Lịch | salesOpenAt timezone/null và giờ server; chưa mở trả lỗi riêng, không tính thành hết vé. |
+| Event deletion | Admin xóa cả event có người; khóa/dọn vé-reference-idempotency của event, giữ User;202 tiếp tục DELETE cùng version đến200. |
+| User management | GET /admin/users; PUT/DELETE /admin/users/{userId}. Sửa tên/email/version, email unique, vé cũ snapshot. Xóa khóa User, hủy vé/hoàn chỗ một lần;202 tiếp tục, session mất quyền. Không sửa Admin/role/password. |
+| Audit | PK/SK nội bộ không trả qua API; audit đọc bảng test theo schema, không suy owner từ email. Ticket, reference, idempotency phải cùng run/event/user. Legacy không được gán owner hoặc dùng ghế mock đã chiếm để kiểm đếm vé thật. |
+| UI | Không còn chọn khu vực; login chung rồi menu theo role. API GET event công khai nhưng UI API mode yêu cầu login. Sidebar/menu selectors cũ v3 có thể không còn đúng. |
+
+## 6. Kiến trúc phối hợp và màn demo
 
 ```mermaid
 flowchart LR
-  Buyer[Frontend sản phẩm 5173] -->|/api| App[SAM ứng dụng 3001]
-  App --> MainDB[(Bảng ứng dụng)]
-  Dashboard[Dashboard 5174 - bên test] -->|/runner| Runner[Runner3100 - bên test]
-  Runner --> K6[k6 và chuẩn bị phiên]
-  K6 -->|User cookie + CSRF + key| TestAPI[SAM test3002 - API v3]
-  TestAPI --> TestDB[(Bảng test theo run)]
-  Runner --> Audit[Đối chiếu DB chỉ đọc]
-  Audit --> TestDB
-  K6 --> Report[Kết quả theo runId]
-  Audit --> Report
-  Report --> Runner
+    Web[Web sản phẩm 5173] --> App[SAM app 3001]
+    App --> Main[(Bảng ứng dụng)]
+    Dashboard[Dashboard phía test - cần xác minh cấu hình] --> Runner[Runner phía test]
+    Runner --> K6[k6 và chuẩn bị User/session]
+    K6 -->|Cookie riêng, CSRF, key| TestAPI[SAM test 3002 - contract 4.1]
+    TestAPI --> TestDB[(Bảng test theo run)]
+    Runner --> Audit[Đối chiếu chỉ đọc]
+    Audit --> TestDB
+    K6 --> Results[Kết quả thật theo runId]
+    Audit --> Results
+    Results --> Runner
 ```
 
-Sơ đồ gồm phần đã có của ứng dụng và phần runner/dashboard do bên test sẽ làm. Runner chỉ bind loopback, chạy danh sách kịch bản/giới hạn được kiểm tra, không nhận chuỗi shell tùy ý từ browser. Dashboard hiển thị trạng thái/metric/audit thật và không hiển thị token/mật khẩu.
+Phần app đã chạy local. Phần runner/dashboard là kiến trúc phối hợp từ biên bản và thông tin phía test, chưa được cửa sổ app kiểm tra trên commit test lab. Không nhúng dashboard kiểm thử vào UI sản phẩm; browser không trực tiếp chạy tiến trình k6. Không nhận chuỗi shell tùy ý từ dashboard, không hiển thị credential/token.
 
-Chuẩn bị100 User qua API register/login, đủ thời hạn phiên; một VU một account/cookie/CSRF. Không chia chung cookie hoặc làm giả IP để vượt rate limit. K6 có thể reset jar sau iteration; phải nạp lại đúng User hoặc chọn option giữ cookie rõ ràng. Tài khoản được chuẩn bị ngoài khoảng đo đặt vé.
+Trước demo hiện app SHA/contract/table/runId/người/chỗ; trong demo hiện request thực,201/200/409/429/503/timeout, p95/throughput; sau demo có audit DB đạt/không đạt. Các ô/đồ thị phải từ dữ liệu chạy thật, không reset DB để tạo kết quả đẹp.
 
-Ba bài đầu:100 người/200chỗ,100 tranh10,100 tranh1. Đây là kỳ vọng chưa đo. Với ramp/hold/down phải có đủ danh tính/sự kiện/ghế cho tải tạo vé, không diễn giải throughput của409 thành vé thành công. Timeout/503/429 tách riêng khỏi EVENT_FULL;200 replay không tính thêm vé. Đối chiếu DB theo event/run sau khi xử lý ổn định. Run sau tạo bảng/sự kiện mới; cleanup chỉ có kế hoạch nhắm đúng bảng test/run, không xóa hàng loạt hoặc volume.
+## 7. Điều kiện bắt đầu tích hợp
 
-Local chứng minh luồng và tính đúng dữ liệu trong điều kiện đã thử, chưa chứng minh scaling AWS. Khi lên AWS cần thiết kế cấu hình endpoint/HTTPS/quyền/quan sát và kiểm thử riêng theo giai đoạn đã duyệt.
+1. Bên test gửi README/lệnh/config và xác nhận SHA test lab thực dùng, đã review với 4.1; cửa sổ app chưa xác minh công cụ này.
+2. Chọn app `9d47cff`, build đúng bản, tạo bảng/env test mới, kiểm health và timestamp; ghi runId/giới hạn tải/thời gian. Không tự tính HTTP lỗi kỹ thuật thành hết vé.
+3. Thử **1–2 User**: register/login/session, xem event trước mở, mua đúng lúc, replay cùng key, key khác bị trùng, User khác không xem vé, audit khớp. Nếu có lỗi thì sửa/kiểm lại trước tăng tải.
+4. Sau đó 100/200 (đủ vé), 100/10 và100/1. Tài khoản/login chuẩn bị tự động **ngoài khoảng đo**; một User một jar/CSRF, đủ thời hạn. Tất cả gần đồng thời là mục tiêu phát tải, không hứa cùng một nano giây.
+5. Kỳ vọng dữ liệu với User hợp lệ/mỗi người một yêu cầu và không lỗi kỹ thuật chưa xử lý: số vé không vượt chỗ; 100/200 có100 vé và100 chỗ còn,100/10 có10 vé và0chỗ,100/1 có1vé và0chỗ. Các số này là **tiêu chí**, chưa là kết quả đã đạt. Timeout/503 phải phân loại/khôi phục rồi audit, không tự đổi thành hết vé.
+6. Ramp/spike/hold/overload/recovery cần đủ User/event/ghế mới, phân biệt response thành công với vé mới; chốt mức tải/ngưỡng trước đo. Một event hết ghế phản hồi409 nhanh không đại diện toàn bộ năng lực hệ thống.
 
-Nguồn: [Git worktree](https://git-scm.com/docs/git-worktree), [DynamoDB transaction](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html), [k6 cookies](https://grafana.com/docs/k6/latest/using-k6/cookies/), [noCookiesReset](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-cookies-reset); cùng code/contract và kết quả trong nhật ký. Không gửi tin nhắn cho người khác thay người dùng.
+Ứng dụng đã có bằng chứng 75/75 backend, HTTP/browser/build trong [nhật ký](../phuc-worklog/week-4/23-10.md); chưa có kết quả k6 100 người hoặc AWS scaling. Quy mô local còn Scan, chưa pagination/index/worker nền. AWS cần cấu hình triển khai/HTTPS/quyền/quan sát và plan riêng được duyệt.
+
+## 8. Nguồn
+
+- [Biên bản gốc](yeu-cau.md), các quyết định tiếp theo của Phúc, [tổng kết phiên](../phuc-worklog/week-4/23-10.md).
+- Code, contract/data model/security hiện hành và đầu ra `git ls-remote` lúc kết phiên; nhánh remote tồn tại chỉ chứng minh đã chia sẻ, không chứng minh nội dung đã chạy.
+- Tham khảo đã dùng trước đó: [Git worktree](https://git-scm.com/docs/git-worktree), [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html), [k6 cookies](https://grafana.com/docs/k6/latest/using-k6/cookies/), [noCookiesReset](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-cookies-reset). Nguồn giải thích cơ chế, không thay kết quả run của dự án.

@@ -4,7 +4,7 @@ Ngày ghi nhận: **23/10/2026**, tuần làm việc thứ tư, giờ Việt Nam
 
 ## 1. Đọc trước khi tiếp tục hỗ trợ
 
-Đây là quy tắc Phúc trực tiếp yêu cầu trong cuộc trò chuyện ngày 23/10/2026. Khung chat mới cần đọc file này và nhật ký mới nhất trước khi đề xuất công việc. Người dùng có thể điều chỉnh quy tắc trong các trao đổi tiếp theo.
+Đây là quy tắc Phúc trực tiếp yêu cầu trong cuộc trò chuyện ngày 23/10/2026. Khung chat mới cần đọc file này, [điểm bắt đầu tuần 4](week-4/README.md) và [tổng kết toàn phiên](week-4/23-10.md) trước khi đề xuất công việc. Người dùng có thể điều chỉnh quy tắc trong các trao đổi tiếp theo.
 
 Thứ tự đọc để nắm lịch sử: [bối cảnh tuần 3](week-3/boi-canh.md) → [nâng cấp quản trị](week-3/2026-10-16-role-admin-event-management.md) → [dọn dữ liệu mẫu](week-3/2026-10-16-don-du-lieu-mau.md) → [nhật ký 23/10](week-4/23-10.md). Bối cảnh tuần 3 là bản tổng hợp có cập nhật sau các công việc, không phải một hạng mục được thực hiện trước tất cả các mốc đó. [BC.txt](Reports/BC.txt) là báo cáo giai đoạn trước quản trị, có cả trạng thái cũ.
 
@@ -52,13 +52,13 @@ Nếu dùng tài liệu bên ngoài, ưu tiên nguồn chính thức, liên kế
 
 ## 6. Nhật ký để người mới có thể tiếp tục
 
-**Chỉ dẫn mới nhất của Phúc:** mặc định không cần ghi thêm nhật ký. Các công việc từ lúc nhận yêu cầu bên ngoài thuộc phần của Phúc; không ghi nhận chúng thành công việc của Quân. Các quy tắc ghi nhật ký dưới đây chỉ áp dụng khi Phúc yêu cầu ghi lại. Bản ghi ứng dụng trước đây đặt nhầm khu đã chuyển về [nhật ký ứng dụng](week-4/23-10-ung-dung.md).
+**Chỉ dẫn mới nhất của Phúc:** mặc định không cần ghi thêm nhật ký. Các công việc từ lúc nhận yêu cầu bên ngoài thuộc phần của Phúc; không ghi nhận chúng thành công việc của Quân. Các quy tắc ghi nhật ký dưới đây chỉ áp dụng khi Phúc yêu cầu ghi lại. Yêu cầu kết phiên 23/10 cho phép tổng hợp và chuẩn hóa cả phiên, không tự bật lại việc ghi nhật ký cho mọi lượt sau. Bản ghi ứng dụng trước đây đặt nhầm khu đã chuyển về [nhật ký ứng dụng](week-4/23-10-ung-dung.md).
 
 Yêu cầu đầu tuần 4 từng dùng [nhật ký hôm nay](week-4/23-10.md) để theo dõi quyết định, bằng chứng và bước tiếp theo. Chỉ dẫn mới nhất ở trên thay thế việc tự động cập nhật này; chỉ ghi tiếp khi Phúc yêu cầu.
 
 Nhật ký cần có mục tiêu, tổng quan hệ thống, sơ đồ kiến trúc, trình tự lịch sử, tình trạng hiện tại, hướng dẫn tiếp tục và nguồn. Phân biệt đã làm / đang chờ / mới dự định. Số liệu database và trạng thái tiến trình chỉ đúng tại lần kiểm tra tương ứng.
 
-Không ghi mật khẩu, cookie, token hoặc dữ liệu cá nhân vào nhật ký. Không tính công việc cũ thành thành tích mới của tuần 4. Phúc phụ trách chính frontend, bạn cùng nhóm phụ trách backend theo bối cảnh cũ; không tự quy công việc cả nhóm cho một người.
+Không ghi mật khẩu, cookie, token hoặc dữ liệu cá nhân vào nhật ký. Không tính công việc cũ thành thành tích mới của tuần 4. Phân công frontend/backend trong tuần 3 là bối cảnh cũ. Theo xác nhận mới trong phiên tuần 4, Phúc phụ trách chuỗi công việc ứng dụng; bên đồng hành phụ trách bộ kiểm thử. Không quy công việc ứng dụng sang Quân do tên thư mục, hoặc tự nhận công việc test lab chưa kiểm tra.
 
 ## 7. Chuẩn bị cho buổi đánh giá AWS
 

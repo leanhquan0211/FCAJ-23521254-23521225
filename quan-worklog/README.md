@@ -1,25 +1,23 @@
-# Nhật ký và bàn giao luồng người mua
+# Quan-worklog — biên bản và phối hợp kiểm thử
 
-Ngày bắt đầu **23/10/2026**, tuần4. Đây là khu ghi chép cho phần ứng dụng/người mua theo biên bản Phúc gửi; không suy ra tác giả của các công việc cũ từ tên thư mục.
+Chuẩn hóa khi kết phiên **23/10/2026**, tuần 4. Khu này giữ **nguồn yêu cầu bên đồng hành, hướng dẫn phối hợp và đường dẫn lịch sử**. Theo đính chính của Phúc, toàn bộ công việc ứng dụng trong cuộc trò chuyện thuộc Phúc; nhật ký ứng dụng đặt tại [phuc-worklog/tuần 4](../phuc-worklog/week-4/README.md). Không suy tác giả hoặc mức hoàn thành từ tên thư mục.
 
-> Phúc đã đính chính: phần công việc ứng dụng được ghi trong khu này trước đây thuộc Phúc. Nhật ký đã chuyển sang [phuc-worklog](../phuc-worklog/week-4/23-10-ung-dung.md); khu quan-worklog giữ biên bản/phối hợp và liên kết lịch sử, không xác định tác giả bằng tên thư mục.
+## Đọc theo thứ tự
 
-## Cửa sổ mới đọc theo thứ tự
+1. [Phong cách làm việc](../phuc-worklog/phong-cach.md) và [tổng kết phiên của Phúc](../phuc-worklog/week-4/23-10.md): quyết định, kiến trúc hiện hành, bằng chứng, trạng thái và việc tiếp theo.
+2. [Biên bản gốc](yeu-cau.md): giữ nguyên văn người dùng cung cấp; đây là yêu cầu, không phải chứng nhận mọi chức năng/test đã đạt. Quyết định Phúc về UI/session/xóa sau đó có thể thay thế chi tiết ban đầu.
+3. [Phối hợp hiện hành](phoi-hop.md): ranh giới file/nhánh, mốc GitHub, lấy code an toàn, env test, contract và checklist tích hợp.
+4. [API contract 4.1](../docs/api-contract.md), [data model](../docs/data-model.md), [security](../docs/security.md): nguồn kỹ thuật để viết assertion, phải dùng cùng app commit.
+5. [api-du-kien.md](api-du-kien.md): bản nháp **lịch sử v3**, không dùng thay contract hiện hành. [Đường dẫn nhật ký cũ](week-4/23-10.md) chuyển tiếp về Phúc.
 
-1. [Phong cách chung](../phuc-worklog/phong-cach.md): giải thích dễ hiểu, mô tả trước code, chờ duyệt và kiểm tra theo giai đoạn. Lượt23/10 đã được người dùng duyệt toàn plan và cho phép tự hoàn tất.
-2. [Biên bản con người](yeu-cau.md): nguồn yêu cầu gốc, giữ nguyên văn.
-3. [Nhật ký23/10](../phuc-worklog/week-4/23-10-ung-dung.md): đọc mục cập nhật mới nhất để biết kết quả, process và điểm tiếp tục; phần đầu là lịch sử khảo sát trước triển khai.
-4. [Phối hợp Git](phoi-hop.md): phạm vi file, worktree, cổng và mốc bàn giao.
-5. [Contract chính thức v3](../docs/api-contract.md), [data model](../docs/data-model.md), [security](../docs/security.md). [Bản nháp ban đầu](api-du-kien.md) giữ để giải thích quyết định, không thay canonical contract.
+## Tình trạng lúc kết phiên
 
-## Trạng thái cần nhớ
+| Nội dung | Đã xác minh / giới hạn |
+| --- | --- |
+| App bàn giao | `feat/admin-accounts-sidebar@9d47cff71a8f75e9c42845700d497cf029a56b16`, API 4.1; có thể có thêm commit docs sau mốc code |
+| Nhánh kiểm thử | Remote `feat/test-lab@9e00d5a8757f60c6516e1bdbb2b4406bb3d05cad` đã tồn tại; cửa sổ app chưa review nội dung/tương thích hoặc chạy tích hợp |
+| Bằng chứng app | 75/75 backend, HTTP/browser/build đạt local; không phải bài k6 100 người hoặc bằng chứng AWS scaling |
+| Main/phuc | Vẫn `f4e20b9`, chưa merge các nâng cấp ứng dụng/test lab |
+| Bước tiếp | Bên test gửi hướng dẫn đã review, đối chiếu 4.1, chạy 1–2 User rồi 100/200,100/10,100/1 trên bảng riêng; Phúc dùng thử UI cuối |
 
-- Mốc API v3 đã bàn giao trên `feat/buyer-flow` tại `a6ba0f2`. Phản hồi UI tách User/admin sau đó được thực hiện trên `feat/role-navigation`, vẫn dùng worktree `.worktrees/buyer-flow`; không thay mốc API mà bên test đã nhận. Trạng thái triển khai/kiểm tra mới ở mục14 nhật ký. Nền `f4e20b9` đã chứa quan-worklog trên GitHub main; repo gốc ở `phuc` không bị đổi HEAD/file bởi cửa sổ này.
-- V3 có User/register/login/session/logout, đặt vé bằng session+CSRF+Idempotency-Key, Vé của tôi và owner-only. Admin có giờ mở bán. Dữ liệu legacy giữ nguyên, không tự nhận theo email chưa xác minh.
-- Bên ứng dụng đã kiểm tra unit, transaction DynamoDB, HTTP và Edge headless; số lượng/lệnh/kết quả cụ thể trong nhật ký. Chưa chạy bài k6 100 người, runner hoặc dashboard của bên đồng hành.
-- Chỉ local; đặt vé = giữ chỗ + mã xác nhận. Chưa thanh toán/OTP/Organizer nhiều đơn vị/AWS và chưa chứng minh autoscaling.
-- Không tạo `tests/load`, `tests/runner`, `tests/dashboard`, `tests/results` thay bên kiểm thử. Phía đó tích hợp commit bàn giao rồi build API test từ đúng worktree/contract.
-
-Theo chỉ dẫn mới nhất, không tự ghi nhật ký nếu Phúc chưa yêu cầu. Không đưa password/token/cookie vào Git. Mỗi lần đo phải ghi app commit, contract version và run/table chính xác.
-
-Nguồn nền: [bối cảnh tuần3](../phuc-worklog/week-3/boi-canh.md), [nhật ký Phúc đầu ngày](../phuc-worklog/week-4/23-10.md), README và tài liệu trong docs. Việc ghi chép mới không chuyển tác giả công việc cũ sang Quân.
+Thông báo “test lab còn local/chưa push” là trạng thái phía test báo trước đó; đã có remote ở lần kết phiên, nhưng chưa tự suy ra nội dung hoặc kết quả chạy mới. Không ghi thay nhật ký/nhận thành tích bộ kiểm thử khi chưa có bằng chứng. Mặc định không tự ghi nhật ký nếu Phúc chưa yêu cầu; lượt này là tổng kết được yêu cầu rõ ràng.
