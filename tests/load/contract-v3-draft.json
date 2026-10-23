@@ -1,0 +1,24 @@
+{
+  "id": "buyer-v3-a6ba0f2",
+  "status": "reviewed-against-application-contract",
+  "applicationCommit": "a6ba0f21e41cc73cfadb3242ff9bd9d30e2f234a",
+  "contractSource": "docs/api-contract.md",
+  "healthVersion": "3.0",
+  "paths": {
+    "health": "/health", "events": "/events", "event": "/events/{eventId}",
+    "register": "/auth/register", "login": "/auth/login", "session": "/auth/session",
+    "logout": "/auth/logout", "purchase": "/events/{eventId}/registrations",
+    "ticket": "/registrations/{registrationId}", "myTickets": "/me/registrations",
+    "adminLogin": "/admin/login", "adminEvents": "/admin/events"
+  },
+  "userCookie": "event_user_session",
+  "csrfHeader": "X-CSRF-Token",
+  "idempotencyHeader": "Idempotency-Key",
+  "replayHeader": "Idempotent-Replayed",
+  "tablePrefix": "fcaj-event-workshop-local-test-",
+  "model": {
+    "eventPK": "EVENTS", "eventSKPrefix": "EVENT#",
+    "ticketType": "REGISTRATION", "userPKPrefix": "USER#",
+    "referenceSKPrefix": "REGISTRATION#", "idempotencySKPrefix": "IDEMPOTENCY#"
+  }
+}
