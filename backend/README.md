@@ -1,4 +1,4 @@
-> Bản hiện hành trên phuc là API4.1: cookie chung event_session, login identifier/password, sai role403; admin xóa có dọn ghi danh,202 cần tiếp tục cùng version. [Contract](../docs/api-contract.md) và [nhật ký 23/10](../phuc-worklog/week-4/23-10.md). Mốc feat/buyer-flow@a6ba0f2 vẫn giữ API3.0; lấy code/tài liệu cùng commit. Nâng cấp cần đăng nhập lại, không reset bảng.
+> Bản hiện hành trên phuc là API4.1: cookie chung event_session, login identifier/password, sai role403; admin xóa có dọn ghi danh,202 cần tiếp tục cùng version. [Contract](../docs/api-contract.md) và [nhật ký 23/10](../phuc-worklog/WORKLOG.md). Mốc feat/buyer-flow@a6ba0f2 vẫn giữ API3.0; lấy code/tài liệu cùng commit. Nâng cấp cần đăng nhập lại, không reset bảng.
 
 # Backend local — sự kiện và đăng ký
 
@@ -126,7 +126,7 @@ python backend/tools/check_registration_api.py --base-url http://127.0.0.1:3002
 
 Smoke test ghi xác nhận `/health` trỏ bảng test và contract4.1, tự tạo admin fixture/User và session thật; thử owner, validation, lịch mở bán, replay sau full/closed, logout và8 request HTTP tranh chỗ cuối. Khi chạy trên host cần `python -m pip install -r backend/requirements.txt`; hoặc chạy tools container với `--endpoint-url http://fcaj-dynamodb-local:8000`. Khác `check_api.py` chỉ đọc.
 
-Các kết quả lịch sử dưới đây được giữ để tham khảo; kết quả và phạm vi kiểm tra trong ngày nằm tại [nhật ký 23/10](../phuc-worklog/week-4/23-10.md).
+Các kết quả lịch sử dưới đây được giữ để tham khảo; kết quả và phạm vi kiểm tra trong ngày nằm tại [nhật ký 23/10](../phuc-worklog/WORKLOG.md).
 
 | Kiểm tra | Kết quả |
 | --- | --- |

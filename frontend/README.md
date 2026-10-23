@@ -61,11 +61,11 @@ check-buyer-browser.mjs thử signup/login/return path/đặt vé/Vé của tôi
 
 check-admin-browser.mjs gọi check-unified-browser.mjs: login chung, menu role, đổi tài khoản/đăng xuất nhiều tab, sidebar mobile, xóa event đã có vé và giữ vé khác. Credential test chỉ nhận qua stdin từ check_admin_api.py --browser; không lưu mật khẩu vào file.
 
-Các script mặc định frontend5173/API3001/CDP9241; dùng FRONTEND_TEST_URL/API_TEST_URL/CHROME_DEBUG_PORT để đổi sang5175/3002. Dùng Edge/Chrome headless profile riêng. Kiểm tra320/375/414/768/1280 và ảnh thực tế. Kết quả đã chạy xem [nhật ký 23/10](../phuc-worklog/week-4/23-10.md), không coi mô tả test là kết quả đạt.
+Các script mặc định frontend5173/API3001/CDP9241; dùng FRONTEND_TEST_URL/API_TEST_URL/CHROME_DEBUG_PORT để đổi sang5175/3002. Dùng Edge/Chrome headless profile riêng. Kiểm tra320/375/414/768/1280 và ảnh thực tế. Kết quả đã chạy xem [nhật ký 23/10](../phuc-worklog/WORKLOG.md), không coi mô tả test là kết quả đạt.
 
 Mock chỉ để xem sự kiện, không mô phỏng account/quyền/transaction. Chưa AWS, Organizer nhiều đơn vị, OTP, khôi phục mật khẩu, thanh toán, hủy vé, Firefox/Safari hoặc trình đọc màn hình. Hai warning Fast Refresh cũ ở ui/button.tsx và ui/badge.tsx còn nguyên.
 
-Nguồn: [API v4](../docs/api-contract.md), [data model](../docs/data-model.md), [security](../docs/security.md), [quy tắc](../phuc-worklog/phong-cach.md).
+Nguồn: [API v4](../docs/api-contract.md), [data model](../docs/data-model.md), [security](../docs/security.md), [quy tắc](../phuc-worklog/AI_RULE.md).
 
 ## Quản lý User và thu gọn sidebar (API 4.1)
 

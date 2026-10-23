@@ -70,7 +70,7 @@ Terraform sẽ quản lý hạ tầng AWS.
 - Frontend có đăng nhập chung, sidebar/navbar theo role; User xem sự kiện và vé của mình, admin quản lý/tạo/sửa/xóa hoặc mở/đóng đăng ký. Không còn trang chọn khu vực; các tab cùng browser dùng một tài khoản. Chọn API hoặc mock rõ ràng bằng `VITE_DATA_MODE`; xem [Frontend README](frontend/README.md).
 - Backend SAM Python 3.13 có `GET /health`, `GET /events`, `GET /events/{eventId}`, `POST /events/{eventId}/registrations`, `GET /registrations/{registrationId}`. Đăng ký giữ chỗ và chống trùng bằng DynamoDB transaction; xem [Backend README](backend/README.md).
 - Có [API contract](docs/api-contract.md), [mô hình dữ liệu](docs/data-model.md), unit test, kiểm tra transaction đồng thời và HTTP smoke test local. Khởi tạo mặc định không thêm dữ liệu mẫu; chỉ seed demo khi chủ động dùng `--seed-demo`, không ghi đè bản ghi cũ. Dữ liệu ứng dụng và dữ liệu kiểm thử dùng bảng riêng.
-- Bản hiện hành API 4.1 trên `phuc` thêm quản lý User (tìm/sửa/xóa, hủy vé và trả chỗ) và sidebar thu gọn; kế thừa User/booking/lịch mở bán/idempotency, chuyển sang cookie chung và cho admin xóa vé/ghi danh theo sự kiện, giữ tài khoản/vé khác. Event đang dọn bị khóa;202 cần tiếp tục. [Contract](docs/api-contract.md), [data model](docs/data-model.md), [nhật ký 23/10](phuc-worklog/week-4/23-10.md) ghi chi tiết kết quả và giới hạn. Bản v3 bàn giao cũ `feat/buyer-flow@a6ba0f2` được giữ nguyên. Code/tài liệu phải lấy cùng commit; nâng cấp cần đăng nhập lại, không reset bảng. Chưa email, thanh toán hoặc AWS.
+- Bản hiện hành API 4.1 trên `phuc` thêm quản lý User (tìm/sửa/xóa, hủy vé và trả chỗ) và sidebar thu gọn; kế thừa User/booking/lịch mở bán/idempotency, chuyển sang cookie chung và cho admin xóa vé/ghi danh theo sự kiện, giữ tài khoản/vé khác. Event đang dọn bị khóa;202 cần tiếp tục. [Contract](docs/api-contract.md), [data model](docs/data-model.md), [nhật ký 23/10](phuc-worklog/WORKLOG.md) ghi chi tiết kết quả và giới hạn. Bản v3 bàn giao cũ `feat/buyer-flow@a6ba0f2` được giữ nguyên. Code/tài liệu phải lấy cùng commit; nâng cấp cần đăng nhập lại, không reset bảng. Chưa email, thanh toán hoặc AWS.
 
 
 ## Chạy toàn bộ local
@@ -81,4 +81,11 @@ Trong terminal khác, tạo `frontend/.env.local` từ `frontend/.env.example` n
 
 ## Bản mở rộng quản lý tài khoản
 
-Nhánh `phuc`, API contract 4.1: Admin quản lý User (tìm tên/email, sửa, xóa và hủy vé/trả chỗ); sidebar cả hai role thu gọn được. [Contract](docs/api-contract.md) là nguồn hướng dẫn tích hợp hiện hành. Các cập nhật trong ngày được tổng hợp tại [nhật ký công việc 23/10](phuc-worklog/week-4/23-10.md).
+Nhánh `phuc`, API contract 4.1: Admin quản lý User (tìm tên/email, sửa, xóa và hủy vé/trả chỗ); sidebar cả hai role thu gọn được. [Contract](docs/api-contract.md) là nguồn hướng dẫn tích hợp hiện hành. Các cập nhật trong ngày được tổng hợp tại [nhật ký công việc 23/10](phuc-worklog/WORKLOG.md).
+
+## Tài liệu làm việc
+
+- [AI_RULE.md](phuc-worklog/AI_RULE.md): luật cộng tác, ghi chép và bàn giao cho AI.
+- [PROJECT_CONTEXT.md](phuc-worklog/PROJECT_CONTEXT.md): bối cảnh, kiến trúc và trạng thái hiện tại.
+- [WORKLOG.md](phuc-worklog/WORKLOG.md): công việc chính và kết quả theo ngày để viết báo cáo tiến độ.
+- `phuc-worklog/handoffs/`: chưa có nội dung bàn giao; chỉ tạo khi có yêu cầu.

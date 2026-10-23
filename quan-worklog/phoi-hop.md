@@ -2,7 +2,7 @@
 
 > **Sau khi Phúc yêu cầu gộp nhánh:** dùng **phuc**, không clone các feat/* cũ; các bảng SHA bên dưới là ảnh chụp trước khi gộp. App4.1 và lab đã cùng Git nhưng adapter lab vẫn3.0; cần đợt đồng bộ riêng. Xem [hướng dẫn hiện hành](../docs/git-workflow.md).
 
-Mốc đối chiếu **23/10/2026**, khi kết phiên. Phúc phụ trách chuỗi công việc **ứng dụng**; bên đồng hành phụ trách **k6/runner/dashboard/dữ liệu test**. [Biên bản](yeu-cau.md) giữ nguyên văn nguồn; [nhật ký Phúc](../phuc-worklog/week-4/23-10.md) ghi diễn biến và quyết định sau đó. Tài liệu này là hướng dẫn phối hợp, không thay contract hay nhật ký thực chạy của bên test.
+Mốc đối chiếu **23/10/2026**, khi kết phiên. Phúc phụ trách chuỗi công việc **ứng dụng**; bên đồng hành phụ trách **k6/runner/dashboard/dữ liệu test**. [Biên bản](yeu-cau.md) giữ nguyên văn nguồn; [nhật ký Phúc](../phuc-worklog/WORKLOG.md) ghi diễn biến và quyết định sau đó. Tài liệu này là hướng dẫn phối hợp, không thay contract hay nhật ký thực chạy của bên test.
 
 ## 1. Bản nào lấy được trên GitHub?
 
@@ -102,7 +102,7 @@ docker compose -f backend/compose.yaml run --rm -e RUN_DYNAMODB_INTEGRATION=1 -e
 
 Suite có fixture cố định trong nhóm transaction nên mỗi lượt dùng bảng mới; không chạy vào bảng đã có dữ liệu không rõ nguồn. Bài HTTP app [check_accounts_api.py](../backend/tools/check_accounts_api.py) tự tạo fixture và chặn bảng ngoài prefix test; [check_registration_api.py](../backend/tools/check_registration_api.py) cần fixture integration. Host tools cần SDK đúng requirements/PYTHONPATH; không ghi cache vào artifact (`PYTHONDONTWRITEBYTECODE=1`) khi SAM warm watcher đang chạy.
 
-Trên Windows dừng đúng SAM/container Lambda đang mount artifact trước build lại, không dừng database hoặc process cửa sổ khác. Nếu resolve dependency lỗi, xem [nhật ký tổng kết](../phuc-worklog/week-4/23-10.md) và [Backend README](../backend/README.md); không tự đổi pin để “chạy tạm”. Các bước này là runbook cho lượt mới, không phải log vừa chạy lại khi chuẩn hóa tài liệu.
+Trên Windows dừng đúng SAM/container Lambda đang mount artifact trước build lại, không dừng database hoặc process cửa sổ khác. Nếu resolve dependency lỗi, xem [nhật ký tổng kết](../phuc-worklog/WORKLOG.md) và [Backend README](../backend/README.md); không tự đổi pin để “chạy tạm”. Các bước này là runbook cho lượt mới, không phải log vừa chạy lại khi chuẩn hóa tài liệu.
 
 ## 5. Khác biệt contract cần cập nhật trong bộ test
 
@@ -151,10 +151,10 @@ Trước demo hiện app SHA/contract/table/runId/người/chỗ; trong demo hi�
 5. Kỳ vọng dữ liệu với User hợp lệ/mỗi người một yêu cầu và không lỗi kỹ thuật chưa xử lý: số vé không vượt chỗ; 100/200 có100 vé và100 chỗ còn,100/10 có10 vé và0chỗ,100/1 có1vé và0chỗ. Các số này là **tiêu chí**, chưa là kết quả đã đạt. Timeout/503 phải phân loại/khôi phục rồi audit, không tự đổi thành hết vé.
 6. Ramp/spike/hold/overload/recovery cần đủ User/event/ghế mới, phân biệt response thành công với vé mới; chốt mức tải/ngưỡng trước đo. Một event hết ghế phản hồi409 nhanh không đại diện toàn bộ năng lực hệ thống.
 
-Ứng dụng đã có bằng chứng 75/75 backend, HTTP/browser/build trong [nhật ký](../phuc-worklog/week-4/23-10.md); chưa có kết quả k6 100 người hoặc AWS scaling. Quy mô local còn Scan, chưa pagination/index/worker nền. AWS cần cấu hình triển khai/HTTPS/quyền/quan sát và plan riêng được duyệt.
+Ứng dụng đã có bằng chứng 75/75 backend, HTTP/browser/build trong [nhật ký](../phuc-worklog/WORKLOG.md); chưa có kết quả k6 100 người hoặc AWS scaling. Quy mô local còn Scan, chưa pagination/index/worker nền. AWS cần cấu hình triển khai/HTTPS/quyền/quan sát và plan riêng được duyệt.
 
 ## 8. Nguồn
 
-- [Biên bản gốc](yeu-cau.md), các quyết định tiếp theo của Phúc, [tổng kết phiên](../phuc-worklog/week-4/23-10.md).
+- [Biên bản gốc](yeu-cau.md), các quyết định tiếp theo của Phúc, [tổng kết phiên](../phuc-worklog/WORKLOG.md).
 - Code, contract/data model/security hiện hành và đầu ra `git ls-remote` lúc kết phiên; nhánh remote tồn tại chỉ chứng minh đã chia sẻ, không chứng minh nội dung đã chạy.
 - Tham khảo đã dùng trước đó: [Git worktree](https://git-scm.com/docs/git-worktree), [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html), [k6 cookies](https://grafana.com/docs/k6/latest/using-k6/cookies/), [noCookiesReset](https://grafana.com/docs/k6/latest/using-k6/k6-options/reference/#no-cookies-reset). Nguồn giải thích cơ chế, không thay kết quả run của dự án.

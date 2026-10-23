@@ -17,7 +17,7 @@
 
 ## Cách xác minh
 
-V3 bổ sung `test_buyer_auth.py`, `test_registration.py` và 3 test transaction opt-in. HTTP `check_registration_api.py` dùng tài khoản/phiên thật, kiểm tra replay sau full/closed, owner, legacy, mở bán, logout và8 lượt tranh1chỗ. `check-buyer-browser.mjs` thao tác signup/login/đặt vé/Vé của tôi/logout; cố tình bỏ response sau commit, reload rồi retry. Các kết quả thực tế và giới hạn ở [nhật ký 23/10](../phuc-worklog/week-4/23-10.md).
+V3 bổ sung `test_buyer_auth.py`, `test_registration.py` và 3 test transaction opt-in. HTTP `check_registration_api.py` dùng tài khoản/phiên thật, kiểm tra replay sau full/closed, owner, legacy, mở bán, logout và8 lượt tranh1chỗ. `check-buyer-browser.mjs` thao tác signup/login/đặt vé/Vé của tôi/logout; cố tình bỏ response sau commit, reload rồi retry. Các kết quả thực tế và giới hạn ở [nhật ký 23/10](../phuc-worklog/WORKLOG.md).
 
 `tests/backend/test_admin.py` kiểm tra mật khẩu, session, CSRF, nguồn giả, role giả, quyền trên tất cả route admin, schema, sức chứa, xóa và xung đột.
 

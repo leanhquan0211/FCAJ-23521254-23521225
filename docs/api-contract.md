@@ -1,6 +1,6 @@
 # API contract local — phiên bản 4.1
 
-Áp dụng cho nhánh `phuc`, ngày 23/10/2026, theo yêu cầu đăng nhập chung/sidebar/xóa ghi danh đã được người dùng duyệt trong [nhật ký 23/10](../phuc-worklog/week-4/23-10.md), kế thừa [yêu cầu nền](../quan-worklog/yeu-cau.md). Nhật ký giữ bằng chứng các mốc trước; kiểm tra bổ sung 4.1 nằm ở [test backend](../tests/backend/test_unified_integration.py), [HTTP smoke](../backend/tools/check_accounts_api.py) và [browser smoke](../tests/frontend/check-accounts-browser.mjs). Đây là hợp đồng của ứng dụng; k6/runner/dashboard do bên kiểm thử phát triển riêng.
+Áp dụng cho nhánh `phuc`, ngày 23/10/2026, theo các cập nhật đăng nhập chung/sidebar/xóa ghi danh được ghi tại [WORKLOG.md](../phuc-worklog/WORKLOG.md), kế thừa [yêu cầu nền](../quan-worklog/yeu-cau.md). Nhật ký giữ bằng chứng các mốc trước; kiểm tra bổ sung 4.1 nằm ở [test backend](../tests/backend/test_unified_integration.py), [HTTP smoke](../backend/tools/check_accounts_api.py) và [browser smoke](../tests/frontend/check-accounts-browser.mjs). Đây là hợp đồng của ứng dụng; k6/runner/dashboard do bên kiểm thử phát triển riêng.
 
 ## 1. Địa chỉ và quy tắc chung
 

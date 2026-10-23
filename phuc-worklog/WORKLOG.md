@@ -1,10 +1,39 @@
-# Nhật ký công việc — 23/10/2026
+# Nhật ký công việc
 
-## Mục tiêu
+Ghi các công việc chính đã hoàn thành và kết quả kiểm tra theo ngày, phục vụ báo cáo tiến độ. Bối cảnh hiện hành xem [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md); quy cách cộng tác xem [AI_RULE.md](AI_RULE.md).
 
-Hoàn thiện luồng đăng ký sự kiện để kiểm tra tính đúng dữ liệu khi nhiều người tranh chỗ, gửi lặp hoặc mất phản hồi. Tập trung phát triển và kiểm thử local; chuẩn bị nền tảng cho đánh giá khả năng mở rộng trên AWS.
+## Giai đoạn nền — trước 16/10/2026
 
-## Các cập nhật đã thực hiện
+Báo cáo cũ chưa có đủ mốc ngày chi tiết; giữ riêng giai đoạn này, không tính lại thành công việc mới ngày 16/10 hoặc 23/10.
+
+- Hoàn thiện frontend prototype: danh sách/chi tiết, tìm kiếm/lọc, form đăng ký, kết quả và lựa chọn API/mock.
+- Xây backend SAM/DynamoDB Local với API health, danh sách/chi tiết sự kiện, tạo/đọc đăng ký; transaction giữ chỗ và chống trùng email. Tích hợp toàn bộ luồng người tham gia với API thật, xử lý lỗi và lưu dữ liệu bền vững.
+- Báo cáo giai đoạn ghi nhận 26 unit, 2 integration đạt cùng HTTP/browser/build; đây là bằng chứng cũ, chưa có tài khoản User hoặc idempotency giữa các lần gửi HTTP ở mốc đó.
+
+Nguồn: [báo cáo nền lưu trong Git](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/Reports/BC.txt).
+
+## 16/10/2026 — Tuần 3
+
+### Công việc chính
+
+| Hạng mục | Kết quả |
+| --- | --- |
+| Xác thực và quản trị sự kiện | Thêm đăng nhập/session/đăng xuất Admin, API và giao diện tạo/sửa/xóa, mở/đóng đăng ký. Backend kiểm tra quyền, Origin/CSRF, giới hạn đăng nhập và version khi cập nhật. |
+| Bảo toàn số chỗ | Khi sửa sức chứa, giữ số chỗ đã dùng; không giảm dưới mức đã đăng ký. Ở mốc này chặn xóa sự kiện có người; quy tắc xóa được thay đổi ngày 23/10. |
+| Tích hợp giao diện | Thêm chọn vai trò, trang quản trị, proxy API cùng origin; giữ thiết kế và component hiện có, không thêm dependency. |
+| Dọn dữ liệu mẫu | Xác minh tám sự kiện mẫu không có đăng ký thật rồi xóa đúng tám sự kiện, giữ tài khoản Admin và volume dữ liệu. Đổi init mặc định thành chỉ tạo bảng; thêm mẫu phải dùng --seed-demo, không ghi đè bản ghi cũ. |
+
+### Kiểm tra
+
+- Đợt quản trị: 45 unit và 2 integration đạt; HTTP, trình duyệt, SAM build/validate và frontend build/lint đạt. Kiểm tra tranh chỗ, chống trùng, quyền, CSRF, xung đột version và responsive.
+- Đợt dọn mẫu: 46 unit đạt, 2 integration bỏ qua; handler/service với DB thật xác nhận danh sách trống và dữ liệu ngoài sự kiện không đổi. Không chạy lại SAM HTTP/browser trong đợt dọn.
+- Các số liệu trên thuộc từng lượt kiểm tra ngày 16/10, không cộng thành một suite hoặc coi là trạng thái DB hiện tại.
+
+Nguồn lịch sử: [nâng cấp quản trị](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/week-3/2026-10-16-role-admin-event-management.md), [dọn mẫu](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/week-3/2026-10-16-don-du-lieu-mau.md). Các bản này giữ trong Git để truy nguyên, không dùng làm hướng dẫn chạy hiện hành.
+
+## 23/10/2026 — Tuần 4
+
+### Công việc chính
 
 | Hạng mục | Trước cập nhật | Kết quả sau cập nhật |
 | --- | --- | --- |
@@ -22,27 +51,7 @@ Hoàn thiện luồng đăng ký sự kiện để kiểm tra tính đúng dữ 
 
 Đã sửa các lỗi tìm thấy khi kiểm tra: vé còn sót sau khi xóa sự kiện bị gián đoạn; vùng bấm icon sai khi ghép tooltip với menu; thông báo lỗi xóa bị mất sau tải lại; form sửa tài khoản giữ version cũ. Các trường hợp này đã được kiểm tra lại.
 
-## Kiến trúc hiện tại
-
-```mermaid
-flowchart LR
-    Browser[User hoặc Admin] --> UI[React + TypeScript / Vite]
-    UI -->|/api, cookie và CSRF| API[SAM HTTP API / Lambda Python 3.13]
-    API --> Services[Auth, session, sự kiện, đặt vé, quản lý User]
-    Services --> Repository[Repository / DynamoDB transaction]
-    Repository --> DB[(DynamoDB Local - bảng ứng dụng)]
-    DB --> Volume[Volume lưu dữ liệu]
-    Lab[Test lab - runner, k6, dashboard riêng] -.->|Cần đồng bộ adapter| TestAPI[API test riêng]
-    TestAPI --> TestDB[(Bảng test theo lượt)]
-```
-
-Frontend hiển thị và gọi API; service xử lý nghiệp vụ; repository chịu trách nhiệm đọc/ghi database. Transaction đặt vé gồm **4 thao tác ghi và 1 kiểm tra tài khoản đang hoạt động**, để giảm chỗ và lưu dữ liệu cùng thành công hoặc cùng thất bại.
-
-Cookie HttpOnly `event_session` dùng chung cho hai vai trò; thao tác ghi kiểm tra Origin/CSRF. Quyền do backend quyết định. Xóa sự kiện hoặc User được khóa trước và dọn theo lô; chưa xong trả 202 để tiếp tục. Hủy vé và hoàn chỗ cùng transaction nên retry không hoàn lần hai.
-
-Ứng dụng dùng web5173/API3001 và bảng `fcaj-event-workshop-local`. Kiểm thử dùng API3002 và bảng có prefix `fcaj-event-workshop-local-test-`; không dùng dữ liệu thử để ghi đè bảng ứng dụng. Chi tiết schema/API nằm trong [contract](../../docs/api-contract.md), [data model](../../docs/data-model.md) và [security](../../docs/security.md).
-
-## Kết quả kiểm tra
+### Kiểm tra
 
 | Phạm vi | Kết quả đã ghi nhận trong ngày |
 | --- | --- |
@@ -53,15 +62,8 @@ Cookie HttpOnly `event_session` dùng chung cho hai vai trò; thao tác ghi ki�
 
 Các bài ghi/xóa dùng bảng test riêng. Bài tranh chỗ đã kiểm tra ở quy mô 8 người/1 chỗ; **chưa phải kết quả 100 người hoặc bằng chứng scaling AWS**. Unit/build của test lab chỉ xác nhận phần công cụ được kiểm tra, không thay bài tích hợp với ứng dụng hiện hành.
 
-## Trạng thái bàn giao và việc tiếp theo
-
-- Code và tài liệu hiện nằm trên nhánh **phuc**, tại thư mục gốc dự án; API contract **4.1**. Main giữ nguyên. Mốc hợp nhất và cách phối hợp Git ở [git-workflow.md](../../docs/git-workflow.md).
-- Web, API và Docker Desktop đã dừng sau khi dùng xong. Đã dọn container/image/cache tạm, giữ volume DynamoDB và kiểm tra dữ liệu không thay đổi. Phiên sau cần khởi động lại theo [Backend README](../../backend/README.md) và [Frontend README](../../frontend/README.md).
-- Test lab vẫn ghim contract3.0 và cookie cũ, còn ứng dụng dùng4.1/cookie chung; cần đồng bộ adapter trước bài mua vé tích hợp. Bắt đầu 1–2 User, sau đó mới chạy 100 người/200 chỗ,100/10,100/1 và các bài tải tăng–giảm, đột biến, duy trì, phục hồi.
-- Chưa triển khai AWS hoặc đo autoscaling. Danh sách tài khoản và dọn dữ liệu hiện còn dùng Scan; cần đánh giá chỉ mục/chi phí khi chuẩn bị lên AWS. Chưa có Organizer đa đơn vị, OTP/xác minh email, khôi phục mật khẩu hoặc thanh toán.
-
-## Nguồn đối chiếu
+### Đối chiếu thay đổi
 
 - Các commit triển khai: [tài khoản và đặt vé](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/1688c9809ec27eed1a03a01cde262b6afce0f8c3), [phiên chung và xóa ghi danh](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/a10907f0287acd7c664b3902b55968565e66042b), [quản lý User và sidebar](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/9d47cff71a8f75e9c42845700d497cf029a56b16).
-- Mã xử lý: [booking.py](../../backend/lambda/booking.py), [session.py](../../backend/lambda/session.py), [event_deletion.py](../../backend/lambda/event_deletion.py), [account_repository.py](../../backend/lambda/account_repository.py), [AppShell.tsx](../../frontend/src/components/AppShell.tsx), [AdminAccountsPage.tsx](../../frontend/src/pages/admin/AdminAccountsPage.tsx).
-- Bằng chứng hồi quy: [tests backend](../../tests/backend/test_unified_integration.py), [HTTP account](../../backend/tools/check_accounts_api.py), [browser account](../../tests/frontend/check-accounts-browser.mjs), cùng đầu ra kiểm tra đã chạy trong phiên phát triển. Lượt chỉnh nhật ký này không chạy lại các bài chức năng.
+- Mã xử lý: [booking.py](../backend/lambda/booking.py), [session.py](../backend/lambda/session.py), [event_deletion.py](../backend/lambda/event_deletion.py), [account_repository.py](../backend/lambda/account_repository.py), [AppShell.tsx](../frontend/src/components/AppShell.tsx), [AdminAccountsPage.tsx](../frontend/src/pages/admin/AdminAccountsPage.tsx).
+- Bằng chứng hồi quy: [tests backend](../tests/backend/test_unified_integration.py), [HTTP account](../backend/tools/check_accounts_api.py), [browser account](../tests/frontend/check-accounts-browser.mjs), cùng đầu ra kiểm tra đã chạy trong phiên phát triển. Các kết quả trên được tổng hợp từ lượt phát triển/kiểm tra, không phải chạy lại khi sắp xếp tài liệu.

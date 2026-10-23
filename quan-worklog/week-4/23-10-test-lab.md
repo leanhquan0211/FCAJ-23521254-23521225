@@ -6,7 +6,7 @@
 
 Người dùng giao trực tiếp thực hiện phần kiểm thử trong attachment `d818db61-a0b4-47e5-88fa-6c4225d4329c/Pasted text.txt`, cho phép làm độc lập trong lúc bên ứng dụng hoàn thiện người mua, và yêu cầu ghi tóm tắt vào `quan-worklog`. Đây là ủy quyền triển khai phần test của lượt này; không coi các chức năng nháp của v3 là đã được ứng dụng cài đặt.
 
-Đã đọc hướng dẫn repository, README, contract v2, data model/security, cấu hình Compose/SAM, code auth/service/repository, các test hiện có và bộ bàn giao theo thứ tự README → yêu cầu → phối hợp → API dự kiến → nhật ký. Không có AGENTS.md trong repository được kiểm tra. Có đọc quy tắc `phuc-worklog/phong-cach.md` trong bộ bàn giao; yêu cầu trực tiếp mới cho phép thực hiện phần đã giao, không dừng để xin duyệt lại chính phần đó.
+Đã đọc hướng dẫn repository, README, contract v2, data model/security, cấu hình Compose/SAM, code auth/service/repository, các test hiện có và bộ bàn giao theo thứ tự README → yêu cầu → phối hợp → API dự kiến → nhật ký. Không có AGENTS.md trong repository được kiểm tra. Có đọc quy tắc `phuc-worklog/phong-cach.md` trong bộ bàn giao (hiện chuyển thành [AI_RULE.md](../../phuc-worklog/AI_RULE.md)); yêu cầu trực tiếp mới cho phép thực hiện phần đã giao, không dừng để xin duyệt lại chính phần đó.
 
 Repository thật: `N:\OneDrive\UIT\TTDN\fcaj-workshop\FCAJ-23521254-23521225`, không phải đường dẫn D: trong tài liệu bên ứng dụng. Điểm nền hiện tại là `f4e20b90095e2519b0dfefd212fb1a1146abbe57` (`added quan-worklog`). Những ghi chép branch phuc/c13f4a9 ở tài liệu trước là bối cảnh máy/lượt khác, không được dùng thay trạng thái Git vừa kiểm tra.
 
