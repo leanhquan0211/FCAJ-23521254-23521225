@@ -1,5 +1,7 @@
 # Event Test Lab — local
 
+> **Cập nhật vị trí code:** bộ lab và app nay cùng nhánh **phuc**, có thể đặt APP_SOURCE_ROOT về folder gốc hiện tại. Hướng dẫn feat/test-lab và đường dẫn máy người bàn giao bên dưới là lịch sử. **Adapter vẫn API3.0/cookie cũ, bài purchase bị chặn trên app4.1**; chưa tự đổi adapter trong lượt gộp Git. Xem [hướng dẫn hợp nhất](../../docs/git-workflow.md).
+
 Phần kiểm thử tách khỏi giao diện người mua/Admin. Mã này nằm trên `feat/test-lab`, worktree `.worktrees/test-lab`, xuất phát từ `f4e20b9`. Không sửa `backend/`, `frontend/`, contract chính thức hoặc các test ứng dụng hiện có.
 
 ## Trạng thái thật

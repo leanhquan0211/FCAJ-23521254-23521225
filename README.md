@@ -1,5 +1,7 @@
 # Xây dựng website đăng ký sự kiện serverless trên AWS
 
+> **Nhánh làm việc hiện hành: `phuc`.** Đã gộp ứng dụng API4.1 và bộ test lab, rút gọn còn main/phuc; xem [hướng dẫn sau gộp](docs/git-workflow.md). Test lab còn adapter3.0, chưa dùng bài purchase để kết luận tương thích4.1.
+
 Building a Serverless Event Registration Website on AWS
 
 ## Mục tiêu

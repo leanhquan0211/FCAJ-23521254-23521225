@@ -69,6 +69,6 @@ Nguồn: [API v4](../docs/api-contract.md), [data model](../docs/data-model.md),
 
 ## Quản lý User và thu gọn sidebar (API 4.1)
 
-Nhánh `feat/admin-accounts-sidebar`: Admin vào `/admin/users` để tìm tên/email, sửa tên/email và xóa User. Xóa sẽ hủy vé/trả chỗ; nếu trả 202, dùng nút tiếp tục xóa. Sidebar cả hai role có nút thu gọn trên navbar; mobile vẫn giữ menu đầy đủ. Chỉ tùy chọn giao diện được lưu localStorage.
+Nhánh `phuc`: Admin vào `/admin/users` để tìm tên/email, sửa tên/email và xóa User. Xóa sẽ hủy vé/trả chỗ; nếu trả 202, dùng nút tiếp tục xóa. Sidebar cả hai role có nút thu gọn trên navbar; mobile vẫn giữ menu đầy đủ. Chỉ tùy chọn giao diện được lưu localStorage.
 
 Kiểm tra HTTP và giao diện: từ gốc dự án chạy `python backend/tools/check_accounts_api.py --base-url http://127.0.0.1:3002 --browser`, với SAM test/database test riêng, Vite 5175 proxy tới 3002 và Edge CDP 9241. Script từ chối ghi nếu health không chỉ ra bảng có prefix `fcaj-event-workshop-local-test-`. Xem [contract](../docs/api-contract.md).

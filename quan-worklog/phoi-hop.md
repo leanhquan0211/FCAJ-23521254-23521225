@@ -1,5 +1,7 @@
 # Phối hợp hiện hành — ứng dụng và bộ kiểm thử
 
+> **Sau khi Phúc yêu cầu gộp nhánh:** dùng **phuc**, không clone các feat/* cũ; các bảng SHA bên dưới là ảnh chụp trước khi gộp. App4.1 và lab đã cùng Git nhưng adapter lab vẫn3.0; cần đợt đồng bộ riêng. Xem [hướng dẫn hiện hành](../docs/git-workflow.md).
+
 Mốc đối chiếu **23/10/2026**, khi kết phiên. Phúc phụ trách chuỗi công việc **ứng dụng**; bên đồng hành phụ trách **k6/runner/dashboard/dữ liệu test**. [Biên bản](yeu-cau.md) giữ nguyên văn nguồn; [nhật ký Phúc](../phuc-worklog/week-4/23-10.md) ghi diễn biến và quyết định sau đó. Tài liệu này là hướng dẫn phối hợp, không thay contract hay nhật ký thực chạy của bên test.
 
 ## 1. Bản nào lấy được trên GitHub?

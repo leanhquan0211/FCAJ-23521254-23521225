@@ -1,4 +1,4 @@
-> Bản hiện hành trên feat/admin-accounts-sidebar là API4.1: cookie chung event_session, login identifier/password, sai role403; admin xóa có dọn ghi danh,202 cần tiếp tục cùng version. [Contract](../docs/api-contract.md) và [nhật ký mục15](../phuc-worklog/week-4/23-10-ung-dung.md). Mốc feat/buyer-flow@a6ba0f2 vẫn giữ API3.0; lấy code/tài liệu cùng commit. Nâng cấp cần đăng nhập lại, không reset bảng.
+> Bản hiện hành trên phuc là API4.1: cookie chung event_session, login identifier/password, sai role403; admin xóa có dọn ghi danh,202 cần tiếp tục cùng version. [Contract](../docs/api-contract.md) và [nhật ký mục15](../phuc-worklog/week-4/23-10-ung-dung.md). Mốc feat/buyer-flow@a6ba0f2 vẫn giữ API3.0; lấy code/tài liệu cùng commit. Nâng cấp cần đăng nhập lại, không reset bảng.
 
 # Backend local — sự kiện và đăng ký
 
@@ -195,6 +195,6 @@ Bài xóa/phiên chung opt-in: cùng RUN_DYNAMODB_INTEGRATION=1, bảng mới pr
 
 ## Bổ sung bàn giao API 4.1
 
-Nhánh `feat/admin-accounts-sidebar` thêm quản lý User và khóa tài khoản trong transaction đặt vé. Fixture mua vé cần profile User thật. Xem [contract hiện hành](../docs/api-contract.md) và [data model](../docs/data-model.md).
+Nhánh `phuc` thêm quản lý User và khóa tài khoản trong transaction đặt vé. Fixture mua vé cần profile User thật. Xem [contract hiện hành](../docs/api-contract.md) và [data model](../docs/data-model.md).
 
 Chạy `python backend/tools/check_accounts_api.py --base-url http://127.0.0.1:3002` trên API test/bảng riêng; thêm `--browser` khi đã có Vite 5175 proxy 3002 và Edge CDP 9241. Không chạy các bài ghi dữ liệu trên bảng ứng dụng. Trên Windows, dừng SAM/container Lambda dùng artifact trước khi build lại để tránh lỗi file đang bị mount; giữ container DynamoDB hoạt động.

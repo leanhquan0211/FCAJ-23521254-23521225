@@ -1,5 +1,7 @@
 # Quan-worklog — biên bản và phối hợp kiểm thử
 
+> **Cập nhật sau yêu cầu gộp nhánh:** ứng dụng và test lab nay cùng nhánh **phuc**; tên feat/* bên dưới là mốc lịch sử đã hợp nhất. Đã đọc cấu hình lab và kiểm unit; adapter purchase vẫn3.0, chưa tích hợp với app4.1. Xem [trạng thái Git hiện hành](../docs/git-workflow.md).
+
 Chuẩn hóa khi kết phiên **23/10/2026**, tuần 4. Khu này giữ **nguồn yêu cầu bên đồng hành, hướng dẫn phối hợp và đường dẫn lịch sử**. Theo đính chính của Phúc, toàn bộ công việc ứng dụng trong cuộc trò chuyện thuộc Phúc; nhật ký ứng dụng đặt tại [phuc-worklog/tuần 4](../phuc-worklog/week-4/README.md). Không suy tác giả hoặc mức hoàn thành từ tên thư mục.
 
 ## Đọc theo thứ tự

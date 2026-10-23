@@ -1,5 +1,7 @@
 # Tuần 4 — điểm bắt đầu của Phúc
 
+> **Vị trí Git hiện hành sau yêu cầu gộp:** code/tài liệu/test lab đã vào nhánh **phuc**, làm ở folder gốc. Các tên nhánh trong tổng kết là mốc lịch sử. Xem [hướng dẫn sau gộp](../../docs/git-workflow.md); không cần clone các nhánh feature đã xóa.
+
 Ngày ghi nhận: **23/10/2026**. Toàn bộ công việc ứng dụng xuyên suốt phiên thuộc Phúc; bên đồng hành làm bộ kiểm thử riêng.
 
 ## Thứ tự đọc cho người mới hoặc cửa sổ AI mới
