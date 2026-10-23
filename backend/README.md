@@ -1,4 +1,4 @@
-> Bản hiện hành trên phuc là API4.1: cookie chung event_session, login identifier/password, sai role403; admin xóa có dọn ghi danh,202 cần tiếp tục cùng version. [Contract](../docs/api-contract.md) và [nhật ký mục15](../phuc-worklog/week-4/23-10-ung-dung.md). Mốc feat/buyer-flow@a6ba0f2 vẫn giữ API3.0; lấy code/tài liệu cùng commit. Nâng cấp cần đăng nhập lại, không reset bảng.
+> Bản hiện hành trên phuc là API4.1: cookie chung event_session, login identifier/password, sai role403; admin xóa có dọn ghi danh,202 cần tiếp tục cùng version. [Contract](../docs/api-contract.md) và [nhật ký 23/10](../phuc-worklog/week-4/23-10.md). Mốc feat/buyer-flow@a6ba0f2 vẫn giữ API3.0; lấy code/tài liệu cùng commit. Nâng cấp cần đăng nhập lại, không reset bảng.
 
 # Backend local — sự kiện và đăng ký
 
@@ -126,7 +126,7 @@ python backend/tools/check_registration_api.py --base-url http://127.0.0.1:3002
 
 Smoke test ghi xác nhận `/health` trỏ bảng test và contract4.1, tự tạo admin fixture/User và session thật; thử owner, validation, lịch mở bán, replay sau full/closed, logout và8 request HTTP tranh chỗ cuối. Khi chạy trên host cần `python -m pip install -r backend/requirements.txt`; hoặc chạy tools container với `--endpoint-url http://fcaj-dynamodb-local:8000`. Khác `check_api.py` chỉ đọc.
 
-Các kết quả lịch sử dưới đây được giữ để tham khảo; kết quả v4 hiện hành nằm ở nhật ký mục15. Kết quả v4 mới nhất tại [nhật ký 23/10](../phuc-worklog/week-4/23-10-ung-dung.md).
+Các kết quả lịch sử dưới đây được giữ để tham khảo; kết quả và phạm vi kiểm tra trong ngày nằm tại [nhật ký 23/10](../phuc-worklog/week-4/23-10.md).
 
 | Kiểm tra | Kết quả |
 | --- | --- |
@@ -183,7 +183,7 @@ python backend/tools/check_admin_api.py --base-url http://127.0.0.1:3002
 
 Script kiểm tra health trỏ bảng test trước khi ghi, tạo admin với mật khẩu ngẫu nhiên chỉ trong bộ nhớ, rồi kiểm tra quyền, login/logout, cookie, CSRF và CRUD. Không tạo admin thật trong bảng ứng dụng. Các test bổ sung nằm tại `tests/backend/test_admin.py`.
 
-Lịch sử mốc quản trị v2: 45 unit test đạt trên Python 3.13 container; hai integration test tranh chỗ/trùng email đạt trên DynamoDB Local (lượt integration chạy bằng Python host 3.11). SAM build và validate/lint đạt. HTTP admin đạt thêm/sửa/xóa, chống CSRF, giữ chỗ, chặn xóa có đăng ký, logout và hai lượt sửa cùng version chỉ một lượt thành công. Edge headless đã kiểm tra luồng quản trị và responsive 320/375/414/768/1280 px. Đây là bằng chứng cũ; v4 đã đổi quy tắc xóa, xem nhật ký mục15 cho kết quả hiện hành.
+Lịch sử mốc quản trị v2: 45 unit test đạt trên Python 3.13 container; hai integration test tranh chỗ/trùng email đạt trên DynamoDB Local (lượt integration chạy bằng Python host 3.11). SAM build và validate/lint đạt. HTTP admin đạt thêm/sửa/xóa, chống CSRF, giữ chỗ, chặn xóa có đăng ký, logout và hai lượt sửa cùng version chỉ một lượt thành công. Edge headless đã kiểm tra luồng quản trị và responsive 320/375/414/768/1280 px. Đây là bằng chứng cũ; v4 đã đổi quy tắc xóa, xem nhật ký 23/10 cho kết quả hiện hành.
 
 Để kiểm tra UI, dùng browser profile riêng có remote-debugging port 9241, frontend proxy trỏ cùng API test, đặt `API_TEST_URL` theo cổng API rồi thêm `--browser`. Script truyền credentials test trực tiếp qua stdin cho `tests/frontend/check-admin-browser.mjs`, không ghi mật khẩu vào file.
 

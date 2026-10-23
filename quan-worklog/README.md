@@ -2,7 +2,7 @@
 
 > **Cập nhật sau yêu cầu gộp nhánh:** ứng dụng và test lab nay cùng nhánh **phuc**; tên feat/* bên dưới là mốc lịch sử đã hợp nhất. Đã đọc cấu hình lab và kiểm unit; adapter purchase vẫn3.0, chưa tích hợp với app4.1. Xem [trạng thái Git hiện hành](../docs/git-workflow.md).
 
-Chuẩn hóa khi kết phiên **23/10/2026**, tuần 4. Khu này giữ **nguồn yêu cầu bên đồng hành, hướng dẫn phối hợp và đường dẫn lịch sử**. Theo đính chính của Phúc, toàn bộ công việc ứng dụng trong cuộc trò chuyện thuộc Phúc; nhật ký ứng dụng đặt tại [phuc-worklog/tuần 4](../phuc-worklog/week-4/README.md). Không suy tác giả hoặc mức hoàn thành từ tên thư mục.
+Chuẩn hóa khi kết phiên **23/10/2026**, tuần 4. Khu này giữ **nguồn yêu cầu bên đồng hành, hướng dẫn phối hợp và đường dẫn lịch sử**. Theo đính chính của Phúc, toàn bộ công việc ứng dụng trong cuộc trò chuyện thuộc Phúc; nhật ký ứng dụng đặt tại [phuc-worklog/tuần 4](../phuc-worklog/week-4/23-10.md). Không suy tác giả hoặc mức hoàn thành từ tên thư mục.
 
 ## Đọc theo thứ tự
 
@@ -10,7 +10,7 @@ Chuẩn hóa khi kết phiên **23/10/2026**, tuần 4. Khu này giữ **nguồn
 2. [Biên bản gốc](yeu-cau.md): giữ nguyên văn người dùng cung cấp; đây là yêu cầu, không phải chứng nhận mọi chức năng/test đã đạt. Quyết định Phúc về UI/session/xóa sau đó có thể thay thế chi tiết ban đầu.
 3. [Phối hợp hiện hành](phoi-hop.md): ranh giới file/nhánh, mốc GitHub, lấy code an toàn, env test, contract và checklist tích hợp.
 4. [API contract 4.1](../docs/api-contract.md), [data model](../docs/data-model.md), [security](../docs/security.md): nguồn kỹ thuật để viết assertion, phải dùng cùng app commit.
-5. [api-du-kien.md](api-du-kien.md): bản nháp **lịch sử v3**, không dùng thay contract hiện hành. [Đường dẫn nhật ký cũ](week-4/23-10.md) chuyển tiếp về Phúc.
+5. [api-du-kien.md](api-du-kien.md): bản nháp **lịch sử v3**, không dùng thay contract hiện hành. Nhật ký ứng dụng chỉ giữ tại [file ngày 23/10](../phuc-worklog/week-4/23-10.md).
 
 ## Tình trạng lúc kết phiên
 

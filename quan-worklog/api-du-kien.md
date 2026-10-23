@@ -2,7 +2,7 @@
 
 > **Chỉ dùng để truy nguyên ý tưởng đầu phiên, không dùng viết test hiện hành.** App cuối phiên là **API 4.1** tại `feat/admin-accounts-sidebar@9d47cff`. Đọc [contract chính thức](../docs/api-contract.md), [phối hợp hiện hành](phoi-hop.md) và [tổng kết Phúc](../phuc-worklog/week-4/23-10.md). Bảng “V2 hiện tại/đề xuất V3”, hai cookie, khách không cần login UI và chặn xóa event có người bên dưới là mô tả lúc soạn nháp; các quyết định sau đã thay chúng. Bản nháp được giữ để không mất nguồn, không đánh đồng với trạng thái triển khai.
 
-> **Cập nhật23/10 sau khi duyệt:** người dùng đã cho triển khai toàn plan. Nội dung dưới giữ như bản nháp lịch sử; contract đã thực hiện nằm tại [docs/api-contract.md](../docs/api-contract.md), bằng chứng ở [nhật ký](../phuc-worklog/week-4/23-10-ung-dung.md). Các câu “chưa duyệt/chưa triển khai” phía dưới mô tả thời điểm soạn nháp, không còn là trạng thái hiện tại. Khi có khác biệt dùng canonical contract và code đã bàn giao.
+> **Cập nhật23/10 sau khi duyệt:** người dùng đã cho triển khai toàn plan. Nội dung dưới giữ như bản nháp lịch sử; contract đã thực hiện nằm tại [docs/api-contract.md](../docs/api-contract.md), bằng chứng ở [nhật ký](../phuc-worklog/week-4/23-10.md). Các câu “chưa duyệt/chưa triển khai” phía dưới mô tả thời điểm soạn nháp, không còn là trạng thái hiện tại. Khi có khác biệt dùng canonical contract và code đã bàn giao.
 
 Ngày: **23/10/2026**. Nguồn yêu cầu: [biên bản](yeu-cau.md). **Chưa duyệt, chưa triển khai.** API đang chạy vẫn theo [contract v2](../docs/api-contract.md). Không dùng JSON ví dụ ở đây như kết quả kiểm thử hoặc cam kết API mới đã tồn tại.
 

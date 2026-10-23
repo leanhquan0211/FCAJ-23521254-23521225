@@ -44,4 +44,4 @@ Nếu có thay đổi local, branch chưa tồn tại hoặc pull không fast-fo
 
 Trước hợp nhất đã tạo Git bundle có kiểm tra tại `.local-data/git-backups/before-consolidate-20261023-223538.bundle`, chỉ local/ignored. Bundle chứa lịch sử và các ref trước khi gộp; không cần giữ thêm nhánh backup. Toàn bộ đầu nhánh phải là ancestor của phuc trước khi xóa tên nhánh trên GitHub/local. Nếu nhánh remote có commit mới trong lúc dọn, dừng xóa và tích hợp phần đó trước.
 
-Lượt gộp không bật lại Docker hoặc sửa/reset DynamoDB. Các hướng dẫn kiểm thử thật vẫn dùng bảng test riêng; không suy kết quả unit/build thành bài 100 người hoặc AWS scaling. Nhật ký cũ giữ timestamp/bằng chứng cũ, không tự ghi thêm nhật ký tiến độ ngoài yêu cầu.
+Lượt gộp không bật lại Docker hoặc sửa/reset DynamoDB. Các hướng dẫn kiểm thử thật vẫn dùng bảng test riêng; không suy kết quả unit/build thành bài 100 người hoặc AWS scaling. Phiên bản nhật ký cũ có thể tra trong lịch sử Git; mỗi ngày chỉ giữ một file nhật ký hiện hành, không tự ghi thêm ngoài yêu cầu.
