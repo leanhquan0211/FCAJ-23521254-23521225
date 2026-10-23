@@ -12,7 +12,8 @@ Resources:
           - http://localhost:5173
           - http://127.0.0.1:5173
         AllowMethods: [GET, POST, PUT, DELETE, OPTIONS]
-        AllowHeaders: [Content-Type, X-CSRF-Token]
+        AllowHeaders: [Content-Type, X-CSRF-Token, Idempotency-Key]
+        ExposeHeaders: [Location, Idempotent-Replayed]
         AllowCredentials: true
         MaxAge: 600
 
@@ -33,7 +34,46 @@ Resources:
           DYNAMODB_REGION: us-east-1
           ALLOWED_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
           COOKIE_SECURE: "false"
+          USER_AUTH_WINDOW_SECONDS: "900"
+          USER_LOGIN_IP_LIMIT: "120"
+          USER_LOGIN_ACCOUNT_LIMIT: "10"
+          USER_SIGNUP_IP_LIMIT: "120"
       Events:
+        BuyerRegister:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /auth/register
+            Method: POST
+            PayloadFormatVersion: "2.0"
+        BuyerLogin:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /auth/login
+            Method: POST
+            PayloadFormatVersion: "2.0"
+        BuyerSession:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /auth/session
+            Method: GET
+            PayloadFormatVersion: "2.0"
+        BuyerLogout:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /auth/logout
+            Method: POST
+            PayloadFormatVersion: "2.0"
+        BuyerTickets:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /me/registrations
+            Method: GET
+            PayloadFormatVersion: "2.0"
         Health:
           Type: HttpApi
           Properties:

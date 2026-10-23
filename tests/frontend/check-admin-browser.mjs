@@ -113,9 +113,19 @@ try {
   await until(contains(title))
   assert('event content renders as text, no script execution', await evaluate("!window.__adminXss && document.body.innerText.includes('<script>')"))
   await click(`a[href="/events/${created.id}/register"]`)
-  await until('Boolean(document.querySelector("#fullName"))')
-  await fill('#fullName', 'Người tham gia thử')
-  await fill('#email', `browser-${randomUUID()}@example.com`)
+  await until("location.pathname === '/login' && Boolean(document.querySelector('#email'))")
+  // Buyer signup UI is covered separately; here obtain a real buyer session to test admin seat guards.
+  const buyerEmail = `browser-admin-${randomUUID()}@example.com`
+  const buyerPassword = randomUUID() + '-test'
+  await evaluate(`(async () => {
+    const credentials = { email: ${JSON.stringify(buyerEmail)}, password: ${JSON.stringify(buyerPassword)} };
+    const signup = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: 'Browser Buyer', ...credentials }) });
+    if (signup.status !== 201) throw new Error('Buyer signup failed');
+    const login = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) });
+    if (!login.ok) throw new Error('Buyer login failed');
+  })()`)
+  await navigate(`/events/${created.id}/register`)
+  await until('Boolean(document.querySelector("#phone"))')
   await click('button[type="submit"]')
   await until("location.pathname.startsWith('/registrations/') && document.body.innerText.includes('Đăng ký thành công')")
   await navigate(`/admin/events/${created.id}/edit`)
@@ -134,7 +144,7 @@ try {
   await until(contains('Sự kiện đã đóng đăng ký.'))
   await navigate('/admin')
   await until('Boolean(document.querySelector("#admin-search"))')
-  await evaluate("Array.from(document.querySelectorAll('button')).find(button => button.textContent === 'Đăng xuất').click()")
+  await evaluate("Array.from(document.querySelectorAll('main button')).find(button => button.textContent === 'Đăng xuất').click()")
   await until("location.pathname === '/' && document.body.innerText.includes('Bạn muốn tham gia như thế nào?')")
   await navigate('/admin')
   await until("location.pathname === '/admin/login' && Boolean(document.querySelector('#username'))")

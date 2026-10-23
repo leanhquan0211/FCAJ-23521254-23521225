@@ -190,6 +190,7 @@ h3 {
 }
 
 .status-badge[data-status='ended'],
+.status-badge[data-status='not_open'],
 .status-badge[data-status='closed'] {
   background: var(--color-ended-paper);
   color: var(--color-ended-ink);

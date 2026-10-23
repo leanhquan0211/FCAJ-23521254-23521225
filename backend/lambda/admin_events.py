@@ -8,7 +8,7 @@ from service import ApiError, EventService, event_output
 
 CATEGORIES = {"Công nghệ", "Thiết kế", "Kỹ năng", "Cộng đồng"}
 TEXT_LIMITS = {"title": 160, "location": 240, "organizer": 160, "summary": 300, "description": 5000}
-INPUT_FIELDS = {*TEXT_LIMITS, "category", "dateTime", "capacity", "registrationOpen"}
+INPUT_FIELDS = {*TEXT_LIMITS, "category", "dateTime", "salesOpenAt", "capacity", "registrationOpen"}
 
 
 def validate_event(body, editing=False):
@@ -38,9 +38,21 @@ def validate_event(body, editing=False):
         starts = datetime.fromisoformat(body["dateTime"])
         if starts.utcoffset() is None or not 2000 <= starts.year <= 2100:
             raise ValueError()
-        values.update(dateTime=starts.isoformat(), startsAtEpoch=int(starts.timestamp()))
+        values.update(dateTime=starts.isoformat(), startsAtEpoch=int(starts.timestamp()), startsAtEpochMs=int(starts.timestamp() * 1000))
     except (TypeError, ValueError, OverflowError):
         errors["dateTime"] = "Thời gian cần có múi giờ và năm từ 2000 đến 2100."
+    values["salesOpenAt"] = None
+    values["salesOpenAtEpochMs"] = 0
+    if body["salesOpenAt"] is not None:
+        try:
+            opens = datetime.fromisoformat(body["salesOpenAt"])
+            if opens.utcoffset() is None or not 2000 <= opens.year <= 2100:
+                raise ValueError()
+            if "startsAtEpochMs" in values and opens.timestamp() * 1000 > values["startsAtEpochMs"]:
+                raise ValueError()
+            values.update(salesOpenAt=opens.isoformat(), salesOpenAtEpochMs=int(opens.timestamp() * 1000))
+        except (TypeError, ValueError, OverflowError):
+            errors["salesOpenAt"] = "Giờ mở bán cần có múi giờ và không sau giờ diễn ra."
     if editing and (type(body["version"]) is not int or body["version"] < 0):
         errors["version"] = "Phiên bản sự kiện không hợp lệ."
     if errors:

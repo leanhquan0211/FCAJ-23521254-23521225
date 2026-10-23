@@ -1,6 +1,6 @@
 # Backend local — sự kiện và đăng ký
 
-Backend dùng Lambda **Python 3.13**, API Gateway **HTTP API payload v2** do SAM giả lập, và **DynamoDB Local 3.3.1** trong Docker. Có API người tham gia và API đăng nhập/session/đăng xuất, quản lý sự kiện cho admin trong [contract v2](../docs/api-contract.md). Frontend đã có HTTP adapter, đồng thời giữ chế độ mock độc lập.
+Backend dùng Lambda **Python 3.13**, API Gateway **HTTP API payload v2** do SAM giả lập, và **DynamoDB Local** trong Docker. API ứng dụng đã nâng lên [contract v3](../docs/api-contract.md): User/account/session riêng, đặt vé có key, owner-only và giờ mở bán. Payload v2 của Gateway là định dạng sự kiện Lambda, khác phiên bản contract ứng dụng v3. Mock chỉ để xem giao diện sự kiện.
 
 ## Kiến trúc và cấu hình
 
@@ -16,7 +16,7 @@ Backend dùng Lambda **Python 3.13**, API Gateway **HTTP API payload v2** do SAM
 
 `localhost` trong Lambda là chính container Lambda, vì vậy không dùng nó làm endpoint DB của Lambda. Compose chỉ publish DB trên loopback. Thư mục `lambda/` tách handler (`app.py`), logic (`service.py`), repository và cấu hình. Xem [mô hình dữ liệu](../docs/data-model.md) cho khóa bảng, seed và transaction đã triển khai.
 
-POST đăng ký validate và chuẩn hóa email, kiểm tra sự kiện rồi dùng `TransactWriteItems` để giảm chỗ, tạo khóa chống trùng và tạo đăng ký cùng nhau. Các điều kiện về chỗ, mở đăng ký và thời gian được kiểm tra lại trong transaction. Khi transaction bị hủy, service đọc lại để phân loại lỗi và retry có giới hạn. GET kết quả chỉ trả trường contract; mã UUID v4 khó đoán nhưng endpoint local hiện chưa có đăng nhập/ủy quyền.
+`buyer_auth.py` xử lý tài khoản/phiên, `booking.py` xử lý vé/replay, repository ghi DB. POST đặt vé lấy danh tính từ phiên; transaction giảm chỗ + reference User/event + Ticket + idempotency. Retry tối đa4 lượt khi xung đột, phân biệt503 busy với409 hết chỗ. GET kết quả và Vé của tôi chỉ cho chủ vé. Admin vẫn dùng `auth.py` và `admin_events.py`.
 
 Dependency được khóa trong `lambda/requirements.txt`: **boto3 1.43.114**. `backend/requirements.txt` tham chiếu file này cho công cụ chạy trên host nếu cần. SAM build cài dependency vào `.aws-sam/build/EventsFunction`, không phụ thuộc boto3 hay Python 3.13 cài trên Windows.
 
@@ -24,7 +24,7 @@ Endpoint DB là bắt buộc và bị giới hạn vào hostname local. Boto3 d�
 
 ## Chạy từ thư mục gốc repository
 
-Yêu cầu: Docker Desktop chạy **Linux containers**, Docker Compose, SAM CLI. Môi trường đã kiểm tra: Docker Desktop 4.95.0 / Engine 29.8.2, Compose 5.6.0, SAM CLI 1.167.0. Python Windows hiện là 3.14.7; runtime Lambda/build/test vẫn là 3.13 qua container. Venv cũ tại root đang thiếu `pyvenv.cfg`, không cần sử dụng nó cho các lệnh Docker/SAM dưới đây.
+Yêu cầu: Docker Desktop chạy **Linux containers**, Docker Compose, SAM CLI. Build/test Lambda dùng Python3.13 qua container, không dựa vào phiên bản Python hay venv trên Windows. Các script HTTP dùng boto3 trên host thì cần cài `backend/requirements.txt`. Dùng `docker version` và `sam --version` để kiểm tra môi trường hiện tại trước khi chạy; không suy phiên bản công cụ từ nhật ký cũ.
 
 **Terminal 1 — PowerShell** (giữ terminal này chạy ở bước cuối):
 
@@ -91,7 +91,7 @@ Nếu chủ động dùng Python trên host với boto3 đã cài, lệnh tươn
 
 ## Kiểm thử
 
-Unit test dùng mock, không ghi DB/gọi AWS; chạy trong Python 3.13 sau khi SAM build. Hai test integration được skip trong lệnh mặc định:
+Unit test dùng mock, không ghi DB/gọi AWS; chạy trong Python3.13 sau khi SAM build. Ba test integration được skip trong lệnh mặc định:
 
 ```bash
 docker compose -f backend/compose.yaml run --rm tools -m unittest discover -s tests/backend -v
@@ -120,9 +120,9 @@ Trong terminal local có các biến SAM giả như phần chạy ở trên, kh�
 python backend/tools/check_registration_api.py --base-url http://127.0.0.1:3002
 ```
 
-Smoke test ghi tự xác nhận `/health` trả bảng test trước khi gửi POST. Nó thử tạo/đọc đăng ký, email trùng và đăng ký sự kiện khác, validation, đóng/hết chỗ và nhiều request HTTP tranh chỗ cuối. Lệnh này có tạo dữ liệu trên bảng test, khác `check_api.py` chỉ đọc.
+Smoke test ghi xác nhận `/health` trỏ bảng test và contract3.0, tự tạo admin fixture/User và session thật; thử owner, validation, lịch mở bán, replay sau full/closed, logout và8 request HTTP tranh chỗ cuối. Khi chạy trên host cần `python -m pip install -r backend/requirements.txt`; hoặc chạy tools container với `--endpoint-url http://fcaj-dynamodb-local:8000`. Khác `check_api.py` chỉ đọc.
 
-Kết quả đã chạy trước nâng cấp quản trị (mốc API người tham gia):
+Kết quả lịch sử v1/v2 dưới đây được giữ để tham khảo, không đại diện v3. Kết quả v3 mới nhất tại [nhật ký 23/10](../quan-worklog/week-4/23-10.md).
 
 | Kiểm tra | Kết quả |
 | --- | --- |
@@ -138,7 +138,7 @@ Kết quả đã chạy trước nâng cấp quản trị (mốc API người th
 | Stop/start DB, không xóa volume | Đạt: health trả 503 khi DB dừng, API phục hồi sau start, fingerprint của 8 sự kiện giữ nguyên |
 | Lần gọi Lambda đầu | Ban đầu timeout 15 giây; đã sửa cache client và timeout 60 giây, kiểm thử HTTP sau sửa đạt |
 
-Đã có admin và quản lý sự kiện; chưa có email, tài khoản khách/ủy quyền theo tài khoản khi đọc kết quả và AWS. Mã UUID ngẫu nhiên không thay thế quyền truy cập. Chưa có HTTP idempotency key để khôi phục kết quả khi client mất response sau commit; Frontend không tự retry POST, gửi lại email trùng sẽ trả 409. Chưa chạy các lệnh tài liệu bằng Git Bash thực tế; Docker/SAM đã chạy từ PowerShell. Chưa kiểm thử Firefox/Safari hoặc nhiều thiết bị.
+V3 đã có tài khoản User/ownership/idempotency. Chưa có email xác nhận/thanh toán/AWS. Frontend không tự retry POST trong nền; người dùng chủ động thử lại cùng key. Chưa kiểm tra Git Bash, Firefox/Safari hoặc nhiều thiết bị cho mốc mới.
 
 Tham chiếu: [DynamoDB Local và Docker Compose](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html), [SAM HTTP API](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-httpapi.html).
 

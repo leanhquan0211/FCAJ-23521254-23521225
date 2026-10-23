@@ -1,6 +1,10 @@
-# Bảo mật cho luồng vai trò và quản trị local
+# Bảo mật User, đặt vé và quản trị local — v3
 
 ## Quy tắc cần giữ khi phát triển
+
+- User tự đăng ký chỉ được role=user. Cookie User và admin riêng; cả hai đều được kiểm tra quyền ở server. Vé chỉ chủ sở hữu được đọc; sai owner hoặc legacy không userId trả404. Không nhận lại vé theo email chưa được xác minh.
+- Email unique được ghi atomic với account; tên/email đặt vé lấy từ phiên. Bốn ghi ghế/reference/vé/idempotency nằm trong một transaction. Key giữ qua retry, scoped theo User; key cũ khác nội dung bị từ chối.
+- User signup/login có bộ đếm riêng; mặc định120/IP/900giây, login thêm10/account. Vượt trả429 và Retry-After. Không tắt auth/CSRF/rate limit chỉ để chạy tải; chuẩn bị phiên ngoài khoảng đo.
 
 - Nút chọn Admin, route guard React và CORS không cấp quyền. Mỗi API admin đều kiểm tra session và role ở backend. Gõ thẳng URL hoặc sửa localStorage không làm tăng quyền.
 - Không tạo tài khoản admin từ website, không có mật khẩu mặc định, không ghi mật khẩu vào source, VITE env, URL hoặc log. Tạo tài khoản bằng CLI có nhập mật khẩu ẩn; không ghi đè tài khoản cũ.
@@ -13,6 +17,8 @@
 
 ## Cách xác minh
 
+V3 bổ sung `test_buyer_auth.py`, `test_registration.py` và 3 test transaction opt-in. HTTP `check_registration_api.py` dùng tài khoản/phiên thật, kiểm tra replay sau full/closed, owner, legacy, mở bán, logout và8 lượt tranh1chỗ. `check-buyer-browser.mjs` thao tác signup/login/đặt vé/Vé của tôi/logout; cố tình bỏ response sau commit, reload rồi retry. Các kết quả thực tế và giới hạn ở [nhật ký 23/10](../quan-worklog/week-4/23-10.md).
+
 `tests/backend/test_admin.py` kiểm tra mật khẩu, session, CSRF, nguồn giả, role giả, quyền trên tất cả route admin, schema, sức chứa, xóa và xung đột.
 
 `backend/tools/check_admin_api.py` chỉ chạy trên bảng test riêng: gọi HTTP thật để kiểm tra cookie, khách bị chặn, CRUD, đăng ký, đóng/mở, xóa bị chặn và hai lượt sửa cùng version chỉ một lượt thành công. Tài khoản test ngẫu nhiên chỉ tồn tại trong bảng test.
@@ -21,7 +27,7 @@
 
 ## Giới hạn của mốc local
 
-Chỉ bind loopback. HTTP và COOKIE_SECURE=false dành cho localhost. Chưa có MFA, khôi phục mật khẩu, giao diện cấp/thu hồi tài khoản, dọn TTL tự động hoặc rate limit cho toàn bộ API. Khi mất response sau đăng ký vẫn chưa có cơ chế khôi phục mã. Link UUID kết quả khách là quyền xem theo đường dẫn, chưa có xác thực khách; người nhận được link có thể đọc thông tin tương ứng. Chưa triển khai AWS hoặc xác nhận phù hợp cho production.
+Chỉ bind loopback. HTTP và COOKIE_SECURE=false dành cho localhost. Chưa có OTP/xác minh email, MFA, khôi phục mật khẩu, giao diện quản lý tài khoản, dọn TTL tự động hoặc rate limit cho toàn bộ API. V3 có replay và quyền chủ vé, nhưng chưa là thiết kế đã đánh giá cho production. Chưa triển khai AWS hoặc kiểm chứng autoscaling.
 
 ## Nguồn tham khảo
 

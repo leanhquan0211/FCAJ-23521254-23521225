@@ -1,74 +1,119 @@
-"""Write smoke checks, allowed only when SAM points to a dedicated local test table."""
+"""Buyer v3 smoke checks; writes only to a dedicated localhost test table."""
 import argparse
 import json
+import secrets
+import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from urllib.error import HTTPError
+from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
 
-
-def call(base, path, method="GET", body=None, expected=None, raw=None, headers=None):
-    data = json.dumps(body).encode() if body is not None else raw
-    request_headers = {"Content-Type": "application/json", **(headers or {})}
-    try:
-        result = urlopen(Request(base + path, data=data, method=method, headers=request_headers), timeout=90)
-    except HTTPError as exc:
-        result = exc
-    payload = json.loads(result.read().decode())
-    if expected is not None:
-        assert result.code == expected, (path, result.code, payload)
-    return result.code, payload, result.headers
+from check_admin_api import Client
+from auth import password_record
+from auth_repository import AuthRepository
+from configuration import local_table
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default="http://127.0.0.1:3002")
+    parser.add_argument("--endpoint-url", default="http://127.0.0.1:8000")
     args = parser.parse_args()
-    base = args.base_url.rstrip("/")
-    parsed = urlparse(base)
-    if parsed.scheme != "http" or parsed.hostname not in {"localhost", "127.0.0.1"} or not parsed.port:
-        parser.error("Only a localhost API is allowed")
-    _, health, _ = call(base, "/health", expected=200)
-    assert health["database"]["table"].startswith("fcaj-event-workshop-local-test-"), "Use a dedicated test table; no writes sent"
-    email = f"http-{uuid.uuid4().hex}@example.com"
-    body = {"fullName": "  HTTP Test  ", "email": f" {email.upper()} ", "phone": " 0901234567 "}
-    _, before, _ = call(base, "/events/http-open", expected=200)
-    _, registration, headers = call(base, "/events/http-open/registrations", "POST", body, 201)
-    assert uuid.UUID(registration["id"]).version == 4
-    assert headers["Location"] == f"/registrations/{registration['id']}"
-    assert set(registration) == {"id", "eventId", "fullName", "email", "phone", "createdAt"}
-    assert registration["email"] == email and registration["fullName"] == "HTTP Test" and registration["phone"] == "0901234567"
-    _, after, _ = call(base, "/events/http-open", expected=200)
-    assert after["remainingSeats"] == before["remainingSeats"] - 1
-    _, saved, _ = call(base, f"/registrations/{registration['id']}", expected=200)
-    assert saved == registration
-    _, duplicate, _ = call(base, "/events/http-open/registrations", "POST", {**body, "email": email}, 409)
-    assert duplicate["error"]["code"] == "DUPLICATE_REGISTRATION"
-    _, unchanged, _ = call(base, "/events/http-open", expected=200)
-    assert unchanged["remainingSeats"] == after["remainingSeats"]
-    call(base, "/events/http-other/registrations", "POST", body, 201)
-    for event_id, expected, code in [("http-full", 409, "EVENT_FULL"), ("http-ended", 409, "REGISTRATION_CLOSED"), ("http-closed", 409, "REGISTRATION_CLOSED"), ("no-such-event", 404, "EVENT_NOT_FOUND"), ("bad_id", 400, "VALIDATION_ERROR")]:
-        _, error, _ = call(base, f"/events/{event_id}/registrations", "POST", body, expected)
-        assert error["error"]["code"] == code
-    for invalid in [{"fullName": "", "email": "bad"}, {**body, "phone": 123}, {**body, "remainingSeats": 1}]:
-        _, error, _ = call(base, "/events/http-open/registrations", "POST", invalid, 400)
-        assert error["error"]["code"] == "VALIDATION_ERROR"
-    call(base, "/events/http-open/registrations", "POST", raw=b"{", expected=400)
-    call(base, "/events/http-open/registrations", "POST", raw=b"{}", headers={"Content-Type": "text/plain"}, expected=415)
-    call(base, "/registrations/not-a-uuid", expected=400)
-    call(base, f"/registrations/{uuid.uuid4()}", expected=404)
-    # Reach exactly one remaining seat in a test-only event, then send concurrent HTTP requests.
-    _, other, _ = call(base, "/events/http-other", expected=200)
-    for _ in range(other["remainingSeats"] - 1):
-        call(base, "/events/http-other/registrations", "POST", {"fullName": "Fill Test", "email": f"{uuid.uuid4().hex}@example.com"}, 201)
-    with ThreadPoolExecutor(max_workers=6) as pool:
-        outcomes = list(pool.map(lambda _: call(base, "/events/http-other/registrations", "POST", {"fullName": "Race Test", "email": f"{uuid.uuid4().hex}@example.com"}), range(6)))
-    assert sum(status == 201 for status, _, _ in outcomes) == 1, outcomes
-    assert all(status == 201 or (status == 409 and payload["error"]["code"] == "EVENT_FULL") for status, payload, _ in outcomes)
-    _, exhausted, _ = call(base, "/events/http-other", expected=200)
-    assert exhausted["remainingSeats"] == 0
-    print(json.dumps({"checks": "passed", "registrationId": registration["id"], "lastSeatWinners": 1, "table": health["database"]["table"]}))
+    url = urlparse(args.base_url)
+    if url.scheme != "http" or url.hostname not in {"localhost", "127.0.0.1"} or not url.port:
+        parser.error("Only an explicit localhost API is allowed")
+    admin = Client(args.base_url.rstrip("/"))
+    health, _ = admin.call("/health")
+    table_name = health["database"]["table"]
+    assert table_name.startswith("fcaj-event-workshop-local-test-"), "No writes: test table required"
+    assert health["apiContractVersion"] == "3.0"
+    table = local_table(args.endpoint_url, table_name)
+    password = secrets.token_urlsafe(24)
+    username = "smoke-" + uuid.uuid4().hex[:10]
+    AuthRepository(table).create("ADMIN#" + username, {"username": username, "role": "admin", **password_record(password)})
+    session, _ = admin.call("/admin/login", "POST", {"username": username, "password": password})
+    admin.csrf = session["csrfToken"]
+
+    def buyer():
+        client = Client(admin.base)
+        email = f"buyer-{uuid.uuid4().hex}@example.com"
+        credentials = {"email": email, "password": password}
+        profile, headers = client.call("/auth/register", "POST", {"fullName": "HTTP Buyer", **credentials}, 201)
+        assert "Set-Cookie" not in headers and profile["user"]["role"] == "user"
+        client.call("/auth/session", expected=401)
+        client.call("/auth/register", "POST", {"fullName": "Duplicate", **credentials}, 409)
+        session, headers = client.call("/auth/login", "POST", credentials)
+        client.csrf = session["csrfToken"]
+        assert "HttpOnly" in headers["Set-Cookie"] and "SameSite=Strict" in headers["Set-Cookie"]
+        assert client.call("/auth/session")[0]["user"]["userId"] == profile["user"]["userId"]
+        client.call("/admin/events", expected=401)
+        return client
+
+    fixture = {"title": "Buyer API smoke", "category": "Công nghệ", "dateTime": "2099-06-01T09:00:00+07:00",
+               "location": "Local", "organizer": "Test", "capacity": 1, "registrationOpen": True,
+               "salesOpenAt": None, "summary": "Test only", "description": "Dedicated test table"}
+    event, _ = admin.call("/admin/events", "POST", fixture, 201)
+    path = f"/events/{event['id']}/registrations"
+    guest, owner, other = Client(admin.base), buyer(), buyer()
+    key = {"Idempotency-Key": str(uuid.uuid4())}
+    guest.call(path, "POST", {}, 401, extra_headers=key)
+    admin.call(path, "POST", {}, 401, extra_headers=key)
+    owner.call(path, "POST", {}, 403, csrf=False, extra_headers=key)
+    owner.call(path, "POST", {}, 403, origin="https://attacker.example", extra_headers=key)
+    owner.call(path, "POST", {"email": "spoof@example.com"}, 400, extra_headers=key)
+    owner.call(path, "POST", {}, 400)
+    ticket, headers = owner.call(path, "POST", {"phone": " 0901234567 "}, 201, extra_headers=key)
+    assert headers["Idempotent-Replayed"] == "false" and headers["Location"] == f"/registrations/{ticket['id']}"
+    # Retry as if the first response had been lost, even though the last seat is now gone.
+    replay, headers = owner.call(path, "POST", {"phone": "0901234567"}, extra_headers=key)
+    assert replay == ticket and headers["Idempotent-Replayed"] == "true"
+    owner.call(path, "POST", {"phone": "different"}, 409, extra_headers=key)
+    duplicate, _ = owner.call(path, "POST", {}, 409, extra_headers={"Idempotency-Key": str(uuid.uuid4())})
+    assert duplicate["error"]["details"]["registrationId"] == ticket["id"]
+    assert owner.call(f"/registrations/{ticket['id']}")[0] == ticket
+    other.call(f"/registrations/{ticket['id']}", expected=404)
+    guest.call(f"/registrations/{ticket['id']}", expected=401)
+    assert owner.call("/me/registrations")[0]["registrations"] == [ticket]
+    assert other.call("/me/registrations")[0]["registrations"] == []
+    legacy_id = str(uuid.uuid4())
+    legacy = {name: value for name, value in ticket.items() if name != "userId"}
+    table.put_item(Item={**legacy, "id": legacy_id, "PK": f"REGISTRATION#{legacy_id}", "SK": "METADATA"},
+                   ConditionExpression="attribute_not_exists(PK)")
+    owner.call(f"/registrations/{legacy_id}", expected=404)
+    admin.call(f"/admin/events/{event['id']}", "PUT", {**fixture, "registrationOpen": False, "version": event["version"]})
+    assert owner.call(path, "POST", {"phone": "0901234567"}, extra_headers=key)[0] == ticket
+
+    opening = datetime.now(timezone.utc) + timedelta(seconds=5)
+    scheduled, _ = admin.call("/admin/events", "POST", {**fixture, "capacity": 10, "salesOpenAt": opening.isoformat()}, 201)
+    scheduled_path = f"/events/{scheduled['id']}/registrations"
+    schedule_key = {"Idempotency-Key": str(uuid.uuid4())}
+    assert other.call(f"/events/{scheduled['id']}")[0]["status"] == "not_open"
+    not_open, _ = other.call(scheduled_path, "POST", {}, 409, extra_headers=schedule_key)
+    assert not_open["error"]["code"] == "SALES_NOT_OPEN"
+    time.sleep(max(0, opening.timestamp() - time.time()) + 0.1)
+    other.call(scheduled_path, "POST", {}, 201, extra_headers=schedule_key)
+
+    race, _ = admin.call("/admin/events", "POST", fixture, 201)
+    buyers = [buyer() for _ in range(8)]
+    def compete(client):
+        try:
+            client.call(f"/events/{race['id']}/registrations", "POST", {}, 201,
+                        extra_headers={"Idempotency-Key": str(uuid.uuid4())})
+            return "won"
+        except AssertionError as exc:
+            _, status, body = exc.args[0]
+            assert status == 409 and body["error"]["code"] == "EVENT_FULL", exc
+            return "full"
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        outcomes = list(pool.map(compete, buyers))
+    assert outcomes.count("won") == 1, outcomes
+    assert owner.call(f"/events/{race['id']}")[0]["remainingSeats"] == 0
+    owner.call("/auth/logout", "POST", {}, 403, csrf=False)
+    owner.call("/auth/logout", "POST", {})
+    owner.call("/auth/session", expected=401)
+    print(json.dumps({"checks": "passed", "contract": "3.0", "table": table_name,
+                      "lastSeatRequests": 8, "lastSeatWinners": 1, "ownerIsolation": True,
+                      "schedule": True, "replayAfterFullAndClosed": True}))
 
 
 if __name__ == "__main__":

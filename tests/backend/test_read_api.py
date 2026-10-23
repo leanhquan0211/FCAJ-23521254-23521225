@@ -29,6 +29,14 @@ def example_item(**changes):
 
 
 class ReadApiTests(unittest.TestCase):
+    def test_sales_opens_at_boundary_and_start_time_stops_sales(self):
+        opens = "2026-10-23T10:00:00+07:00"
+        item = example_item(salesOpenAt=opens)
+        self.assertEqual(event_output(item, datetime.fromisoformat("2026-10-23T02:59:59.999+00:00"))["status"], "not_open")
+        self.assertEqual(event_output(item, datetime.fromisoformat("2026-10-23T03:00:00+00:00"))["status"], "open")
+        self.assertEqual(event_output(item, datetime.fromisoformat(item["dateTime"]))["status"], "ended")
+        self.assertEqual(event_output(example_item(), datetime.fromisoformat(opens))["salesOpenAt"], None)
+
     def test_status_is_decided_by_time_open_flag_and_seats(self):
         now = datetime(2026, 10, 16, tzinfo=timezone.utc)
         self.assertEqual(event_output(example_item(), now)["status"], "open")
@@ -73,6 +81,8 @@ class ReadApiTests(unittest.TestCase):
         result, body = self.invoke("GET /health", repo)
         self.assertEqual(result["statusCode"], 200)
         self.assertEqual(body["database"]["status"], "ready")
+        self.assertEqual(body["apiContractVersion"], "3.0")
+        self.assertIsNotNone(datetime.fromisoformat(body["serverTime"]).utcoffset())
         repo.health.assert_called_once()
 
     def test_unavailable_database_uses_error_envelope(self):

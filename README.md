@@ -20,8 +20,9 @@ Quản trị viên:
 - Mở hoặc đóng đăng ký.
 - Xem số lượt đăng ký.
 
-Chống trùng bằng `eventId` và email đã trim/chuyển chữ thường. `registrationId`
-là mã xác nhận riêng của mỗi đăng ký thành công, không dùng làm điều kiện chống trùng.
+API v3 chống trùng bằng `userId` và `eventId`. Người tham gia tự tạo tài khoản,
+đăng nhập rồi đặt vé; tên/email lấy từ phiên. `Idempotency-Key` giữ nguyên khi thử
+lại để nhận vé cũ, tránh trừ chỗ lần nữa. `registrationId` là mã vé, chỉ chủ vé được xem.
 
 ## Ngoài phạm vi
 
@@ -67,7 +68,7 @@ Terraform sẽ quản lý hạ tầng AWS.
 - Frontend có trang chọn vai trò User/Admin; khách xem/tìm kiếm/đăng ký sự kiện, admin đăng nhập để thêm/sửa/xóa hoặc mở/đóng đăng ký. Luồng khách đã tích hợp HTTP API. Chọn API hoặc mock rõ ràng bằng `VITE_DATA_MODE`; xem [Frontend README](frontend/README.md).
 - Backend SAM Python 3.13 có `GET /health`, `GET /events`, `GET /events/{eventId}`, `POST /events/{eventId}/registrations`, `GET /registrations/{registrationId}`. Đăng ký giữ chỗ và chống trùng bằng DynamoDB transaction; xem [Backend README](backend/README.md).
 - Có [API contract](docs/api-contract.md), [mô hình dữ liệu](docs/data-model.md), unit test, kiểm tra transaction đồng thời và HTTP smoke test local. Khởi tạo mặc định không thêm dữ liệu mẫu; chỉ seed demo khi chủ động dùng `--seed-demo`, không ghi đè bản ghi cũ. Dữ liệu ứng dụng và dữ liệu kiểm thử dùng bảng riêng.
-- Đã có quản trị sự kiện, session admin HttpOnly, CSRF và giới hạn đăng nhập; xem [quy tắc bảo mật](docs/security.md). Chặn xóa sự kiện có chỗ đã dùng. Chưa có email hoặc tài nguyên AWS; link kết quả khách vẫn dùng UUID, chưa có tài khoản khách.
+- Đã bổ sung đăng ký/đăng nhập User, Vé của tôi, quyền chủ vé, giờ mở bán và replay API v3 trên nhánh `feat/buyer-flow`; xem [nhật ký bàn giao](quan-worklog/week-4/23-10.md) và [contract](docs/api-contract.md). Session User/admin riêng, cookie HttpOnly, CSRF và giới hạn auth. Chặn xóa sự kiện có chỗ đã dùng. Dữ liệu legacy giữ nguyên nhưng không đọc công khai. Chưa email, thanh toán hoặc tài nguyên AWS.
 
 ## Chạy toàn bộ local
 

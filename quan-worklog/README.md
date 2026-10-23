@@ -1,32 +1,23 @@
 # Nhật ký và bàn giao luồng người mua
 
-Ngày bắt đầu: **23/10/2026**, tuần 4. Đây là khu ghi chép cho phần **ứng dụng/người mua** theo biên bản Phúc gửi; không tự suy ra người đang chat đã đổi tên hoặc người nào đã thực hiện các commit cũ.
+Ngày bắt đầu **23/10/2026**, tuần4. Đây là khu ghi chép cho phần ứng dụng/người mua theo biên bản Phúc gửi; không suy ra tác giả của các công việc cũ từ tên thư mục.
 
-## Đọc theo thứ tự
+## Cửa sổ mới đọc theo thứ tự
 
-1. [Phong cách làm việc chung](../phuc-worklog/phong-cach.md): giải thích dễ hiểu, mô tả trước khi code, chờ duyệt và kiểm tra theo giai đoạn.
-2. [Biên bản gốc](yeu-cau.md): bản sao nội dung người dùng cung cấp, là nguồn yêu cầu.
-3. [Nhật ký 23/10](week-4/23-10.md): kết quả rà soát, phần đã có/chưa có và điểm tiếp tục.
-4. [Phối hợp Git và phân công](phoi-hop.md): ai sửa đâu, nhánh/thư mục làm việc, cổng và mốc bàn giao.
-5. [Contract dự kiến](api-du-kien.md): phương án v3 để cả hai bên góp ý; **chưa được duyệt hoặc triển khai**.
+1. [Phong cách chung](../phuc-worklog/phong-cach.md): giải thích dễ hiểu, mô tả trước code, chờ duyệt và kiểm tra theo giai đoạn. Lượt23/10 đã được người dùng duyệt toàn plan và cho phép tự hoàn tất.
+2. [Biên bản con người](yeu-cau.md): nguồn yêu cầu gốc, giữ nguyên văn.
+3. [Nhật ký23/10](week-4/23-10.md): đọc mục cập nhật mới nhất để biết kết quả, process và điểm tiếp tục; phần đầu là lịch sử khảo sát trước triển khai.
+4. [Phối hợp Git](phoi-hop.md): phạm vi file, worktree, cổng và mốc bàn giao.
+5. [Contract chính thức v3](../docs/api-contract.md), [data model](../docs/data-model.md), [security](../docs/security.md). [Bản nháp ban đầu](api-du-kien.md) giữ để giải thích quyết định, không thay canonical contract.
 
 ## Trạng thái cần nhớ
 
-- Mã nguồn hiện kiểm tra trên nhánh `phuc`, commit `c13f4a985a02960eaedd06ac9ccfba186de59220` (`System testing ideas`). Đầu lượt rà soát working tree sạch. Đây là trạng thái local, không khẳng định đã đồng bộ mới nhất từ GitHub.
-- API thực tế vẫn là [contract v2](../docs/api-contract.md): khách đăng ký bằng tên/email; admin có login/session. Chưa có tài khoản người mua, giờ mở bán riêng, quyền sở hữu vé hoặc HTTP idempotency key.
-- Tuần này chỉ local. Mua vé nghĩa là đặt chỗ + mã xác nhận, chưa thanh toán. Chưa chứng minh autoscaling AWS.
-- Theo biên bản: bên ứng dụng phụ trách frontend người mua, API, nghiệp vụ/data model và canonical contract; bên test phụ trách dữ liệu thử, k6, đối chiếu, báo cáo, runner và frontend test riêng.
-- Thư mục `tests/load/`, `tests/runner/`, `tests/dashboard/`, `tests/results/` và hai nhánh feature là **đề xuất mới**, chưa tạo.
-- Lượt này chỉ đọc và viết tài liệu. Không đổi API/schema, không tạo nhánh/worktree, không chạy tải, không sửa/xóa database.
+- Code mới nằm trên `feat/buyer-flow` tại `.worktrees/buyer-flow`. Nền `f4e20b9` đã chứa quan-worklog trên GitHub main. Không đổi branch/file của cửa sổ ở repo gốc; lúc kiểm tra cuối, repo gốc đang ở `phuc`, cũng tại nền này.
+- V3 có User/register/login/session/logout, đặt vé bằng session+CSRF+Idempotency-Key, Vé của tôi và owner-only. Admin có giờ mở bán. Dữ liệu legacy giữ nguyên, không tự nhận theo email chưa xác minh.
+- Bên ứng dụng đã kiểm tra unit, transaction DynamoDB, HTTP và Edge headless; số lượng/lệnh/kết quả cụ thể trong nhật ký. Chưa chạy bài k6 100 người, runner hoặc dashboard của bên đồng hành.
+- Chỉ local; đặt vé = giữ chỗ + mã xác nhận. Chưa thanh toán/OTP/Organizer nhiều đơn vị/AWS và chưa chứng minh autoscaling.
+- Không tạo `tests/load`, `tests/runner`, `tests/dashboard`, `tests/results` thay bên kiểm thử. Phía đó tích hợp commit bàn giao rồi build API test từ đúng worktree/contract.
 
-## Điểm cần duyệt trước khi code
+Ghi tiếp nhật ký theo ngày, phân biệt yêu cầu đã duyệt, mã đã có và kết quả thực chạy. Không đưa password/token/cookie vào Git. Mỗi lần đo phải ghi app commit, contract version và run/table chính xác.
 
-Phạm vi User/Admin; contract v3 (đặc biệt body đặt vé, giờ mở bán và key gửi lặp); cách giữ/bảo vệ dữ liệu cũ; phân công file/nhánh và cách tạo dữ liệu test. Chi tiết và lựa chọn đề xuất nằm trong hai tài liệu bàn giao.
-
-Sau khi thống nhất, bên ứng dụng cập nhật `docs/api-contract.md` và `docs/data-model.md` theo phiên bản được duyệt; không để hai bản nháp và canonical contract mâu thuẫn mà không ghi trạng thái. Bên test chỉ coi thay đổi đã chốt là giao diện ổn định để viết assertion.
-
-## Quy tắc cập nhật
-
-Ghi tiếp đúng nhật ký ngày đang làm. Phân biệt yêu cầu người dùng, đề xuất, mã đã có và kiểm tra thực tế. Không lưu mật khẩu/token/cookie hoặc dữ liệu thật của người tham gia vào Git. Mỗi mốc bàn giao ghi commit, phiên bản contract, API nào chạy được, lệnh kiểm tra và kết quả.
-
-Nguồn nền: [bối cảnh tuần 3](../phuc-worklog/week-3/boi-canh.md), [nhật ký đầu ngày tuần 4](../phuc-worklog/week-4/23-10.md), README/backend/frontend và tài liệu `docs/`. Bản ghi mới này không chuyển công việc cũ thành công việc mới của Quân.
+Nguồn nền: [bối cảnh tuần3](../phuc-worklog/week-3/boi-canh.md), [nhật ký Phúc đầu ngày](../phuc-worklog/week-4/23-10.md), README và tài liệu trong docs. Việc ghi chép mới không chuyển tác giả công việc cũ sang Quân.

@@ -5,15 +5,19 @@ import uuid
 import base64
 import binascii
 from decimal import Decimal
+from datetime import datetime, timezone
 
 from botocore.exceptions import BotoCoreError, ClientError
 
 from configuration import ConfigurationError, local_table
 from repository import EventRepository
-from service import ApiError, EventService, RegistrationService
+from service import ApiError, EventService
 from admin_events import AdminEventService
 from auth import AuthService, session_output
 from auth_repository import AuthRepository
+from buyer_auth import BuyerAuthService
+from buyer_repository import BuyerRepository
+from booking import BookingService
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +37,7 @@ def response(status, body, event, extra_headers=None, cookies=None):
     if origin in allowed:
         headers["Access-Control-Allow-Origin"] = origin
         headers["Access-Control-Allow-Credentials"] = "true"
+        headers["Access-Control-Expose-Headers"] = "Location, Idempotent-Replayed"
         headers["Vary"] = "Origin"
     result = {"statusCode": status, "headers": headers, "body": json.dumps(body, ensure_ascii=False, default=json_number)}
     if cookies:
@@ -64,10 +69,22 @@ def lambda_handler(event, context):
             raise ApiError(400, "VALIDATION_ERROR", "API này chưa hỗ trợ tham số truy vấn.")
         if route not in {"GET /health", "GET /events", "GET /events/{eventId}", "POST /events/{eventId}/registrations", "GET /registrations/{registrationId}",
                          "POST /admin/login", "GET /admin/session", "POST /admin/logout", "GET /admin/events", "POST /admin/events",
-                         "PUT /admin/events/{eventId}", "DELETE /admin/events/{eventId}"}:
+                         "PUT /admin/events/{eventId}", "DELETE /admin/events/{eventId}",
+                         "POST /auth/register", "POST /auth/login", "GET /auth/session", "POST /auth/logout", "GET /me/registrations"}:
             raise ApiError(404, "ROUTE_NOT_FOUND", "Không tìm thấy API.")
         table = local_table()
         repository = EventRepository(table)
+        buyer = BuyerAuthService(BuyerRepository(table))
+        if route == "POST /auth/register":
+            return response(201, buyer.register(event, registration_body(event)), event)
+        if route == "POST /auth/login":
+            body, cookie = buyer.login(event, registration_body(event))
+            return response(200, body, event, cookies=[cookie])
+        if route == "GET /auth/session":
+            return response(200, buyer.require_user(event), event)
+        if route == "POST /auth/logout":
+            cookie = buyer.logout(event)
+            return response(200, {"loggedOut": True}, event, cookies=[cookie])
         if "/admin/" in route:
             auth = AuthService(AuthRepository(table))
             if route == "POST /admin/login":
@@ -92,23 +109,34 @@ def lambda_handler(event, context):
             return response(200, body, event)
         if route == "GET /health":
             table_name = repository.health()
-            body = {"status": "ok", "database": {"status": "ready", "table": table_name}}
+            body = {"status": "ok", "database": {"status": "ready", "table": table_name},
+                    "apiContractVersion": "3.0", "serverTime": datetime.now(timezone.utc).isoformat()}
         elif route == "GET /events":
             body = EventService(repository).list_events()
         elif route == "GET /events/{eventId}":
             body = EventService(repository).get_event((event.get("pathParameters") or {}).get("eventId"))
         elif route == "POST /events/{eventId}/registrations":
-            body = RegistrationService(repository).register((event.get("pathParameters") or {}).get("eventId"), registration_body(event))
-            return response(201, body, event, {"Location": f"/registrations/{body['id']}"})
+            session = buyer.require_user(event, mutation=True)
+            headers = {key.lower(): value for key, value in (event.get("headers") or {}).items()}
+            body, replayed = BookingService(repository).register(
+                (event.get("pathParameters") or {}).get("eventId"), registration_body(event),
+                session["user"], headers.get("idempotency-key"))
+            return response(200 if replayed else 201, body, event,
+                            {"Location": f"/registrations/{body['id']}", "Idempotent-Replayed": str(replayed).lower()})
+        elif route == "GET /me/registrations":
+            session = buyer.require_user(event)
+            body = BookingService(repository).list_registrations(session["user"]["userId"])
         else:
-            body = RegistrationService(repository).get_registration((event.get("pathParameters") or {}).get("registrationId"))
+            session = buyer.require_user(event)
+            body = BookingService(repository).get_registration(
+                (event.get("pathParameters") or {}).get("registrationId"), session["user"]["userId"])
         return response(200, body, event)
     except ApiError as exc:
         status, code, message = exc.status, exc.code, exc.message
         error = {"code": code, "message": message, "requestId": request_id}
         if exc.details:
             error["details"] = exc.details
-        return response(status, {"error": error}, event)
+        return response(status, {"error": error}, event, exc.headers)
     except (BotoCoreError, ClientError, ConfigurationError, RuntimeError):
         logger.exception("Database unavailable; requestId=%s", request_id)
         status, code, message = 503, "DATABASE_UNAVAILABLE", "Cơ sở dữ liệu chưa sẵn sàng. Vui lòng thử lại."

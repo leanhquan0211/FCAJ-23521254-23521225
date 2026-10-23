@@ -1,5 +1,5 @@
 import type { EventItem } from '@/types/event'
-import { RegistrationError, type Registration, type RegistrationInput } from '@/types/registration'
+import { RegistrationError, type Registration } from '@/types/registration'
 
 import { request } from '@/services/http-client'
 
@@ -17,9 +17,4 @@ export async function getEvent(eventId: string): Promise<EventItem | null> {
 export async function getRegistration(registrationId: string): Promise<Registration | null> {
   try { return await request<Registration>(`/registrations/${encodeURIComponent(registrationId)}`) }
   catch (cause) { if (cause instanceof RegistrationError && cause.code === 'not-found') return null; throw cause }
-}
-
-export async function registerForEvent(input: RegistrationInput): Promise<Registration> {
-  const { eventId, ...body } = input
-  return request<Registration>(`/events/${encodeURIComponent(eventId)}/registrations`, { method: 'POST', body: JSON.stringify(body) })
 }

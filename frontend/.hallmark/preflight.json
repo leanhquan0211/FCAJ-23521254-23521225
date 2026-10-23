@@ -1,7 +1,7 @@
 {
-  "scannedAt": "2026-10-09",
+  "scannedAt": "2026-10-23",
   "framework": "Vite 8 + React 19 + TypeScript 6",
-  "fontStack": "Geist Variable from @fontsource-variable/geist",
+  "fontStack": "Be Vietnam Pro headings and Geist Variable body; locked DESIGN.md",
   "palette": "shadcn/ui OKLCH variables in src/index.css",
   "spacing": "Tailwind CSS v4 default 4px scale",
   "motion": "No motion library installed",

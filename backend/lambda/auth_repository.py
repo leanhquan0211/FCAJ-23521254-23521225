@@ -1,4 +1,4 @@
-"""Only this layer reads/writes administrator accounts and sessions."""
+"""Shared metadata primitives for admin auth and buyer sessions/counters."""
 from botocore.exceptions import ClientError
 
 from service import ApiError

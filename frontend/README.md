@@ -1,136 +1,71 @@
-# Frontend website đăng ký sự kiện
+# Frontend đăng ký sự kiện — API v3
 
-Frontend chạy local: **chọn vai trò → User xem/tìm kiếm/đăng ký; Admin đăng nhập → quản lý sự kiện**. Luồng khách vẫn là danh sách → chi tiết → form → kết quả. Đã tích hợp Backend SAM + DynamoDB Local qua HTTP; có thể chọn mock để phát triển UI. Chưa có email hoặc AWS. Quy tắc giao diện nằm trong [DESIGN.md](DESIGN.md). Ghi chú thiết lập nằm trong [frontend.md](frontend.md).
+React/TypeScript/Vite, Tailwind và shadcn/ui. Giữ hệ thiết kế Almanac trong [DESIGN.md](DESIGN.md): màu giấy/pine, Be Vietnam Pro cho tiêu đề và Geist cho nội dung. Không bổ sung thư viện UI/test cho mốc này.
 
-## Tiến độ
+## Chạy local
 
-| Hạng mục | Trạng thái | Kết quả hiện tại / Việc còn lại |
-| --- | --- | --- |
-| Vite + React + TypeScript | Hoàn thành | Ứng dụng và lệnh dev/build/lint hoạt động. |
-| Tailwind CSS, shadcn/ui, Lucide | Hoàn thành | Đã cấu hình và dùng trong các màn hình. |
-| Hallmark và DESIGN.md | Hoàn thành | Có token và quy tắc responsive, trạng thái, component; mở rộng cho luồng mới. |
-| Event Listing, tìm kiếm và lọc | Hoàn thành | Tìm không dấu; danh mục và trạng thái kết hợp; xóa bộ lọc. |
-| Event Detail | Hoàn thành | Trang riêng cho từng ID, hiển thị nội dung và chỗ còn lại. |
-| Registration Form | Hoàn thành | Kiểm tra tên/email, chặn sự kiện đóng, giữ form khi service báo lỗi. |
-| Registration Result | Hoàn thành | API mode đọc kết quả từ DynamoDB nên tải lại vẫn xem được; mock mode dùng localStorage. |
-| Mock service và localStorage | Hoàn thành | Giữ để phát triển UI, chỉ chạy khi chọn `mock`. |
-| Admin Dashboard | Hoàn thành local | Đăng nhập/session/đăng xuất, tìm kiếm và thêm/sửa/xóa sự kiện; chặn xóa nếu đã có chỗ dùng. |
-| API contract | Hoàn thành | Có [contract v2](../docs/api-contract.md), HTTP adapter và trạng thái `closed`. |
-| Kết nối Backend | Hoàn thành | Danh sách, chi tiết, đăng ký và đọc kết quả gọi HTTP ở API mode. |
-| Triển khai AWS | Chưa thực hiện | Chưa có hosting hay hạ tầng cho Frontend. |
+Từ thư mục gốc của đúng worktree:
 
-**Mức độ kiểm thử:** build và lint đạt (2 cảnh báo Fast Refresh ở `button.tsx`/`badge.tsx`). Chrome headless đã thử luồng API thật trên bảng test riêng, reload kết quả, validation, trùng email, trạng thái đóng/hết chỗ/kết thúc, lỗi mạng không fallback, loading, tìm kiếm/lọc và các độ rộng 320/375/414/768/1280 px. Chưa kiểm thử nhiều trình duyệt hoặc trình đọc màn hình.
+```powershell
+npm.cmd --prefix frontend ci
+npm.cmd --prefix frontend run dev
+```
 
-## Công nghệ và cấu trúc
+Mở `http://127.0.0.1:5173`. Vite proxy `/api` sang SAM3001, không cần API URL chứa secret. Mặc định `VITE_DATA_MODE=api`, `VITE_API_BASE_URL=/api`; có thể copy `.env.example` thành `.env.local` khi cần. Sau đổi env phải restart Vite. Backend xem [hướng dẫn](../backend/README.md).
 
-Phiên bản cài thực tế từ `npm ls --depth=0`: Vite **8.3.4**, React/React DOM **19.3.0**, TypeScript **6.0.3**, Tailwind CSS và plugin Vite **4.3.3**, React Router **8.4.0**, shadcn CLI **4.21.4**, Radix UI **1.7.0**, lucide-react **1.54.0**, oxlint **1.87.0**. Font: Be Vietnam Pro và Geist **5.3.0**. Dùng npm với `package-lock.json`.
+Nếu đang dùng SAM test3002, trong terminal Vite trước khi chạy dev:
 
-| Vị trí | Vai trò |
+```powershell
+$env:API_PROXY_TARGET='http://127.0.0.1:3002'
+npm.cmd --prefix frontend run dev
+```
+
+Đây là cấu hình proxy của Vite tại máy, không phải cấu hình hosting AWS. Cổng5173 cần trống; không dừng process của cửa sổ khác khi chưa đối chiếu. Preview4173 không nằm trong Origin allowlist mặc định cho login.
+
+## Luồng dùng thử
+
+1. Khách xem/tìm/lọc sự kiện công khai. Chọn sự kiện còn chỗ và bấm đặt vé.
+2. Chưa có phiên thì sang login; chọn tạo tài khoản, nhập tên/email/mật khẩu15–128ký tự và xác nhận mật khẩu.
+3. Register thành công quay sang login, chưa tự đăng nhập. Sau login quay lại đúng sự kiện đã chọn.
+4. Tên/email lấy từ tài khoản, chỉ nhập phone tùy chọn rồi xác nhận. Backend quyết định lịch mở bán, trạng thái và số ghế.
+5. Trang kết quả có mã vé; Vé của tôi liệt kê vé của tài khoản đang đăng nhập. Logout thu hồi phiên và tải lại trang công khai để xóa toàn bộ trạng thái tài khoản trong bộ nhớ.
+
+Đặt vé hiện là giữ chỗ và mã xác nhận, chưa thanh toán/gửi email. Admin vẫn đăng nhập riêng, tạo/sửa/đóng sự kiện; thêm `salesOpenAt` tùy chọn trong form. Để trống = không hẹn giờ; nhập theo giờ Việt Nam và không sau giờ diễn ra. Chưa tới lịch hiển thị Chưa mở bán. Sự kiện có chỗ đã dùng không được xóa.
+
+## Routes và trách nhiệm mã
+
+| Route | Chức năng |
 | --- | --- |
-| `src/pages/` | Bốn màn hình của luồng người dùng. |
-| `src/components/` | Header/footer, bộ lọc, Card sự kiện, thông tin sự kiện và component shadcn trong `ui/`. |
-| `src/data/events.ts` | Tám sự kiện mẫu ban đầu. |
-| `src/services/events.ts` | Chọn HTTP hoặc mock theo cấu hình, cung cấp interface chung cho màn hình. |
-| `src/services/http-events.ts` | Fetch API, map lỗi contract, không truy cập localStorage hoặc tự retry POST. |
-| `src/services/mock-events.ts` | Service mô phỏng; chỉ service này thao tác localStorage. |
-| `src/types/` | Kiểu dữ liệu sự kiện và đăng ký. |
-| `src/lib/event-listing.ts` | Tìm kiếm/lọc và định dạng ngày. |
-| `tokens.css`, `src/index.css` | Token và CSS giao diện theo [DESIGN.md](DESIGN.md). |
+| / | Chọn vai trò, chỉ điều hướng |
+| /events, /events/:eventId | Xem/tìm/lọc/chi tiết công khai |
+| /signup, /login | Tài khoản người tham gia |
+| /events/:eventId/register | Đặt vé, cần User |
+| /registrations/:registrationId | Kết quả, chỉ chủ vé |
+| /my-tickets | Vé của tôi |
+| /admin/login | Đăng nhập quản trị |
+| /admin, /admin/events/new, /admin/events/:eventId/edit | Quản trị, cần admin |
 
-## Chạy tại localhost
+`services/http-client.ts` xử lý HTTP/lỗi chung, không fallback sang mock khi API lỗi. `services/buyer.ts` giữ API User/booking; `BuyerSessionProvider` kiểm tra phiên khi tải trang, giữ CSRF trong bộ nhớ và xử lý hết hạn. `booking` form giữ UUID cho ý định đang chờ theo User/event trong sessionStorage; không lưu password/cookie/CSRF ở đó. `services/admin.ts` và `pages/admin/` giữ luồng admin.
 
-Yêu cầu **Node.js >=22.22.0** (phù hợp Vite và React Router hiện cài), npm; môi trường đã kiểm tra dùng Node **26.10.0**, npm **11.19.1**. Từ **thư mục gốc repository**:
+Khi request chưa rõ kết quả, form giữ nguyên key/phone và cho thử lại; qua reload vẫn tiếp tục ý định cũ. Sau thành công xóa ý định. Người dùng cũng có thể xem Vé của tôi. Cùng User/event đã có vé nhưng key khác thì điều hướng đến vé đã có. Backend kiểm tra ownership; route guard UI chỉ hỗ trợ trải nghiệm.
 
-```bash
-cd frontend
+## Mock và giới hạn
+
+`VITE_DATA_MODE=mock` chỉ để xem danh sách/chi tiết với dữ liệu mẫu. V3 không mô phỏng tài khoản, đặt vé hoặc quyền admin. Không dùng localStorage/mock để chứng minh transaction hay tải thật. Các helper mock đăng ký cũ còn để tham khảo lịch sử, không nối vào luồng sản phẩm v3.
+
+Hosting sau này cần SPA fallback và HTTPS/Secure cookie. Chưa triển khai AWS, OTP, khôi phục mật khẩu, Organizer nhiều đơn vị, thanh toán hoặc hủy vé. Vé legacy không có userId được giữ trong DB nhưng không đọc công khai và không tự nhận theo email.
+
+## Kiểm tra
+
+```powershell
+npm.cmd --prefix frontend run build
+npm.cmd --prefix frontend run lint
 ```
 
-Nếu chưa có `.env.local`, copy `.env.example` thành `.env.local`, sau đó:
+`tests/frontend/check-buyer-browser.mjs` dùng Node WebSocket/CDP với Edge/Chrome headless, API thật trên bảng test. Mặc định frontend5173, API3001, debug9241; chọn `API_TEST_URL=http://127.0.0.1:3002` khi dùng bảng test. `FRONTEND_TEST_URL` và `CHROME_DEBUG_PORT` có thể đổi. Script tự chặn bảng không có prefix test. Fixture `http-open` được tạo bởi integration suite trong [Backend README](../backend/README.md#kiểm-thử), không chạy browser script trên dữ liệu ứng dụng.
 
-```bash
-npm ci
-npm run dev
-```
+Buyer browser kiểm tra signup/login/return path/đặt vé/Vé của tôi/logout; chặn response sau server commit, reload và retry để chứng minh chỉ một vé. Kiểm tra320/375/414/768/1280px. `check-registration-browser.mjs` là tên tương thích trỏ sang bài v3. `check-admin-browser.mjs` kiểm tra hồi quy quản trị và nhận tài khoản test qua stdin từ `check_admin_api.py --browser`. Dùng profile trình duyệt riêng, không dùng profile cá nhân.
 
-Mở địa chỉ Vite in ra trong terminal, thường là `http://localhost:5173/`. Không chạy `npm run dev` ở thư mục gốc vì `package.json` nằm trong `frontend/`.
+Kết quả và ảnh đã kiểm tra được ghi ở [nhật ký23/10](../quan-worklog/week-4/23-10.md). Chưa kiểm tra Firefox/Safari, trình đọc màn hình hoặc nhiều thiết bị. Hai warning Fast Refresh cũ ở `ui/button.tsx` và `ui/badge.tsx` vẫn còn.
 
-```bash
-npm run build
-npm run lint
-npm run preview
-```
-
-## Chọn API hoặc mock
-
-Trong `frontend/.env.local` (các biến `VITE_` được đưa vào client, không đặt secret ở đây):
-
-```dotenv
-VITE_DATA_MODE=api
-VITE_API_BASE_URL=/api
-```
-
-API mode cần DynamoDB Local và SAM chạy theo [Backend README](../backend/README.md). Frontend lấy số chỗ và kết quả từ Backend, không tự trừ chỗ, không dùng localStorage cho đăng ký và không fallback khi API lỗi. Nếu thiếu/sai cấu hình URL, giao diện báo lỗi. Mặc định là api với URL /api; Vite chuyển tiếp đến SAM cổng 3001.
-
-CORS Backend hiện cho origin cổng 5173. Có thể dùng `npm run dev -- --port 5173 --strictPort` để tránh Vite tự chuyển cổng; nếu chủ động đổi cổng, cần cập nhật cả CORS template và `ALLOWED_ORIGINS` rồi build/restart SAM.
-
-Muốn phát triển UI độc lập, đổi `VITE_DATA_MODE=mock`; mode này không cần Backend và dùng localStorage như mô tả dưới đây. Đã kiểm tra mock mode đọc 8 sự kiện, tạo/đọc lại đăng ký dù cấu hình API không truy cập được. Mode khác `api`/`mock` là lỗi cấu hình. Sau khi thay env phải restart Vite hoặc build lại. Request có timeout 75 giây để chờ Lambda cold start trên OneDrive; không tự retry POST.
-
-## Routes
-
-| Đường dẫn | Chức năng |
-| --- | --- |
-| `/` | Chọn Người tham gia hoặc Quản trị viên. |
-| `/admin/login` | Đăng nhập quản trị viên. |
-| `/admin` | Danh sách/tìm kiếm sự kiện cho admin. |
-| `/admin/events/new` | Tạo sự kiện. |
-| `/admin/events/:eventId/edit` | Sửa thông tin, sức chứa và mở/đóng. |
-| `/events` | Danh sách, tìm kiếm và lọc. |
-| `/events/:eventId` | Chi tiết; ví dụ `/events/thiet-ke-de-dung`. |
-| `/events/:eventId/register` | Form đăng ký; chặn ID sai, hết chỗ, đóng đăng ký hoặc đã kết thúc. |
-| `/registrations/:registrationId` | Kết quả đã lưu; ID được tạo sau khi đăng ký. |
-| Đường dẫn khác | Trang không tìm thấy. |
-
-Vite dev server hỗ trợ truy cập/tải lại các URL con. Khi triển khai lên hosting sau này cần cấu hình **SPA fallback** để các URL con trả về `index.html`; hosting hiện chưa được triển khai.
-
-## Dữ liệu mock và cách thử (chỉ khi chọn mock)
-
-Tám sự kiện gốc nằm trong `src/data/events.ts`. Service tính số chỗ hiện tại bằng số chỗ mẫu trừ số đăng ký đã lưu. Đăng ký thành công được lưu trong localStorage key **`event-workshop:registrations:v1`**; email được trim và chuyển về chữ thường trước khi kiểm tra trùng. Mỗi đăng ký tạo ID bằng `crypto.randomUUID()` và chiếm một chỗ. Dữ liệu chỉ tồn tại trong trình duyệt và origin đang dùng, không chia sẻ giữa người dùng hoặc thiết bị.
-
-Để reset **riêng dữ liệu mock của ứng dụng**, mở DevTools Console tại trang rồi chạy:
-
-```js
-localStorage.removeItem('event-workshop:registrations:v1')
-location.reload()
-```
-
-Để mô phỏng **một lần lỗi service** mà không có công cụ kiểm thử trong giao diện, chạy lệnh sau trong DevTools Console trước khi bấm xác nhận đăng ký:
-
-```js
-sessionStorage.setItem('event-workshop:fail-next-registration', '1')
-```
-
-Key này sẽ tự xóa sau lần gửi tiếp theo. Form giữ dữ liệu và hiển thị lỗi để thử lại. Nếu muốn xóa cờ lỗi thủ công: `sessionStorage.removeItem('event-workshop:fail-next-registration')`.
-
-Thử luồng: mở `/events`, chọn sự kiện còn chỗ như **Thiết kế sản phẩm dễ dùng**, xem chi tiết, bấm **Đăng ký tham gia**, nhập tên và email hợp lệ, xác nhận, ghi lại mã trên trang kết quả rồi tải lại. Quay về sự kiện để kiểm tra chỗ giảm một; dùng lại email với chữ hoa/thường khác để xem lỗi trùng. Các sự kiện `cv-dung-nang-luc` và `nhiep-anh-ke-chuyen` dùng để thử hết chỗ và đã kết thúc.
-
-## Kiểm thử và giới hạn
-
-- **Đã đạt:** `npm run build`; `npm run lint` (2 cảnh báo Fast Refresh). Chrome headless đã thử luồng HTTP với Backend thật trên bảng local test: đăng ký hợp lệ, reload kết quả, thiếu tên/email, email sai, email trùng khác hoa/thường, bấm gửi liên tiếp, lỗi API không fallback, loading và chặn sự kiện hết chỗ/đóng/kết thúc. Danh sách, form và kết quả không cuộn ngang ở 320/375/414/768/1280 px; đã xem ảnh form mobile và kết quả desktop. Tìm kiếm/lọc kết hợp và xóa lọc vẫn đạt.
-- **Chưa kiểm tra:** Firefox/Safari, trình đọc màn hình và nhiều thiết bị người dùng. Backend đã có kiểm tra transaction đồng thời riêng; mock localStorage vẫn không cung cấp giao dịch.
-- **Chưa triển khai:** email xác nhận và AWS. Quản trị viên đã có xác thực phía backend. Backend local đã tích hợp; API đọc kết quả chưa có đăng nhập/ủy quyền.
-
-Backend đã có transaction và năm API trong [contract](../docs/api-contract.md). Bước tiếp theo: quyết định kiểm soát truy cập dữ liệu đăng ký khách và kiểm thử rộng hơn. AWS vẫn nằm ngoài mốc local hiện tại.
-
-Script trình duyệt nằm tại `tests/frontend/check-registration-browser.mjs`, dùng Node WebSocket và Chrome DevTools Protocol, không cài thêm framework test. Chỉ cho phép tạo đăng ký khi API đang trỏ bảng có prefix `fcaj-event-workshop-local-test-`. Xem [Backend README](../backend/README.md#kiểm-thử) để chuẩn bị bảng/API test. Ví dụ mở Chrome headless bằng profile riêng, remote debugging port 9240, rồi từ repo root chạy `node tests/frontend/check-registration-browser.mjs`. Mặc định script dùng Frontend 5173 và API 3002; có thể đổi bằng `FRONTEND_TEST_URL`, `API_TEST_URL`, `CHROME_DEBUG_PORT`.
-
-## Vai trò và quản trị
-
-Trang `/` có hai lựa chọn. Người tham gia vào thẳng danh sách; Quản trị viên được kiểm tra session ở backend rồi vào dashboard hoặc chuyển sang `/admin/login`. URL admin trực tiếp cũng phải kiểm tra session. Không lưu quyền hoặc session token trong localStorage/sessionStorage. Mock không cấp quyền admin.
-
-Tạo tài khoản bằng [CLI backend](../backend/README.md#tạo-tài-khoản-admin-và-dùng-quản-trị), không có mật khẩu mặc định. Dashboard có tìm kiếm không dấu, thêm/sửa thông tin, điều chỉnh sức chứa, mở/đóng và xóa sự kiện chưa có chỗ dùng. Backend kiểm tra lại tất cả quy tắc.
-
-`services/http-client.ts` xử lý HTTP chung; `services/admin.ts` giữ contract quản trị; `pages/admin/` là màn hình. `AdminLayout` chặn trang theo session, `useAdminSession` cung cấp session/CSRF trong bộ nhớ. Phiên hết hạn sẽ quay về đăng nhập. Giao diện chỉ cập nhật dữ liệu sau khi API xác nhận thành công.
-
-Vite dev/preview có proxy `/api` đến `127.0.0.1:3001`, cổng dev cố định 5173. `npm run preview` ở cổng 4173 không nằm trong allowlist Origin cho login; để thử đầy đủ dùng `npm run dev`, hoặc cấu hình allowlist rồi restart SAM. Khi hosting thật cần reverse proxy/API URL và HTTPS phù hợp; cấu hình Vite không tự trở thành cấu hình hosting.
-
-Kiểm tra mốc quản trị: build/lint đạt (giữ hai cảnh báo Fast Refresh cũ). Edge headless đạt chọn vai trò, khách tìm kiếm, URL admin trực tiếp bị chặn, sai mật khẩu, login/reload/logout, thêm/sửa, đăng ký sự kiện vừa tạo, đóng đăng ký, chặn giảm sức chứa và khóa nút xóa khi đã có chỗ dùng. Nội dung `<script>` hiển thị như văn bản. Các trang chọn vai trò, login, danh sách và form quản trị không cuộn ngang hoặc xuống dòng chữ nút ở 320/375/414/768/1280 px; đã xem ảnh form mobile. Chưa kiểm tra Firefox/Safari hoặc trình đọc màn hình.
+Nguồn contract: [API v3](../docs/api-contract.md), [security](../docs/security.md), [yêu cầu con người](../quan-worklog/yeu-cau.md).

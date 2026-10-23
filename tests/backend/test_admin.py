@@ -19,14 +19,14 @@ from service import ApiError
 def event_item(**changes):
     return {"PK": "EVENTS", "SK": "EVENT#example", "entityType": "EVENT", "id": "example",
             "title": "Sự kiện mẫu", "category": "Công nghệ", "dateTime": "2099-01-01T09:00:00+07:00",
-            "startsAtEpoch": 4070908800, "location": "Trực tuyến", "organizer": "Workshop",
+            "startsAtEpoch": 4070908800, "salesOpenAt": None, "location": "Trực tuyến", "organizer": "Workshop",
             "capacity": 10, "remainingSeats": 8, "registrationOpen": True,
             "summary": "Tóm tắt", "description": "Nội dung", **changes}
 
 
 def event_input(**changes):
     item = event_item()
-    return {key: item[key] for key in ("title", "category", "dateTime", "location", "organizer", "capacity", "registrationOpen", "summary", "description")} | changes
+    return {key: item[key] for key in ("title", "category", "dateTime", "salesOpenAt", "location", "organizer", "capacity", "registrationOpen", "summary", "description")} | changes
 
 
 class AuthTests(unittest.TestCase):
@@ -109,6 +109,16 @@ class AuthTests(unittest.TestCase):
 
 
 class AdminEventTests(unittest.TestCase):
+    def test_sales_schedule_requires_timezone_and_cannot_follow_start(self):
+        for value in ["2099-01-01T09:00:00", "2100-01-01T00:00:00+00:00", 123]:
+            self.assert_code("VALIDATION_ERROR", lambda: validate_event(event_input(salesOpenAt=value)))
+        values = validate_event(event_input(salesOpenAt=None))
+        self.assertIsNone(values["salesOpenAt"])
+        self.assertEqual(values["salesOpenAtEpochMs"], 0)
+        body = event_input()
+        body.pop("salesOpenAt")
+        self.assert_code("VALIDATION_ERROR", lambda: validate_event(body))
+
     def setUp(self):
         self.repo = Mock()
         self.repo.get_event.return_value = event_item()

@@ -43,13 +43,13 @@ def verify_origin(event):
         raise ApiError(403, "FORBIDDEN_ORIGIN", "Nguồn gửi yêu cầu không được phép.")
 
 
-def session_token(event):
+def session_token(event, cookie_name=COOKIE_NAME):
     headers = request_headers(event)
     raw = "; ".join(event.get("cookies") or []) or headers.get("cookie", "")
     try:
         cookies = SimpleCookie()
         cookies.load(raw)
-        value = cookies[COOKIE_NAME].value if COOKIE_NAME in cookies else ""
+        value = cookies[cookie_name].value if cookie_name in cookies else ""
         return value if re.fullmatch(r"[a-zA-Z0-9_-]{43}", value) else ""
     except CookieError:
         return ""
@@ -59,10 +59,10 @@ def session_key(token):
     return "SESSION#" + hashlib.sha256(token.encode()).hexdigest()
 
 
-def session_cookie(token, clear=False):
+def session_cookie(token, clear=False, cookie_name=COOKIE_NAME):
     # HTTP is permitted only for this explicitly local application. Enable Secure for HTTPS.
     secure = "; Secure" if os.getenv("COOKIE_SECURE", "false").lower() == "true" else ""
-    return f"{COOKIE_NAME}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if clear else SESSION_SECONDS}{secure}"
+    return f"{cookie_name}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={0 if clear else SESSION_SECONDS}{secure}"
 
 
 class AuthService:

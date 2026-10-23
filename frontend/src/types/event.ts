@@ -6,13 +6,14 @@ export const EVENT_CATEGORIES = [
 ] as const
 
 export type EventCategory = (typeof EVENT_CATEGORIES)[number]
-export type RegistrationStatus = 'open' | 'full' | 'ended' | 'closed'
+export type RegistrationStatus = 'open' | 'full' | 'ended' | 'closed' | 'not_open'
 
 export interface EventItem {
   id: string
   title: string
   category: EventCategory
   dateTime: string
+  salesOpenAt?: string | null
   location: string
   organizer: string
   remainingSeats: number
@@ -27,4 +28,5 @@ export const STATUS_LABELS: Record<RegistrationStatus, string> = {
   full: 'Hết chỗ',
   ended: 'Đã kết thúc',
   closed: 'Đã đóng đăng ký',
+  not_open: 'Chưa mở bán',
 }

@@ -17,6 +17,7 @@ export interface EventInput {
   title: string
   category: EventCategory
   dateTime: string
+  salesOpenAt: string | null
   location: string
   organizer: string
   capacity: number

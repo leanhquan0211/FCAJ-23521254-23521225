@@ -26,8 +26,8 @@ class Client:
         self.opener = build_opener(HTTPCookieProcessor(self.jar))
         self.csrf = ""
 
-    def call(self, path, method="GET", body=None, expected=200, csrf=True, origin="http://localhost:5173"):
-        headers = {"Origin": origin}
+    def call(self, path, method="GET", body=None, expected=200, csrf=True, origin="http://localhost:5173", extra_headers=None):
+        headers = {"Origin": origin, **(extra_headers or {})}
         if body is not None:
             headers["Content-Type"] = "application/json"
         if csrf and self.csrf:
@@ -61,7 +61,7 @@ def main():
     AuthRepository(table).create("ADMIN#" + username, {"username": username, "role": "admin", **password_record(password)})
     fixture = {"title": "Kiểm thử quản trị", "category": "Công nghệ", "dateTime": "2099-01-01T09:00:00+07:00",
                "location": "Trực tuyến", "organizer": "Nhóm kiểm thử", "capacity": 5,
-               "registrationOpen": True, "summary": "Sự kiện kiểm thử", "description": "Chỉ dùng trong bảng test."}
+               "registrationOpen": True, "salesOpenAt": None, "summary": "Sự kiện kiểm thử", "description": "Chỉ dùng trong bảng test."}
     for method, path in [("GET", "/admin/events"), ("POST", "/admin/events"), ("PUT", "/admin/events/example"), ("DELETE", "/admin/events/example")]:
         client.call(path, method, fixture if method != "GET" else None, 401)
     client.call("/admin/login", "POST", {"username": username, "password": "wrong"}, 401)
@@ -76,16 +76,22 @@ def main():
     event_id = created["id"]
     public, _ = client.call(f"/events/{event_id}")
     assert public["remainingSeats"] == 5 and "version" not in public
+    buyer = Client(client.base)
+    email = f"admin-check-{uuid.uuid4().hex}@example.com"
+    buyer.call("/auth/register", "POST", {"fullName": "Buyer", "email": email, "password": password}, 201)
+    user_session, _ = buyer.call("/auth/login", "POST", {"email": email, "password": password})
+    buyer.csrf = user_session["csrfToken"]
+    booking_headers = {"Idempotency-Key": str(uuid.uuid4())}
     closed, _ = client.call(f"/admin/events/{event_id}", "PUT", {**fixture, "registrationOpen": False, "version": created["version"]})
-    client.call(f"/events/{event_id}/registrations", "POST", {"fullName": "Guest", "email": "guest@example.com"}, 409)
+    buyer.call(f"/events/{event_id}/registrations", "POST", {}, 409, extra_headers=booking_headers)
     client.call(f"/admin/events/{event_id}", "PUT", {**fixture, "version": created["version"]}, 409)
     reopened, _ = client.call(f"/admin/events/{event_id}", "PUT", {**fixture, "version": closed["version"]})
-    registration, _ = client.call(f"/events/{event_id}/registrations", "POST", {"fullName": "Guest", "email": "guest@example.com"}, 201)
+    registration, _ = buyer.call(f"/events/{event_id}/registrations", "POST", {}, 201, extra_headers=booking_headers)
     resized, _ = client.call(f"/admin/events/{event_id}", "PUT", {**fixture, "capacity": 7, "version": reopened["version"]})
     assert resized["remainingSeats"] == 6 and resized["occupiedSeats"] == 1
     error, _ = client.call(f"/admin/events/{event_id}", "DELETE", {"version": resized["version"]}, 409)
     assert error["error"]["code"] == "EVENT_HAS_REGISTRATIONS"
-    result, _ = client.call(f"/registrations/{registration['id']}")
+    result, _ = buyer.call(f"/registrations/{registration['id']}")
     assert result["id"] == registration["id"]
     # Both writes use the same version; precisely one edit may win.
     def edit(index):
@@ -104,7 +110,7 @@ def main():
     disposable, _ = client.call("/admin/events", "POST", fixture, 201)
     client.call(f"/admin/events/{disposable['id']}", "DELETE", {"version": disposable["version"]})
     client.call(f"/events/{disposable['id']}", expected=404)
-    cookie = next(iter(client.jar)).value
+    cookie = next(cookie.value for cookie in client.jar if cookie.name == "event_admin_session")
     client.call("/admin/logout", "POST")
     client.call("/admin/events", expected=401)
     assert "Item" not in table.get_item(Key={"PK": "SESSION#" + hashlib.sha256(cookie.encode()).hexdigest(), "SK": "METADATA"})

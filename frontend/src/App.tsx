@@ -10,12 +10,18 @@ import { AdminLayout } from '@/components/AdminLayout'
 import { AdminLoginPage } from '@/pages/admin/AdminLoginPage'
 import { AdminEventListPage } from '@/pages/admin/AdminEventListPage'
 import { EventEditorPage } from '@/pages/admin/EventEditorPage'
+import { BuyerSessionProvider } from '@/components/BuyerSessionProvider'
+import { BuyerAuthPage } from '@/pages/BuyerAuthPage'
+import { MyTicketsPage } from '@/pages/MyTicketsPage'
 
 function App() {
-  return <Routes>
+  return <BuyerSessionProvider><Routes>
     <Route element={<SiteLayout />}>
       <Route path="/" element={<RoleSelectionPage />} />
       <Route path="/events" element={<EventListPage />} />
+      <Route path="/login" element={<BuyerAuthPage key="login" mode="login" />} />
+      <Route path="/signup" element={<BuyerAuthPage key="signup" mode="signup" />} />
+      <Route path="/my-tickets" element={<MyTicketsPage />} />
       <Route path="/events/:eventId" element={<EventDetailPage />} />
       <Route path="/events/:eventId/register" element={<RegistrationPage />} />
       <Route path="/registrations/:registrationId" element={<RegistrationResultPage />} />
@@ -27,7 +33,7 @@ function App() {
       </Route>
       <Route path="*" element={<PageState title="Không tìm thấy trang" message="Đường dẫn này không tồn tại." />} />
     </Route>
-  </Routes>
+  </Routes></BuyerSessionProvider>
 }
 
 export default App

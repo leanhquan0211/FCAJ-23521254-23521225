@@ -1,5 +1,7 @@
 # Kiểm thử Backend
 
+Mốc hiện tại là API v3. Bổ sung `test_buyer_auth.py` cho User/session/rate limit, `test_registration.py` cho owner/replay/key và3 integration test tranh chỗ/chống trùng/replay atomic. Mỗi lần chạy integration phải tạo bảng test mới, không tái sử dụng fixture đã chạy. `check_registration_api.py` tự chuẩn bị tài khoản/phiên thật và kiểm tra v3 trên bảng test. Browser buyer mới là `check-buyer-browser.mjs`; tên `check-registration-browser.mjs` cũ chuyển sang bài mới. Kết quả đã chạy và giới hạn nằm trong [nhật ký23/10](../quan-worklog/week-4/23-10.md).
+
 `tests/backend/test_read_api.py` (tính từ repo root) chứa unit test với mock; chạy bằng lệnh unittest container trong [Backend README](../backend/README.md#kiểm-thử).
 
 `backend/tools/check_api.py` (tính từ repo root) là smoke test chỉ đọc API local đã chạy. Không tạo đăng ký hoặc reset/seed dữ liệu.

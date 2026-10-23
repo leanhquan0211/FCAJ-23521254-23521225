@@ -2,24 +2,33 @@
 
 Một bảng `fcaj-event-workshop-local`, khóa chuỗi `PK` + `SK`, không có GSI. Chọn mô hình này vì các truy vấn hiện tại là danh sách sự kiện và lấy từng sự kiện/đăng ký bằng ID. Với tập sự kiện Workshop nhỏ, danh sách dùng Query trên partition `EVENTS`, tránh Scan toàn bảng.
 
-| Loại item | PK | SK | Trạng thái triển khai |
+| Loại item | PK | SK | Trạng thái triển khai v3 |
 | --- | --- | --- | --- |
 | Sự kiện | `EVENTS` | `EVENT#<eventId>` | Có bảng/seed và API đọc |
 | Đăng ký | `REGISTRATION#<registrationId>` | `METADATA` | Đã triển khai, ID là UUID v4 |
-| Khóa chống trùng | `EVENT#<eventId>` | `EMAIL#<email chuẩn hóa>` | Đã triển khai trong cùng transaction |
+| Khóa chống trùng email cũ | `EVENT#<eventId>` | `EMAIL#<email chuẩn hóa>` | Legacy giữ nguyên, không ghi mới theo v3 |
+| User | `USER#<userId>` | `PROFILE` | fullName/email/role/createdAt, passwordSalt/passwordHash |
+| Email duy nhất | `USER_EMAIL#<email chuẩn hóa>` | `METADATA` | userId, cùng transaction tạo User |
+| Phiên User | `USER_SESSION#<SHA-256 token>` | `METADATA` | userId/csrfToken/expiresAt |
+| User/event reference | `USER#<userId>` | `REGISTRATION#<eventId>` | registrationId/eventId/createdAt, entityType USER_REGISTRATION |
+| Idempotency | `USER#<userId>` | `IDEMPOTENCY#<key>` | fingerprint/registrationId/registration snapshot |
+| Counter User | `USER_AUTH#<kind>#<digest>#<bucket>` | `METADATA` | attempts/expiresAt; riêng signup-ip/login-ip/login-account |
 | Tài khoản admin | `ADMIN#<username chữ thường>` | `METADATA` | role, passwordSalt và passwordHash scrypt; không trả ra API |
 | Phiên admin | `SESSION#<SHA-256 token>` | `METADATA` | username, role, csrfToken và expiresAt |
 | Giới hạn đăng nhập | `LOGIN#<ip/account>#<SHA-256>#<cửa sổ 15 phút>` | `METADATA` | attempts atomic và expiresAt |
 
-Item sự kiện chứa các trường công khai trong [API contract](api-contract.md), cùng `entityType=EVENT`, `registrationOpen` và `startsAtEpoch` (Unix seconds). `status` được tính khi đọc; không lưu một giá trị trạng thái dễ bị cũ. `remainingSeats` là số nguyên được Backend quản lý. Boto3 trả Decimal; handler chuyển số nguyên sang JSON number, không trả chuỗi.
+Item sự kiện chứa các trường công khai trong [API contract v3](api-contract.md), cùng `entityType=EVENT`, `registrationOpen`, `startsAtEpoch` (giây), `startsAtEpochMs` và `salesOpenAtEpochMs` (milliseconds). salesOpenAt=null lưu epoch=0; legacy thiếu salesOpenAt được đọc null, thiếu startsAtEpochMs dùng epoch giây cũ. `status` tính khi đọc. Boto3 Decimal được đổi sang JSON number.
 
 API đăng ký dùng **một TransactWriteItems** gồm:
 
-1. Update sự kiện, giảm `remainingSeats` đúng một, điều kiện `remainingSeats > 0`, `registrationOpen = true`, `startsAtEpoch > now`.
-2. Put khóa chống trùng `eventId + email.trim().lower()`, điều kiện item chưa tồn tại.
-3. Put đăng ký có UUID, điều kiện item chưa tồn tại.
+1. Update sự kiện, giảm `remainingSeats` đúng một, điều kiện còn ghế, manual mở, đã tới salesOpenAt và chưa tới dateTime theo giờ server.
+2. Put User/event reference, điều kiện chưa tồn tại.
+3. Put đăng ký UUID có userId chủ sở hữu, điều kiện chưa tồn tại.
+4. Put User/Idempotency-Key gồm fingerprint và snapshot kết quả, điều kiện chưa tồn tại.
 
-Transaction thành công mới trả kết quả 201. Nếu bị hủy, service đọc lại nhất quán để phân loại đóng/hết chỗ/trùng và retry có giới hạn nếu còn xung đột. `ClientRequestToken` là UUID của đăng ký, được giữ nguyên khi SDK retry. Khóa chống trùng chứa `registrationId` để đối chiếu với bản ghi đăng ký; không có API liệt kê các khóa email.
+Transaction thành công trả201. Nếu bị hủy, service đọc nhất quán lại để phân loại replay/trùng/đóng/hết chỗ, retry tối đa4 lượt có jitter, sau đó503 REGISTRATION_BUSY. ClientRequestToken sinh cho từng transaction call và giữ trong SDK retry; HTTP request mới vẫn được bảo vệ bởi record idempotency bền vững. Replay đọc trước điều kiện bán, trả200 cùng vé. Chưa có TTL cho idempotency.
+
+Vé của tôi Query PK User và SK prefix REGISTRATION#, sau đó đọc từng Ticket theo ID và kiểm tra owner. Account đăng ký mới dùng transaction hai item: User và email unique. Session chỉ lưu token hash, đọc lại profile/role mỗi request. Vé legacy thiếu userId và khóa email cũ giữ nguyên, không gán theo email; GET User trả404, không còn public. Chỗ legacy không được hoàn lại hay reset khi nâng cấp.
 
 Repository dùng resource client cho đọc và low-level client riêng cho transaction. Low-level client nhận AttributeValue được tạo bởi `TypeSerializer`, tránh trộn cơ chế tự chuyển kiểu của boto3 resource với payload đã serialize.
 

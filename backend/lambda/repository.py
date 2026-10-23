@@ -1,3 +1,5 @@
+import uuid
+
 from boto3.dynamodb.conditions import Key
 from boto3.dynamodb.types import TypeSerializer
 
@@ -52,38 +54,52 @@ class EventRepository:
             Key={"PK": f"REGISTRATION#{registration_id}", "SK": "METADATA"}, ConsistentRead=True,
         ).get("Item")
 
-    def has_registration(self, event_id, email):
-        return "Item" in self.table.get_item(
-            Key={"PK": f"EVENT#{event_id}", "SK": f"EMAIL#{email}"}, ConsistentRead=True,
-        )
+    def get_user_item(self, user_id, sort_key):
+        return self.table.get_item(
+            Key={"PK": f"USER#{user_id}", "SK": sort_key}, ConsistentRead=True,
+        ).get("Item")
 
-    def create_registration(self, registration, now_epoch):
-        # A separate low-level client avoids resource-client attribute transformations.
+    def list_user_registrations(self, user_id):
+        items = []
+        params = {"KeyConditionExpression": Key("PK").eq(f"USER#{user_id}") & Key("SK").begins_with("REGISTRATION#"),
+                  "ConsistentRead": True}
+        while True:
+            result = self.table.query(**params)
+            items.extend(result.get("Items", []))
+            if "LastEvaluatedKey" not in result:
+                return items
+            params["ExclusiveStartKey"] = result["LastEvaluatedKey"]
+
+    def create_booking(self, registration, key, fingerprint, now_ms):
+        """Seat, owner reference, ticket and HTTP replay record commit together."""
         client = local_client(self.table.meta.client.meta.endpoint_url, self.table.name)
         serializer = TypeSerializer()
 
         def attributes(values):
-            return {key: serializer.serialize(value) for key, value in values.items()}
+            return {name: serializer.serialize(value) for name, value in values.items()}
 
+        user_pk = f"USER#{registration['userId']}"
+        new_items = [
+            {"PK": user_pk, "SK": f"REGISTRATION#{registration['eventId']}",
+             "registrationId": registration["id"], "eventId": registration["eventId"],
+             "createdAt": registration["createdAt"], "entityType": "USER_REGISTRATION"},
+            {**registration, "PK": f"REGISTRATION#{registration['id']}", "SK": "METADATA", "entityType": "REGISTRATION"},
+            {"PK": user_pk, "SK": f"IDEMPOTENCY#{key}", "fingerprint": fingerprint,
+             "registrationId": registration["id"], "registration": registration, "entityType": "IDEMPOTENCY"},
+        ]
         client.transact_write_items(
-            ClientRequestToken=registration["id"],
-            TransactItems=[
-                {"Update": {
-                    "TableName": self.table.name,
-                    "Key": attributes({"PK": "EVENTS", "SK": f"EVENT#{registration['eventId']}"}),
-                    "UpdateExpression": "SET remainingSeats = remainingSeats - :one",
-                    "ConditionExpression": "attribute_exists(PK) AND registrationOpen = :open AND remainingSeats >= :one AND startsAtEpoch > :now",
-                    "ExpressionAttributeValues": attributes({":one": 1, ":open": True, ":now": now_epoch}),
-                }},
-                {"Put": {
-                    "TableName": self.table.name,
-                    "Item": attributes({"PK": f"EVENT#{registration['eventId']}", "SK": f"EMAIL#{registration['email']}", "entityType": "REGISTRATION_UNIQUE", "registrationId": registration["id"]}),
-                    "ConditionExpression": "attribute_not_exists(PK) AND attribute_not_exists(SK)",
-                }},
-                {"Put": {
-                    "TableName": self.table.name,
-                    "Item": attributes({**registration, "PK": f"REGISTRATION#{registration['id']}", "SK": "METADATA", "entityType": "REGISTRATION"}),
-                    "ConditionExpression": "attribute_not_exists(PK) AND attribute_not_exists(SK)",
-                }},
-            ],
+            # Stable within SDK retries. Conditional owner/key writes protect new HTTP invocations.
+            ClientRequestToken=uuid.uuid4().hex,
+            TransactItems=[{"Update": {
+                "TableName": self.table.name,
+                "Key": attributes({"PK": "EVENTS", "SK": f"EVENT#{registration['eventId']}"}),
+                "UpdateExpression": "SET remainingSeats = remainingSeats - :one",
+                "ConditionExpression": (
+                    "attribute_exists(PK) AND registrationOpen = :open AND remainingSeats >= :one "
+                    "AND (attribute_not_exists(salesOpenAtEpochMs) OR salesOpenAtEpochMs <= :now) "
+                    "AND ((attribute_exists(startsAtEpochMs) AND startsAtEpochMs > :now) "
+                    "OR (attribute_not_exists(startsAtEpochMs) AND startsAtEpoch > :seconds))"),
+                "ExpressionAttributeValues": attributes({":one": 1, ":open": True, ":now": now_ms, ":seconds": now_ms // 1000}),
+            }}] + [{"Put": {"TableName": self.table.name, "Item": attributes(item),
+                            "ConditionExpression": "attribute_not_exists(PK) AND attribute_not_exists(SK)"}} for item in new_items],
         )

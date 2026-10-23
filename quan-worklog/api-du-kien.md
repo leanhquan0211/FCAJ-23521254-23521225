@@ -1,5 +1,7 @@
 # Contract người mua v3 — bản đề xuất để thống nhất
 
+> **Cập nhật23/10 sau khi duyệt:** người dùng đã cho triển khai toàn plan. Nội dung dưới giữ như bản nháp lịch sử; contract đã thực hiện nằm tại [docs/api-contract.md](../docs/api-contract.md), bằng chứng ở [nhật ký](week-4/23-10.md). Các câu “chưa duyệt/chưa triển khai” phía dưới mô tả thời điểm soạn nháp, không còn là trạng thái hiện tại. Khi có khác biệt dùng canonical contract và code đã bàn giao.
+
 Ngày: **23/10/2026**. Nguồn yêu cầu: [biên bản](yeu-cau.md). **Chưa duyệt, chưa triển khai.** API đang chạy vẫn theo [contract v2](../docs/api-contract.md). Không dùng JSON ví dụ ở đây như kết quả kiểm thử hoặc cam kết API mới đã tồn tại.
 
 Đầu mối cập nhật canonical contract và data model: **bên ứng dụng/người mua**. Sau khi hai bên thống nhất mới đưa nội dung được duyệt vào `docs/api-contract.md`, `docs/data-model.md` và code. Mọi thay đổi ảnh hưởng test phải có commit/mốc áp dụng. Các ID, token, mật khẩu và thời điểm trong ví dụ là dữ liệu minh họa, không hardcode chúng vào bài test.

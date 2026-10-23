@@ -8,10 +8,11 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
-def request(base, path, expected=200, origin=None, method="GET"):
+def request(base, path, expected=200, origin=None, method="GET", preflight_method="GET"):
     headers = {"Origin": origin} if origin else {}
     if method == "OPTIONS":
-        headers["Access-Control-Request-Method"] = "GET"
+        headers["Access-Control-Request-Method"] = preflight_method
+        headers["Access-Control-Request-Headers"] = "Content-Type,X-CSRF-Token,Idempotency-Key"
     try:
         result = urlopen(Request(base + path, headers=headers, method=method), timeout=75)
     except HTTPError as exc:
@@ -32,17 +33,19 @@ def main():
     base = args.base_url.rstrip("/")
     health, _ = request(base, "/health")
     assert health["status"] == "ok" and health["database"]["status"] == "ready"
+    assert health["apiContractVersion"] == "3.0"
+    assert datetime.fromisoformat(health["serverTime"]).utcoffset() is not None
     result, headers = request(base, "/events", origin="http://localhost:5173")
     assert headers["Access-Control-Allow-Origin"] == "http://localhost:5173"
     events = result["events"]
     assert isinstance(events, list)
-    fields = {"id", "title", "category", "dateTime", "location", "organizer", "capacity", "remainingSeats", "summary", "description", "status"}
+    fields = {"id", "title", "category", "dateTime", "salesOpenAt", "location", "organizer", "capacity", "remainingSeats", "summary", "description", "status"}
     for item in events:
         assert set(item) == fields
         assert isinstance(item["capacity"], int) and isinstance(item["remainingSeats"], int)
         assert 0 <= item["remainingSeats"] <= item["capacity"]
         assert datetime.fromisoformat(item["dateTime"]).utcoffset() is not None
-        assert item["status"] in {"open", "full", "ended", "closed"}
+        assert item["status"] in {"open", "full", "ended", "closed", "not_open"}
     if events:
         sample = events[0]
         detail, _ = request(base, f"/events/{sample['id']}")
@@ -55,6 +58,9 @@ def main():
     assert "Access-Control-Allow-Origin" not in denied_headers
     _, preflight = request(base, "/events", origin="http://localhost:5173", method="OPTIONS")
     assert preflight["Access-Control-Allow-Origin"] == "http://localhost:5173"
+    _, booking_preflight = request(base, "/events/http-open/registrations", origin="http://localhost:5173", method="OPTIONS", preflight_method="POST")
+    assert "idempotency-key" in booking_preflight["Access-Control-Allow-Headers"].lower()
+    assert "idempotent-replayed" in headers["Access-Control-Expose-Headers"].lower()
     print(json.dumps({"checks": "passed", "events": len(events), "statuses": sorted({item["status"] for item in events}), "fingerprint": hashlib.sha256(json.dumps(events, sort_keys=True, ensure_ascii=False).encode()).hexdigest()}))
 
 

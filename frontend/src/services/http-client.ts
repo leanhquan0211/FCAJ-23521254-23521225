@@ -8,6 +8,8 @@ const ERROR_CODES: Record<string, RegistrationErrorCode> = {
   FORBIDDEN: 'forbidden', FORBIDDEN_ORIGIN: 'forbidden', CSRF_FAILED: 'forbidden',
   EVENT_CHANGED: 'conflict', CAPACITY_TOO_SMALL: 'conflict', EVENT_HAS_REGISTRATIONS: 'conflict',
   LOGIN_RATE_LIMITED: 'rate-limited',
+  AUTH_RATE_LIMITED: 'rate-limited', EMAIL_ALREADY_EXISTS: 'duplicate',
+  SALES_NOT_OPEN: 'closed', IDEMPOTENCY_KEY_REUSED: 'conflict', REGISTRATION_BUSY: 'unavailable',
 }
 
 function apiBaseUrl() {
@@ -35,6 +37,7 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
     if (!response.ok) {
       const error = body?.error
       if (path.startsWith('/admin/') && error?.code === 'AUTH_REQUIRED') window.dispatchEvent(new Event('admin-session-expired'))
+      if (!path.startsWith('/admin/') && error?.code === 'AUTH_REQUIRED') window.dispatchEvent(new Event('buyer-session-expired'))
       throw new RegistrationError(ERROR_CODES[error?.code] ?? 'internal', error?.message ?? 'Không thể xử lý yêu cầu. Vui lòng thử lại.', error?.details)
     }
     if (body === null) throw new RegistrationError('internal', 'API trả về dữ liệu không hợp lệ.')
