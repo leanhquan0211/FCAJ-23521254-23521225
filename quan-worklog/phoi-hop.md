@@ -1,6 +1,6 @@
 # Phối hợp song song — ứng dụng và kiểm thử
 
-> Mốc mới đang triển khai ngày23/10: `feat/unified-account`, contract4.0 thay hai cookie bằng event_session, /auth/login nhận identifier/password, sai role403; admin xóa kèm ghi danh và có202 tiếp tục. Chưa coi đã push cho tới khi nhật ký ghi SHA remote được đối chiếu. Mốc `feat/buyer-flow@a6ba0f2` API3.0 và `feat/role-navigation@e9e9bff` được giữ nguyên. Phần mô tả các mốc M0–M4 bên dưới thuộc v3; muốn thử v4 phải lấy code/contract cùng commit, không trộn artifact. Xem [nhật ký mục15](week-4/23-10.md).
+> Mốc v4 đã push ngày23/10: `feat/unified-account@a10907f0287acd7c664b3902b55968565e66042b`, contract4.0 thay hai cookie bằng event_session, /auth/login nhận identifier/password, sai role403; admin xóa kèm ghi danh và có202 tiếp tục. Đã đối chiếu remote SHA. Mốc `feat/buyer-flow@a6ba0f2` API3.0 và `feat/role-navigation@e9e9bff` được giữ nguyên. Phần mô tả các mốc M0–M4 bên dưới thuộc v3; muốn thử v4 phải lấy code/contract cùng commit, không trộn artifact. Xem [nhật ký mục15](week-4/23-10.md) cho kiểm tra, giới hạn và cách clone riêng không ghi đè thay đổi.
 
 > Bổ sung23/10: sau bàn giao API `feat/buyer-flow@a6ba0f2`, người dùng duyệt tách giao diện User/admin. Phần UI làm trên `feat/role-navigation` tại cùng worktree buyer, không đổi API/schema hoặc nhánh bàn giao. Bên test tiếp tục dùng SHA đã chốt cho tích hợp API; cập nhật selector/điều hướng nếu chọn kiểm tra UI mới. Kết quả mới nằm ở mục14 [nhật ký](week-4/23-10.md).
 
