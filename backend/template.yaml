@@ -158,3 +158,24 @@ Resources:
             Path: /admin/events/{eventId}
             Method: DELETE
             PayloadFormatVersion: "2.0"
+        AdminUsers:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/users
+            Method: GET
+            PayloadFormatVersion: "2.0"
+        AdminUpdateUser:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/users/{userId}
+            Method: PUT
+            PayloadFormatVersion: "2.0"
+        AdminDeleteUser:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref LocalHttpApi
+            Path: /admin/users/{userId}
+            Method: DELETE
+            PayloadFormatVersion: "2.0"

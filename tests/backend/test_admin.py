@@ -173,7 +173,7 @@ class AdminEventTests(unittest.TestCase):
 
 class AdminHandlerTests(unittest.TestCase):
     def test_every_admin_data_route_requires_server_session(self):
-        for route in ["GET /admin/events", "POST /admin/events", "PUT /admin/events/{eventId}", "DELETE /admin/events/{eventId}", "GET /admin/session", "POST /admin/logout"]:
+        for route in ["GET /admin/users", "PUT /admin/users/{userId}", "DELETE /admin/users/{userId}", "GET /admin/events", "POST /admin/events", "PUT /admin/events/{eventId}", "DELETE /admin/events/{eventId}", "GET /admin/session", "POST /admin/logout"]:
             with self.subTest(route=route), patch("app.local_table"):
                 result = app.lambda_handler({"routeKey": route, "headers": {"role": "admin"}}, None)
                 self.assertEqual(result["statusCode"], 401)

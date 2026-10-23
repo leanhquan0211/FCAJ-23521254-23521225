@@ -1,6 +1,6 @@
-# API contract local — phiên bản 4.0
+# API contract local — phiên bản 4.1
 
-Áp dụng cho nhánh `feat/unified-account`, ngày 23/10/2026, theo yêu cầu đăng nhập chung/sidebar/xóa ghi danh đã được người dùng duyệt trong [nhật ký, mục 15](../quan-worklog/week-4/23-10.md), kế thừa [yêu cầu nền](../quan-worklog/yeu-cau.md). Bằng chứng chạy nằm trong [nhật ký](../quan-worklog/week-4/23-10.md). Đây là hợp đồng của ứng dụng; k6/runner/dashboard do bên kiểm thử phát triển riêng.
+Áp dụng cho nhánh `feat/admin-accounts-sidebar`, ngày 23/10/2026, theo yêu cầu đăng nhập chung/sidebar/xóa ghi danh đã được người dùng duyệt trong [nhật ký, mục 15](../phuc-worklog/week-4/23-10-ung-dung.md), kế thừa [yêu cầu nền](../quan-worklog/yeu-cau.md). Nhật ký giữ bằng chứng các mốc trước; kiểm tra bổ sung 4.1 nằm ở [test backend](../tests/backend/test_unified_integration.py), [HTTP smoke](../backend/tools/check_accounts_api.py) và [browser smoke](../tests/frontend/check-accounts-browser.mjs). Đây là hợp đồng của ứng dụng; k6/runner/dashboard do bên kiểm thử phát triển riêng.
 
 ## 1. Địa chỉ và quy tắc chung
 
@@ -29,6 +29,9 @@ SAM ứng dụng mặc định `http://127.0.0.1:3001`; SAM test `http://127.0.0
 | POST /admin/login | Origin hợp lệ | `{username,password}` → 200 AdminSession + cookie |
 | GET /admin/session | Admin | Không → 200 AdminSession |
 | POST /admin/logout | Admin + Origin + CSRF | Không → 200 `{loggedOut:true}` |
+| GET /admin/users | Admin | Không → 200 `{users:ManagedUser[]}` |
+| PUT /admin/users/{userId} | Admin + Origin + CSRF | `{fullName,email,version}` → 200 ManagedUser |
+| DELETE /admin/users/{userId} | Admin + Origin + CSRF | `{version}` → 200 `{deleted:true}` hoặc 202 `{deleted:false,deleting:true,version}` |
 | GET /admin/events | Admin | Không → 200 `{events:AdminEvent[]}` |
 | POST /admin/events | Admin + Origin + CSRF | EventInput → 201 AdminEvent |
 | PUT /admin/events/{eventId} | Admin + Origin + CSRF | EventInput + version → 200 AdminEvent |
@@ -74,7 +77,7 @@ EventInput gồm title/category/dateTime/salesOpenAt/location/organizer/capacity
 - Ưu tiên status: tới dateTime → ended; manual đóng → closed; chưa tới salesOpenAt → not_open; hết chỗ → full; còn lại open. Chưa có endTime riêng.
 - Giờ server quyết định. Đúng salesOpenAt thì mở; đúng dateTime thì dừng. Transaction kiểm tra epoch milliseconds, không dựa đồng hồ UI. Legacy startsAtEpoch giây vẫn được hỗ trợ.
 
-Health: `{status:"ok",database:{status:"ready",table:string},apiContractVersion:"4.0",serverTime:ISO_UTC}`. Health chỉ đọc, không tạo/seed bảng. serverTime giúp đối chiếu clock, không bảo đảm request đến đúng thời điểm client phát.
+Health: `{status:"ok",database:{status:"ready",table:string},apiContractVersion:"4.1",serverTime:ISO_UTC}`. Health chỉ đọc, không tạo/seed bảng. serverTime giúp đối chiếu clock, không bảo đảm request đến đúng thời điểm client phát.
 
 ## 5. Đặt vé, replay và quyền xem
 
@@ -140,3 +143,17 @@ Kỳ vọng trên sự kiện mới:100 người/200 chỗ →100 vé; tranh10 �
 - [OWASP CSRF](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), [k6 cookies](https://grafana.com/docs/k6/latest/using-k6/cookies/): tham khảo bảo vệ thao tác và tách phiên thử.
 
 Mốc v3 để bên kiểm thử đối chiếu: `feat/buyer-flow@a6ba0f21e41cc73cfadb3242ff9bd9d30e2f234a`. Không đọc contract v4 rồi áp dụng cho API v3; lấy code và tài liệu cùng commit.
+
+## Quản lý User — bổ sung ở 4.1
+
+`ManagedUser` gồm `userId,fullName,email,role,createdAt,version,deleting`. Chỉ Admin được dùng ba route quản lý tài khoản; không liệt kê hay sửa tài khoản Admin. `userId` phải là UUID v4 chuẩn. Không nhận password/role hoặc trường lạ trong body. Tìm kiếm theo tên/email thực hiện trên frontend, không dùng query API.
+
+Sửa tên/email cần đúng `version` đang hiển thị. Tên được trim (1–120 ký tự); email trim/lowercase, đúng dạng, tối đa 254 ký tự và duy nhất. Profile và ánh xạ email được đổi trong cùng transaction, version tăng một. Vé đã đặt giữ tên/email tại lúc đặt; vé mới dùng thông tin mới. Session đọc lại profile nên nhận thông tin vừa sửa.
+
+Xóa dùng `version` để tránh xóa nhầm dữ liệu vừa được người khác sửa. Backend đánh dấu `deleting` trước: đăng nhập, session và đặt vé của User đó bị từ chối ngay (401 `AUTH_REQUIRED`). Transaction mua vé nay có **5 thao tác: 4 ghi + 1 ConditionCheck profile User đang hoạt động**; dữ liệu test phải có profile thật, không chỉ cookie hoặc userId tự tạo.
+
+Mỗi vé bị hủy bằng một transaction gồm kiểm tra tài khoản đang xóa, xóa liên kết User–vé, xóa vé và trả một chỗ cho sự kiện còn hoạt động. Vì liên kết và trả chỗ cùng commit, gửi lại không trả chỗ lần hai. Sự kiện đã bị xóa/đang xóa không được tạo lại hoặc trả chỗ. Vé của người khác không bị tác động.
+
+Một lần DELETE xử lý tối đa 10 liên kết vé; metadata User theo lô 25; dọn session/vé còn sót bằng tối đa 5 trang Scan, mỗi trang 100 item. Cursor được lưu trong profile để tiếp tục. Response 202 yêu cầu gọi lại DELETE cùng version cho tới 200; UI có nút tiếp tục xóa. Tài khoản vẫn bị khóa trong thời gian này. Xóa lại tài khoản đã mất trả 200. Backend chỉ dọn vé sót sau xóa sự kiện nếu sự kiện đã mất/đang xóa; vé mất liên kết nhưng sự kiện còn hoạt động trả `ACCOUNT_BUSY` để tránh đoán sai số chỗ.
+
+Lỗi mới: 404 `ACCOUNT_NOT_FOUND`; 409 `ACCOUNT_CHANGED` (tải lại danh sách), email trùng trả 409 `EMAIL_ALREADY_EXISTS` kèm trường email; 503 `ACCOUNT_BUSY` khi cần xử lý tiếp/đối chiếu dữ liệu. Các kiểm tra quyền, Origin và CSRF giống nhóm Admin hiện có. Bản này dùng Scan cho danh sách và dọn session trong phạm vi local; chưa phải bằng chứng hiệu năng hoặc thiết kế tối ưu cho AWS.

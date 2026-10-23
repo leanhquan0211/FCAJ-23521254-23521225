@@ -1,10 +1,12 @@
+> Contract ứng dụng hiện hành: **4.1**, nhánh `feat/admin-accounts-sidebar`; xem [API contract](../docs/api-contract.md). Công việc ứng dụng thuộc Phúc. Phần dưới giữ các mốc bàn giao trước để truy vết.
+
 # Phối hợp song song — ứng dụng và kiểm thử
 
-> Mốc v4 đã push ngày23/10: `feat/unified-account@a10907f0287acd7c664b3902b55968565e66042b`, contract4.0 thay hai cookie bằng event_session, /auth/login nhận identifier/password, sai role403; admin xóa kèm ghi danh và có202 tiếp tục. Đã đối chiếu remote SHA. Mốc `feat/buyer-flow@a6ba0f2` API3.0 và `feat/role-navigation@e9e9bff` được giữ nguyên. Phần mô tả các mốc M0–M4 bên dưới thuộc v3; muốn thử v4 phải lấy code/contract cùng commit, không trộn artifact. Xem [nhật ký mục15](week-4/23-10.md) cho kiểm tra, giới hạn và cách clone riêng không ghi đè thay đổi.
+> Mốc v4 đã push ngày23/10: `feat/unified-account@a10907f0287acd7c664b3902b55968565e66042b`, contract4.0 thay hai cookie bằng event_session, /auth/login nhận identifier/password, sai role403; admin xóa kèm ghi danh và có202 tiếp tục. Đã đối chiếu remote SHA. Mốc `feat/buyer-flow@a6ba0f2` API3.0 và `feat/role-navigation@e9e9bff` được giữ nguyên. Phần mô tả các mốc M0–M4 bên dưới thuộc v3; muốn thử v4 phải lấy code/contract cùng commit, không trộn artifact. Xem [nhật ký mục15](../phuc-worklog/week-4/23-10-ung-dung.md) cho kiểm tra, giới hạn và cách clone riêng không ghi đè thay đổi.
 
-> Bổ sung23/10: sau bàn giao API `feat/buyer-flow@a6ba0f2`, người dùng duyệt tách giao diện User/admin. Phần UI làm trên `feat/role-navigation` tại cùng worktree buyer, không đổi API/schema hoặc nhánh bàn giao. Bên test tiếp tục dùng SHA đã chốt cho tích hợp API; cập nhật selector/điều hướng nếu chọn kiểm tra UI mới. Kết quả mới nằm ở mục14 [nhật ký](week-4/23-10.md).
+> Bổ sung23/10: sau bàn giao API `feat/buyer-flow@a6ba0f2`, người dùng duyệt tách giao diện User/admin. Phần UI làm trên `feat/role-navigation` tại cùng worktree buyer, không đổi API/schema hoặc nhánh bàn giao. Bên test tiếp tục dùng SHA đã chốt cho tích hợp API; cập nhật selector/điều hướng nếu chọn kiểm tra UI mới. Kết quả mới nằm ở mục14 [nhật ký](../phuc-worklog/week-4/23-10-ung-dung.md).
 
-Cập nhật23/10/2026 sau khi người dùng duyệt toàn plan. Nguồn: [biên bản](yeu-cau.md). Bên ứng dụng là cửa sổ nhận biên bản này; không tự suy người thực hiện từ tên thư mục. Contract tại commit v3 là API3.0; file [contract](../docs/api-contract.md) trên nhánh mới là4.0.
+Cập nhật23/10/2026 sau khi người dùng duyệt toàn plan. Nguồn: [biên bản](yeu-cau.md). Bên ứng dụng là cửa sổ nhận biên bản này; không tự suy người thực hiện từ tên thư mục. Contract tại commit v3 là API3.0; file [contract](../docs/api-contract.md) trên nhánh hiện hành là4.1.
 
 ## 1. Trạng thái Git thực tế
 
@@ -28,7 +30,8 @@ Hai cửa sổ cùng máy cần hai worktree hoặc clone. Chỉ đổi branch t
 | tests/runner | Không thêm vào Lambda | Runner local riêng |
 | tests/dashboard | Không nhúng vào frontend sản phẩm | Frontend test/package/lock riêng |
 | tests/results | Đọc báo cáo | Kết quả theo runId, không secret |
-| quan-worklog | Cửa sổ ứng dụng ghi | Đọc |
+| phuc-worklog | Công việc ứng dụng của Phúc; chỉ ghi nhật ký khi được yêu cầu | Đọc |
+| quan-worklog | Giữ biên bản và phối hợp, không quy công việc ứng dụng cho Quân | Đọc |
 | phuc-worklog | Không ghi đè | Theo phân công bên đó |
 | README, Compose, dependency, CI/infra | Một bên sửa mỗi đợt, ghi rõ nhu cầu | Tránh đồng thời sửa cùng file |
 
@@ -44,7 +47,7 @@ Hai cửa sổ cùng máy cần hai worktree hoặc clone. Chỉ đổi branch t
 | M3 | UI người mua và giờ mở bán trong admin | Browser smoke, dùng thử thủ công |
 | M4 | Unit/integration/HTTP/Edge hồi quy ứng dụng và tài liệu | Chạy k6/runner/dashboard thật sau khi tích hợp đúng commit |
 
-M0–M3 đã có mã và kiểm tra local. Phần hồi quy ứng dụng của M4 đã chạy; chưa có kết quả k6 100 người hoặc dashboard/runner của bên test. Số lượng và giới hạn bằng chứng trong [nhật ký](week-4/23-10.md).
+M0–M3 đã có mã và kiểm tra local. Phần hồi quy ứng dụng của M4 đã chạy; chưa có kết quả k6 100 người hoặc dashboard/runner của bên test. Số lượng và giới hạn bằng chứng trong [nhật ký](../phuc-worklog/week-4/23-10-ung-dung.md).
 
 Hai bên không cần chờ toàn dự án: bên test lấy commit bàn giao, tích hợp vào branch riêng rồi build lại API test từ chính branch đó. Trước mỗi run ghi app commit, contract3.0, bảng/env/runId và tham số thực tế. Không dùng artifact `.aws-sam` của branch khác mà không ghi rõ.
 

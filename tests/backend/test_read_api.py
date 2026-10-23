@@ -81,7 +81,7 @@ class ReadApiTests(unittest.TestCase):
         result, body = self.invoke("GET /health", repo)
         self.assertEqual(result["statusCode"], 200)
         self.assertEqual(body["database"]["status"], "ready")
-        self.assertEqual(body["apiContractVersion"], "4.0")
+        self.assertEqual(body["apiContractVersion"], "4.1")
         self.assertIsNotNone(datetime.fromisoformat(body["serverTime"]).utcoffset())
         repo.health.assert_called_once()
 

@@ -12,6 +12,7 @@ import { RegistrationResultPage } from '@/pages/RegistrationResultPage'
 import { AdminLayout } from '@/components/AdminLayout'
 import { AdminLoginPage } from '@/pages/admin/AdminLoginPage'
 import { AdminEventListPage } from '@/pages/admin/AdminEventListPage'
+import { AdminAccountsPage } from '@/pages/admin/AdminAccountsPage'
 import { EventEditorPage } from '@/pages/admin/EventEditorPage'
 import { BuyerAuthPage } from '@/pages/BuyerAuthPage'
 import { MyTicketsPage } from '@/pages/MyTicketsPage'
@@ -42,6 +43,7 @@ function App() {
       </Route>
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminEventListPage />} />
+        <Route path="users" element={<AdminAccountsPage />} />
         <Route path="events/new" element={<EventEditorPage />} />
         <Route path="events/:eventId/edit" element={<EventEditorPage />} />
       </Route>

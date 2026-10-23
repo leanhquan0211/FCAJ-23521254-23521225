@@ -26,6 +26,7 @@ def event_item(**changes):
 class BookingTests(unittest.TestCase):
     def setUp(self):
         self.repo = Mock()
+        self.repo.get_user_account.return_value = {"role": "user"}
         self.repo.get_event.return_value = event_item()
         self.repo.get_user_item.return_value = None
         self.service = BookingService(self.repo)
@@ -161,7 +162,7 @@ class BookingTests(unittest.TestCase):
                 app.registration_body(event)
             self.assertEqual(caught.exception.status, status)
 
-    def test_transaction_has_four_atomic_guarded_writes(self):
+    def test_transaction_has_four_writes_and_active_account_guard(self):
         ticket, _ = self.service.register('example', {}, self.user, self.key)
         table = Mock(name='table')
         table.name = 'fcaj-event-workshop-local-test'
@@ -169,10 +170,11 @@ class BookingTests(unittest.TestCase):
         with patch('repository.local_client') as client:
             EventRepository(table).create_booking(ticket, self.key, 'fingerprint', 123000)
             writes = client.return_value.transact_write_items.call_args.kwargs['TransactItems']
-        self.assertEqual(len(writes), 4)
+        self.assertEqual(len(writes), 5)
+        self.assertIn('attribute_not_exists(deleting)', writes[1]['ConditionCheck']['ConditionExpression'])
         self.assertIn('remainingSeats >= :one', writes[0]['Update']['ConditionExpression'])
         self.assertIn('salesOpenAtEpochMs <= :now', writes[0]['Update']['ConditionExpression'])
-        self.assertTrue(all('ConditionExpression' in item['Put'] for item in writes[1:]))
+        self.assertTrue(all('ConditionExpression' in item['Put'] for item in writes[2:]))
 
 
 if __name__ == '__main__':

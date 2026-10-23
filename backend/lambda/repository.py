@@ -54,6 +54,9 @@ class EventRepository:
             Key={"PK": f"REGISTRATION#{registration_id}", "SK": "METADATA"}, ConsistentRead=True,
         ).get("Item")
 
+    def get_user_account(self, user_id):
+        return self.get_user_item(user_id, "PROFILE")
+
     def get_user_item(self, user_id, sort_key):
         return self.table.get_item(
             Key={"PK": f"USER#{user_id}", "SK": sort_key}, ConsistentRead=True,
@@ -100,6 +103,10 @@ class EventRepository:
                     "AND ((attribute_exists(startsAtEpochMs) AND startsAtEpochMs > :now) "
                     "OR (attribute_not_exists(startsAtEpochMs) AND startsAtEpoch > :seconds))"),
                 "ExpressionAttributeValues": attributes({":one": 1, ":open": True, ":now": now_ms, ":seconds": now_ms // 1000}),
+            }}, {"ConditionCheck": {
+                "TableName": self.table.name, "Key": attributes({"PK": user_pk, "SK": "PROFILE"}),
+                "ConditionExpression": "#role = :user AND attribute_not_exists(deleting)",
+                "ExpressionAttributeNames": {"#role": "role"}, "ExpressionAttributeValues": attributes({":user": "user"}),
             }}] + [{"Put": {"TableName": self.table.name, "Item": attributes(item),
                             "ConditionExpression": "attribute_not_exists(PK) AND attribute_not_exists(SK)"}} for item in new_items],
         )

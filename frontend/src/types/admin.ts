@@ -1,4 +1,10 @@
 import type { EventCategory, EventItem } from '@/types/event'
+import type { Buyer } from '@/types/buyer'
+
+export interface ManagedAccount extends Buyer {
+  version: number
+  deleting: boolean
+}
 
 export interface AdminSession {
   username: string

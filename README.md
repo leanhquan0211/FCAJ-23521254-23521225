@@ -68,7 +68,7 @@ Terraform sẽ quản lý hạ tầng AWS.
 - Frontend có đăng nhập chung, sidebar/navbar theo role; User xem sự kiện và vé của mình, admin quản lý/tạo/sửa/xóa hoặc mở/đóng đăng ký. Không còn trang chọn khu vực; các tab cùng browser dùng một tài khoản. Chọn API hoặc mock rõ ràng bằng `VITE_DATA_MODE`; xem [Frontend README](frontend/README.md).
 - Backend SAM Python 3.13 có `GET /health`, `GET /events`, `GET /events/{eventId}`, `POST /events/{eventId}/registrations`, `GET /registrations/{registrationId}`. Đăng ký giữ chỗ và chống trùng bằng DynamoDB transaction; xem [Backend README](backend/README.md).
 - Có [API contract](docs/api-contract.md), [mô hình dữ liệu](docs/data-model.md), unit test, kiểm tra transaction đồng thời và HTTP smoke test local. Khởi tạo mặc định không thêm dữ liệu mẫu; chỉ seed demo khi chủ động dùng `--seed-demo`, không ghi đè bản ghi cũ. Dữ liệu ứng dụng và dữ liệu kiểm thử dùng bảng riêng.
-- Bản v4 trên `feat/unified-account` kế thừa User/booking/lịch mở bán/idempotency, chuyển sang cookie chung và cho admin xóa vé/ghi danh theo sự kiện, giữ tài khoản/vé khác. Event đang dọn bị khóa;202 cần tiếp tục. [Contract](docs/api-contract.md), [data model](docs/data-model.md), [nhật ký mục15](quan-worklog/week-4/23-10.md) ghi chi tiết kết quả và giới hạn. Bản v3 bàn giao cũ `feat/buyer-flow@a6ba0f2` được giữ nguyên. Code/tài liệu phải lấy cùng commit; nâng cấp cần đăng nhập lại, không reset bảng. Chưa email, thanh toán hoặc AWS.
+- Bản hiện hành API 4.1 trên `feat/admin-accounts-sidebar` thêm quản lý User (tìm/sửa/xóa, hủy vé và trả chỗ) và sidebar thu gọn; kế thừa User/booking/lịch mở bán/idempotency, chuyển sang cookie chung và cho admin xóa vé/ghi danh theo sự kiện, giữ tài khoản/vé khác. Event đang dọn bị khóa;202 cần tiếp tục. [Contract](docs/api-contract.md), [data model](docs/data-model.md), [nhật ký mục15](phuc-worklog/week-4/23-10-ung-dung.md) ghi chi tiết kết quả và giới hạn. Bản v3 bàn giao cũ `feat/buyer-flow@a6ba0f2` được giữ nguyên. Code/tài liệu phải lấy cùng commit; nâng cấp cần đăng nhập lại, không reset bảng. Chưa email, thanh toán hoặc AWS.
 
 
 ## Chạy toàn bộ local
@@ -76,3 +76,7 @@ Terraform sẽ quản lý hạ tầng AWS.
 Từ repo root: bật DynamoDB bằng `docker compose -f backend/compose.yaml up -d dynamodb`, build bằng `sam build --use-container --template-file backend/template.yaml`, rồi chạy SAM trên cổng 3001 theo [lệnh cấu hình đầy đủ](backend/README.md#chạy-từ-thư-mục-gốc-repository). Giữ terminal SAM chạy.
 
 Trong terminal khác, tạo `frontend/.env.local` từ `frontend/.env.example` nếu chưa có, chạy `cd frontend`, `npm ci` (khi cần cài dependency), `npm run dev`. Mở địa chỉ Vite in ra, thường là `http://localhost:5173`. Khi cập nhật code/template Backend phải build và restart phiên SAM đang chạy.
+
+## Bản mở rộng quản lý tài khoản
+
+Nhánh `feat/admin-accounts-sidebar`, API contract 4.1: Admin quản lý User (tìm tên/email, sửa, xóa và hủy vé/trả chỗ); sidebar cả hai role thu gọn được. [Contract](docs/api-contract.md) là nguồn hướng dẫn tích hợp hiện hành. Công việc ứng dụng và bản ghi trước đây thuộc [Phúc](phuc-worklog/week-4/23-10-ung-dung.md); không tự ghi thêm nhật ký.

@@ -22,9 +22,10 @@ Item sự kiện chứa các trường công khai trong [API contract v4](api-co
 API đăng ký dùng **một TransactWriteItems** gồm:
 
 1. Update sự kiện, giảm `remainingSeats` đúng một, điều kiện không có deleting, còn ghế, manual mở, đã tới salesOpenAt và chưa tới dateTime theo giờ server.
-2. Put User/event reference, điều kiện chưa tồn tại.
-3. Put đăng ký UUID có userId chủ sở hữu, điều kiện chưa tồn tại.
-4. Put User/Idempotency-Key gồm fingerprint và snapshot kết quả, điều kiện chưa tồn tại.
+2. ConditionCheck profile User tồn tại, role=user và chưa deleting.
+3. Put User/event reference, điều kiện chưa tồn tại.
+4. Put đăng ký UUID có userId chủ sở hữu, điều kiện chưa tồn tại.
+5. Put User/Idempotency-Key gồm fingerprint và snapshot kết quả, điều kiện chưa tồn tại.
 
 Transaction thành công trả201. Nếu bị hủy, service đọc nhất quán lại để phân loại replay/trùng/đóng/hết chỗ, retry tối đa4 lượt có jitter, sau đó503 REGISTRATION_BUSY. ClientRequestToken sinh cho từng transaction call và giữ trong SDK retry; HTTP request mới vẫn được bảo vệ bởi record idempotency bền vững. Replay đọc trước điều kiện bán, trả200 cùng vé. Chưa có TTL cho idempotency.
 
@@ -48,7 +49,7 @@ Compose dùng volume `fcaj-event-workshop-dynamodb-data` và `-sharedDb -dbPath 
 
 Sự kiện mới có `version=1`; sự kiện seed cũ thiếu version được xem là 0. Mỗi sửa tăng version một. Repository chỉ Put sửa khi chưa có deleting và version/cặp capacity/remainingSeats vẫn giống bản đọc trước. Xóa dùng quy trình khóa theo version rồi dọn riêng. Cần alias `#capacity` vì capacity là reserved word của DynamoDB. Một lượt đăng ký cạnh tranh làm điều kiện cập nhật/xóa thất bại thay vì bị ghi đè.
 
-Sức chứa mới trừ số chỗ đã dùng sẽ ra remainingSeats mới. Admin được xóa sự kiện bất kể ghế đã dùng; khóa deleting=true, registrationOpen=false trước khi dọn. Điều kiện sửa/booking từ chối khóa deleting. API quản trị đọc partition EVENTS, không Scan hoặc xuất tài khoản, session hay khóa email.
+Sức chứa mới trừ số chỗ đã dùng sẽ ra remainingSeats mới. Admin được xóa sự kiện bất kể ghế đã dùng; khóa deleting=true, registrationOpen=false trước khi dọn. Điều kiện sửa/booking từ chối khóa deleting. API quản trị sự kiện đọc partition EVENTS; danh sách User riêng dùng Scan và chỉ xuất trường công khai. Không xuất hash mật khẩu, session hay khóa email.
 
 `expiresAt` là Unix seconds. Backend luôn kiểm tra thời hạn session bằng code; không dựa vào việc DB có xóa item hết hạn hay không. Bộ đếm chỉ dùng key cửa sổ hiện tại. Mốc local chưa bật dọn TTL tự động, nên item hết hạn có thể còn trong DB; đăng xuất xóa session đang dùng. Không ghi token gốc hoặc mật khẩu rõ vào DB.
 
@@ -56,8 +57,18 @@ Mọi client cần endpoint local rõ ràng. Code chỉ cho các hostname loopba
 
 ## Xóa ghi danh theo sự kiện — v4
 
-Event có thêm deleting=true và deletionCursor (PK/SK trang scan cuối đã dọn), chỉ xuất deleting cho admin, không xuất cursor. Không tăng version khi khóa, để retry cùng version. Bốn ghi booking atomic được giữ; transaction không commit sau khi khóa xóa. Public list/detail và xem/replay vé ẩn event đang xóa.
+Event có thêm deleting=true và deletionCursor (PK/SK trang scan cuối đã dọn), chỉ xuất deleting cho admin, không xuất cursor. Không tăng version khi khóa, để retry cùng version. Bốn ghi booking atomic và kiểm tra profile User được giữ; transaction không commit sau khi khóa xóa. Public list/detail và xem/replay vé ẩn event đang xóa.
 
 EventDeletionService scan nhất quán cả bảng theo trang100, xử lý tối đa5trang/request. Chọn đúng Ticket có eventId, User SK REGISTRATION#eventId, User IDEMPOTENCY# với registration.eventId, legacy partition EVENT#eventId. Batch dọn xong trang mới lưu cursor, hết trang xóa event. 202 cần tiếp tục DELETE; lỗi giữa chừng dùng cursor bền vững để retry, không reset bảng. Không dọn PROFILE/USER_EMAIL/APP_SESSION hoặc dữ liệu event khác.
 
 Chưa có GSI/index đảo theo event nên scan là giới hạn rõ ràng của local, không phải cách đã chứng minh hiệu quả trên AWS. Cần thiết kế index/backfill có kiểm soát trước quy mô lớn. Không tự đổi schema hoặc migrate bảng ứng dụng trong bản này.
+
+## Quản lý tài khoản ở contract 4.1
+
+Profile `USER#{userId}/PROFILE` có `version` (tạo mới = 1; profile cũ thiếu trường được đọc là 0). Email duy nhất nằm ở `USER_EMAIL#{email}/METADATA`; đổi email phải cập nhật profile, thêm ánh xạ mới và xóa ánh xạ cũ trong cùng transaction. Vé giữ bản chụp tên/email tại lúc đặt.
+
+Transaction mua vé có 4 thao tác ghi và 1 ConditionCheck: profile User phải tồn tại, role=user và chưa có deleting. Khóa xóa tài khoản vì vậy chặn cả yêu cầu mua đang chạy dở trước lúc commit.
+
+Khi xóa User, đặt `deleting=true` trước. Với từng liên kết `USER#.../REGISTRATION#...`, transaction xóa liên kết + vé và cộng một remainingSeats nếu sự kiện còn hoạt động. Liên kết là bằng chứng công việc chưa xử lý nên retry không hoàn chỗ hai lần. Nếu sự kiện đang xóa/đã mất thì không hoàn chỗ. Sau đó dọn metadata, session và vé sót của sự kiện đang xóa; lưu `deletionCursor` trên profile qua các lần DELETE. Cuối cùng xóa profile và ánh xạ email. Không tìm quyền sở hữu bằng email, không đụng vé/tài khoản khác. Vé legacy không có userId không được suy đoán là của User chỉ vì trùng email.
+
+Danh sách User và dọn session hiện dùng Scan local. Cần đánh giá lại chỉ mục, chi phí và công việc nền trước khi triển khai quy mô lớn trên AWS. Xem [contract](api-contract.md) và [account_repository.py](../backend/lambda/account_repository.py).

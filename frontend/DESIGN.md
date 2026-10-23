@@ -119,3 +119,9 @@ html:root {
   --ring: var(--color-focus);
 }
 ```
+
+## Mở rộng đã duyệt: tài khoản và sidebar
+
+Giữ bảng màu Almanac, font và các component hiện có. Admin có mục Quản lý tài khoản với tìm kiếm tên/email, danh sách hiện cả tên và email, hộp sửa và xác nhận xóa có giải thích hủy vé/trả chỗ. Không có mục này trong menu User.
+
+Sidebar desktop rộng 256px khi mở và 80px khi thu gọn. Nút điều khiển đặt trên navbar; menu dạng icon có aria-label và tooltip cả khi hover lẫn focus bàn phím. Lưu duy nhất tùy chọn boolean trong localStorage. Mobile luôn dùng drawer đầy đủ chữ, độc lập với tùy chọn desktop. Không thêm thư viện hoặc đổi token.

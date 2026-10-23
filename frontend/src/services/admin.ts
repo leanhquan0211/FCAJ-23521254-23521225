@@ -1,6 +1,6 @@
 import { DATA_MODE } from '@/services/events'
 import { request } from '@/services/http-client'
-import type { AdminEvent, AdminSession, EventInput } from '@/types/admin'
+import type { AdminEvent, AdminSession, EventInput, ManagedAccount } from '@/types/admin'
 import { RegistrationError } from '@/types/registration'
 
 function requireApi() {
@@ -38,5 +38,22 @@ export function saveEvent(input: EventInput, session: AdminSession, existing?: A
 export function deleteEvent(event: AdminEvent, session: AdminSession) {
   return request<{ deleted: boolean; deleting?: boolean; version?: number }>(`/admin/events/${encodeURIComponent(event.id)}`, {
     method: 'DELETE', headers: { 'X-CSRF-Token': session.csrfToken }, body: JSON.stringify({ version: event.version }),
+  })
+}
+
+export async function getAdminAccounts() {
+  return (await request<{ users: ManagedAccount[] }>('/admin/users')).users
+}
+
+export function saveAccount(account: ManagedAccount, fullName: string, email: string, session: AdminSession) {
+  return request<ManagedAccount>(`/admin/users/${account.userId}`, {
+    method: 'PUT', headers: { 'X-CSRF-Token': session.csrfToken },
+    body: JSON.stringify({ fullName, email, version: account.version }),
+  })
+}
+
+export function deleteAccount(account: ManagedAccount, session: AdminSession) {
+  return request<{ deleted: boolean; deleting?: boolean }>(`/admin/users/${account.userId}`, {
+    method: 'DELETE', headers: { 'X-CSRF-Token': session.csrfToken }, body: JSON.stringify({ version: account.version }),
   })
 }

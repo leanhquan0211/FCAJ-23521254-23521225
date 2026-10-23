@@ -26,7 +26,7 @@ def main():
     health, _ = admin.call("/health")
     table_name = health["database"]["table"]
     assert table_name.startswith("fcaj-event-workshop-local-test-"), "No writes: test table required"
-    assert health["apiContractVersion"] == "4.0"
+    assert health["apiContractVersion"] == "4.1"
     table = local_table(args.endpoint_url, table_name)
     password = secrets.token_urlsafe(24)
     username = "smoke-" + uuid.uuid4().hex[:10]
@@ -115,7 +115,7 @@ def main():
     owner.call("/auth/logout", "POST", {}, 403, csrf=False)
     owner.call("/auth/logout", "POST", {})
     owner.call("/auth/session", expected=401)
-    print(json.dumps({"checks": "passed", "contract": "4.0", "table": table_name,
+    print(json.dumps({"checks": "passed", "contract": "4.1", "table": table_name,
                       "lastSeatRequests": 8, "lastSeatWinners": 1, "ownerIsolation": True,
                       "schedule": True, "replayAfterFullAndClosed": True}))
 

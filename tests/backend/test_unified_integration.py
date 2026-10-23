@@ -20,12 +20,15 @@ from event_deletion import EventDeletionService, belongs_to_event
 from repository import EventRepository
 from service import ApiError, EventService
 from session import SessionService, shared_key
+from admin_accounts import AdminAccountService
+from account_repository import AccountRepository
 
 
 @unittest.skipUnless(os.getenv('RUN_DYNAMODB_INTEGRATION') == '1', 'Opt-in local database tests')
 class UnifiedIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.fixture_password = password_record("Dedicated account fixture only")
         name = os.environ['DYNAMODB_TABLE']
         if not name.startswith('fcaj-event-workshop-local-test-'):
             raise RuntimeError('Dedicated test table required')
@@ -47,9 +50,12 @@ class UnifiedIntegrationTests(unittest.TestCase):
             'salesOpenAt': None, 'location': 'Local', 'organizer': 'Test', 'capacity': seats,
             'registrationOpen': True, 'summary': 'Fixture', 'description': 'Fixture'})
 
-    def user(self):
-        return {'userId': str(uuid.uuid4()), 'email': f'{uuid.uuid4().hex}@example.com',
-                'fullName': 'Test Buyer', 'role': 'user', 'createdAt': '2026-10-23T00:00:00Z'}
+    def user(self, persist=True):
+        user = {'userId': str(uuid.uuid4()), 'email': f'{uuid.uuid4().hex}@example.com',
+                'fullName': 'Test Buyer', 'role': 'user', 'version': 1, 'createdAt': '2026-10-23T00:00:00Z'}
+        if persist:
+            BuyerRepository(self.table).create_user({**user, **self.fixture_password})
+        return user
 
     def finish_delete(self, event):
         for _ in range(30):
@@ -60,7 +66,7 @@ class UnifiedIntegrationTests(unittest.TestCase):
 
     def test_switch_account_revokes_old_session_and_legacy_cookies_cannot_authorize(self):
         buyer_repo = BuyerRepository(self.table)
-        user = self.user()
+        user = self.user(persist=False)
         password = uuid.uuid4().hex
         buyer_repo.create_user({**user, **password_record(password)})
         auth_repo = AuthRepository(self.table)
@@ -91,7 +97,7 @@ class UnifiedIntegrationTests(unittest.TestCase):
         self.assert_code('AUTH_REQUIRED', lambda: service.require(final_event))
 
     def test_delete_removes_only_event_tickets_and_preserves_account_session_other_event(self):
-        user = self.user()
+        user = self.user(persist=False)
         BuyerRepository(self.table).create_user({**user, **password_record(uuid.uuid4().hex)})
         sessions = SessionService(AuthRepository(self.table))
         _, cookie = sessions.issue({}, {'userId': user['userId'], 'role': 'user'})
@@ -159,3 +165,103 @@ class UnifiedIntegrationTests(unittest.TestCase):
                 break
             params['ExclusiveStartKey'] = page['LastEvaluatedKey']
         self.assertIsNone(self.repo.get_event(event['id']))
+
+    def delete_user(self, user):
+        service = AdminAccountService(AccountRepository(self.table))
+        for _ in range(40):
+            try:
+                if service.delete(user['userId'], {'version': user.get('version', 0)})['deleted']:
+                    return
+            except ApiError as exc:
+                if exc.code not in {'ACCOUNT_CHANGED', 'ACCOUNT_BUSY'}:
+                    raise
+        self.fail('User cleanup did not complete')
+
+    def test_account_edit_keeps_ticket_snapshot_and_email_is_unique(self):
+        user, other = self.user(), self.user()
+        event = self.create_event()
+        ticket, _ = self.bookings.register(event['id'], {}, user, str(uuid.uuid4()))
+        accounts = AdminAccountService(AccountRepository(self.table))
+        sessions = SessionService(AuthRepository(self.table))
+        _, cookie = sessions.issue({}, {'userId': user['userId'], 'role': 'user'})
+        email = f'new-{uuid.uuid4().hex}@example.com'
+        updated = accounts.update(user['userId'], {'fullName': ' Updated Buyer ', 'email': ' '+email.upper()+' ', 'version': 1})
+        self.assertEqual((updated['fullName'], updated['email'], updated['version']), ('Updated Buyer', email, 2))
+        self.assertIsNone(BuyerRepository(self.table).account_by_email(user['email']))
+        self.assertEqual(sessions.require({'cookies': [cookie.split(';')[0]]})['user']['email'], email)
+        self.assertEqual(self.bookings.get_registration(ticket['id'], user['userId'])['email'], user['email'])
+        self.assert_code('EMAIL_ALREADY_EXISTS', lambda: accounts.update(user['userId'], {'fullName': 'Changed', 'email': other['email'], 'version': 2}))
+        self.assert_code('ACCOUNT_CHANGED', lambda: accounts.update(user['userId'], {'fullName': 'Stale', 'email': email, 'version': 1}))
+        listed = next(item for item in accounts.list_users()['users'] if item['userId'] == user['userId'])
+        self.assertNotIn('passwordHash', listed)
+        self.assertNotIn('PK', listed)
+
+    def test_delete_account_refunds_once_and_preserves_other_users(self):
+        user, other = self.user(), self.user()
+        first, second = self.create_event(10), self.create_event(20)
+        own, _ = self.bookings.register(first['id'], {}, user, str(uuid.uuid4()))
+        keep, _ = self.bookings.register(first['id'], {}, other, str(uuid.uuid4()))
+        self.bookings.register(second['id'], {}, user, str(uuid.uuid4()))
+        sessions = SessionService(AuthRepository(self.table))
+        _, cookie = sessions.issue({}, {'userId': user['userId'], 'role': 'user'})
+        self.delete_user(user)
+        self.assertEqual(self.repo.get_event(first['id'])['remainingSeats'], 9)
+        self.assertEqual(self.repo.get_event(second['id'])['remainingSeats'], 20)
+        self.delete_user(user)
+        self.assertEqual(self.repo.get_event(first['id'])['remainingSeats'], 9)
+        self.assertIsNone(BuyerRepository(self.table).user(user['userId']))
+        self.assertIsNone(BuyerRepository(self.table).account_by_email(user['email']))
+        self.assertIsNone(self.repo.get_registration(own['id']))
+        self.assertEqual(self.bookings.get_registration(keep['id'], other['userId']), keep)
+        self.assert_code('AUTH_REQUIRED', lambda: sessions.require({'cookies': [cookie.split(';')[0]]}))
+
+    def test_account_lock_blocks_inflight_booking_and_cleanup_resumes(self):
+        user = self.user()
+        first, second = self.create_event(10), self.create_event(20)
+        ticket, _ = self.bookings.register(first['id'], {}, user, str(uuid.uuid4()))
+        self.bookings.register(second['id'], {}, user, str(uuid.uuid4()))
+        accounts = AccountRepository(self.table)
+        accounts.lock_user(accounts.user(user['userId']))
+        self.assert_code('AUTH_REQUIRED', lambda: self.bookings.register(first['id'], {}, user, str(uuid.uuid4())))
+        with self.assertRaises(Exception) as caught:
+            self.repo.create_booking({**ticket, 'id': str(uuid.uuid4()), 'eventId': self.create_event()['id']}, str(uuid.uuid4()), 'fixture', 1)
+        self.assertEqual(caught.exception.response['Error']['Code'], 'TransactionCanceledException')
+        cancel = accounts.cancel_ticket
+        def interrupt(user_id, reference):
+            cancel(user_id, reference)
+            raise RuntimeError('Injected interruption after refund committed')
+        with patch.object(accounts, 'cancel_ticket', side_effect=interrupt), self.assertRaises(RuntimeError):
+            accounts.cleanup_user(accounts.user(user['userId']))
+        self.delete_user(user)
+        self.assertEqual(self.repo.get_event(first['id'])['remainingSeats'], 10)
+        self.assertEqual(self.repo.get_event(second['id'])['remainingSeats'], 20)
+
+    def test_parallel_account_delete_and_event_delete_do_not_double_refund(self):
+        user = self.user()
+        event, keep_event = self.create_event(10), self.create_event(10)
+        self.bookings.register(event['id'], {}, user, str(uuid.uuid4()))
+        self.bookings.register(keep_event['id'], {}, user, str(uuid.uuid4()))
+        def delete_account():
+            # Independent SDK resources per worker.
+            helper = UnifiedIntegrationTests()
+            helper.table = self.table.__class__(self.table.name, client=self.table.meta.client)
+            helper.delete_user(user)
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            futures = [pool.submit(delete_account), pool.submit(delete_account), pool.submit(self.finish_delete, event)]
+            for future in futures:
+                future.result()
+        self.assertIsNone(self.repo.get_event(event['id']))
+        self.assertEqual(self.repo.get_event(keep_event['id'])['remainingSeats'], 10)
+
+    def test_account_delete_cleans_ticket_when_event_cleanup_removed_reference_first(self):
+        user = self.user()
+        event = self.create_event(10)
+        ticket, _ = self.bookings.register(event['id'], {}, user, str(uuid.uuid4()))
+        self.table.update_item(Key={'PK': 'EVENTS', 'SK': 'EVENT#'+event['id']},
+                               UpdateExpression='SET deleting = :yes, registrationOpen = :no',
+                               ExpressionAttributeValues={':yes': True, ':no': False})
+        self.table.delete_item(Key={'PK': 'USER#'+user['userId'], 'SK': 'REGISTRATION#'+event['id']})
+        self.delete_user(user)
+        self.assertIsNone(self.repo.get_registration(ticket['id']))
+        self.assertEqual(self.repo.get_event(event['id'])['remainingSeats'], 9)
+        self.finish_delete(event)

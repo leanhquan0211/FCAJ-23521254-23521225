@@ -19,6 +19,8 @@ from buyer_auth import BuyerAuthService
 from buyer_repository import BuyerRepository
 from booking import BookingService
 from session import SessionService, response_cookies
+from account_repository import AccountRepository
+from admin_accounts import AdminAccountService
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +73,7 @@ def lambda_handler(event, context):
         if route not in {"GET /health", "GET /events", "GET /events/{eventId}", "POST /events/{eventId}/registrations", "GET /registrations/{registrationId}",
                          "POST /admin/login", "GET /admin/session", "POST /admin/logout", "GET /admin/events", "POST /admin/events",
                          "PUT /admin/events/{eventId}", "DELETE /admin/events/{eventId}",
+                         "GET /admin/users", "PUT /admin/users/{userId}", "DELETE /admin/users/{userId}",
                          "POST /auth/register", "POST /auth/login", "GET /auth/session", "POST /auth/logout", "GET /me/registrations"}:
             raise ApiError(404, "ROUTE_NOT_FOUND", "Không tìm thấy API.")
         table = local_table()
@@ -98,6 +101,16 @@ def lambda_handler(event, context):
             session = auth.require_admin(event, mutation=not route.startswith("GET "))
             if route == "GET /admin/session":
                 return response(200, session_output(session), event)
+            if route in {"GET /admin/users", "PUT /admin/users/{userId}", "DELETE /admin/users/{userId}"}:
+                accounts = AdminAccountService(AccountRepository(table))
+                user_id = (event.get("pathParameters") or {}).get("userId")
+                if route == "GET /admin/users":
+                    body = accounts.list_users()
+                elif route.startswith("PUT "):
+                    body = accounts.update(user_id, registration_body(event))
+                else:
+                    body = accounts.delete(user_id, registration_body(event))
+                return response(202 if body.get("deleting") else 200, body, event)
             admin = AdminEventService(repository)
             event_id = (event.get("pathParameters") or {}).get("eventId")
             if route == "GET /admin/events":
@@ -112,7 +125,7 @@ def lambda_handler(event, context):
         if route == "GET /health":
             table_name = repository.health()
             body = {"status": "ok", "database": {"status": "ready", "table": table_name},
-                    "apiContractVersion": "4.0", "serverTime": datetime.now(timezone.utc).isoformat()}
+                    "apiContractVersion": "4.1", "serverTime": datetime.now(timezone.utc).isoformat()}
         elif route == "GET /events":
             body = EventService(repository).list_events()
         elif route == "GET /events/{eventId}":

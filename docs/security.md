@@ -17,7 +17,7 @@
 
 ## Cách xác minh
 
-V3 bổ sung `test_buyer_auth.py`, `test_registration.py` và 3 test transaction opt-in. HTTP `check_registration_api.py` dùng tài khoản/phiên thật, kiểm tra replay sau full/closed, owner, legacy, mở bán, logout và8 lượt tranh1chỗ. `check-buyer-browser.mjs` thao tác signup/login/đặt vé/Vé của tôi/logout; cố tình bỏ response sau commit, reload rồi retry. Các kết quả thực tế và giới hạn ở [nhật ký 23/10](../quan-worklog/week-4/23-10.md).
+V3 bổ sung `test_buyer_auth.py`, `test_registration.py` và 3 test transaction opt-in. HTTP `check_registration_api.py` dùng tài khoản/phiên thật, kiểm tra replay sau full/closed, owner, legacy, mở bán, logout và8 lượt tranh1chỗ. `check-buyer-browser.mjs` thao tác signup/login/đặt vé/Vé của tôi/logout; cố tình bỏ response sau commit, reload rồi retry. Các kết quả thực tế và giới hạn ở [nhật ký 23/10](../phuc-worklog/week-4/23-10-ung-dung.md).
 
 `tests/backend/test_admin.py` kiểm tra mật khẩu, session, CSRF, nguồn giả, role giả, quyền trên tất cả route admin, schema, sức chứa, xóa và xung đột.
 
@@ -37,3 +37,9 @@ Chỉ bind loopback. HTTP và COOKIE_SECURE=false dành cho localhost. Chưa có
 - [OWASP Session Management](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html): cookie HttpOnly, SameSite, thời hạn và thu hồi session.
 - [OWASP CSRF Prevention](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html): kiểm tra Origin và CSRF token, không chỉ dựa vào SameSite.
 - [Schema.org Event](https://schema.org/Event): tham khảo tên, mô tả, thời gian, địa điểm, đơn vị tổ chức và sức chứa; ứng dụng chỉ lấy các trường cần cho phạm vi hiện tại.
+
+## Quản lý tài khoản và sidebar — contract 4.1
+
+GET `/admin/users`, PUT/DELETE `/admin/users/{userId}` yêu cầu Admin; thao tác ghi kiểm tra Origin và CSRF. Chỉ sửa fullName/email/version, không nhận role/password. Response chỉ có dữ liệu công khai, không hash mật khẩu hoặc token. Profile đang deleting bị từ chối ở login, session và transaction đặt vé. Xóa User không xóa Admin hoặc tài khoản của người khác.
+
+Frontend chỉ lưu boolean `event-workshop:sidebar-collapsed` trong localStorage. Cookie phiên vẫn HttpOnly và CSRF chỉ nằm trong bộ nhớ. Tùy chọn giao diện không mang thông tin đăng nhập hoặc quyền truy cập.

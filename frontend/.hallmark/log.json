@@ -2,6 +2,16 @@
   {
     "date": "2026-10-23",
     "scope": "app",
+    "macrostructure": "Workbench shell with searchable account rows",
+    "theme": "Almanac",
+    "enrichment": "none",
+    "brief": "Approved User account search/edit/delete and collapsible role sidebar; preserve locked design",
+    "verification": "Build/lint passed (two existing Fast Refresh warnings); Edge 320/375/414/768/1280; keyboard tooltip, 44px icon targets, saved preference, mobile full menu, edit conflict and deletion seat refund passed; screenshots inspected",
+    "critique": "P4 H5 E4 S4 R5 V4; no new dependency, preserve tokens and route ownership"
+  },
+  {
+    "date": "2026-10-23",
+    "scope": "app",
     "macrostructure": "Workbench shell with Catalogue event content",
     "theme": "Almanac",
     "enrichment": "none",

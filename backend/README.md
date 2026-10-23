@@ -1,4 +1,4 @@
-> Bản hiện hành trên feat/unified-account là API4.0: cookie chung event_session, login identifier/password, sai role403; admin xóa có dọn ghi danh,202 cần tiếp tục cùng version. [Contract](../docs/api-contract.md) và [nhật ký mục15](../quan-worklog/week-4/23-10.md). Mốc feat/buyer-flow@a6ba0f2 vẫn giữ API3.0; lấy code/tài liệu cùng commit. Nâng cấp cần đăng nhập lại, không reset bảng.
+> Bản hiện hành trên feat/admin-accounts-sidebar là API4.1: cookie chung event_session, login identifier/password, sai role403; admin xóa có dọn ghi danh,202 cần tiếp tục cùng version. [Contract](../docs/api-contract.md) và [nhật ký mục15](../phuc-worklog/week-4/23-10-ung-dung.md). Mốc feat/buyer-flow@a6ba0f2 vẫn giữ API3.0; lấy code/tài liệu cùng commit. Nâng cấp cần đăng nhập lại, không reset bảng.
 
 # Backend local — sự kiện và đăng ký
 
@@ -93,7 +93,7 @@ Nếu chủ động dùng Python trên host với boto3 đã cài, lệnh tươn
 
 ## Kiểm thử
 
-Nếu chạy Python trên host với `PYTHONPATH` trỏ vào `.aws-sam/build/EventsFunction`, đặt `$env:PYTHONDONTWRITEBYTECODE='1'` trước lệnh test để file cache không kích hoạt SAM warm watcher. Tool HTTP quản trị/người mua đã tự tắt ghi bytecode. Chờ `/health` báo đúng contract4.0 và bảng test rồi mới chạy smoke test.
+Nếu chạy Python trên host với `PYTHONPATH` trỏ vào `.aws-sam/build/EventsFunction`, đặt `$env:PYTHONDONTWRITEBYTECODE='1'` trước lệnh test để file cache không kích hoạt SAM warm watcher. Tool HTTP quản trị/người mua đã tự tắt ghi bytecode. Chờ `/health` báo đúng contract4.1 và bảng test rồi mới chạy smoke test.
 
 Unit test dùng mock, không ghi DB/gọi AWS; chạy trong Python3.13 sau khi SAM build. Ba test integration được skip trong lệnh mặc định:
 
@@ -124,9 +124,9 @@ Trong terminal local có các biến SAM giả như phần chạy ở trên, kh�
 python backend/tools/check_registration_api.py --base-url http://127.0.0.1:3002
 ```
 
-Smoke test ghi xác nhận `/health` trỏ bảng test và contract4.0, tự tạo admin fixture/User và session thật; thử owner, validation, lịch mở bán, replay sau full/closed, logout và8 request HTTP tranh chỗ cuối. Khi chạy trên host cần `python -m pip install -r backend/requirements.txt`; hoặc chạy tools container với `--endpoint-url http://fcaj-dynamodb-local:8000`. Khác `check_api.py` chỉ đọc.
+Smoke test ghi xác nhận `/health` trỏ bảng test và contract4.1, tự tạo admin fixture/User và session thật; thử owner, validation, lịch mở bán, replay sau full/closed, logout và8 request HTTP tranh chỗ cuối. Khi chạy trên host cần `python -m pip install -r backend/requirements.txt`; hoặc chạy tools container với `--endpoint-url http://fcaj-dynamodb-local:8000`. Khác `check_api.py` chỉ đọc.
 
-Các kết quả lịch sử dưới đây được giữ để tham khảo; kết quả v4 hiện hành nằm ở nhật ký mục15. Kết quả v4 mới nhất tại [nhật ký 23/10](../quan-worklog/week-4/23-10.md).
+Các kết quả lịch sử dưới đây được giữ để tham khảo; kết quả v4 hiện hành nằm ở nhật ký mục15. Kết quả v4 mới nhất tại [nhật ký 23/10](../phuc-worklog/week-4/23-10-ung-dung.md).
 
 | Kiểm tra | Kết quả |
 | --- | --- |
@@ -192,3 +192,9 @@ Lịch sử mốc quản trị v2: 45 unit test đạt trên Python 3.13 contain
 Ctrl+C ở SAM và Vite, rồi `docker compose -f backend/compose.yaml down` để gỡ container/network của dự án và giữ volume. Nếu muốn tiết kiệm đĩa hơn, sau khi không còn container SAM dùng image, có thể gỡ riêng image `public.ecr.aws/sam/build-python3.13:latest-x86_64` và các image Lambda Python 3.13 đã dùng. Lần build/chạy sau cần tải lại. Không dùng `docker system prune -a --volumes` vì ảnh hưởng dự án khác và dữ liệu.
 
 Bài xóa/phiên chung opt-in: cùng RUN_DYNAMODB_INTEGRATION=1, bảng mới prefix test, chạy unittest discover để bao gồm test_unified_integration.py. File này chỉ dọn dữ liệu event fixture trong bảng test, không xóa bảng/volume. Không chạy lại fixture transaction vào cùng bảng đã có dữ liệu; tạo env test mới mỗi lượt.
+
+## Bổ sung bàn giao API 4.1
+
+Nhánh `feat/admin-accounts-sidebar` thêm quản lý User và khóa tài khoản trong transaction đặt vé. Fixture mua vé cần profile User thật. Xem [contract hiện hành](../docs/api-contract.md) và [data model](../docs/data-model.md).
+
+Chạy `python backend/tools/check_accounts_api.py --base-url http://127.0.0.1:3002` trên API test/bảng riêng; thêm `--browser` khi đã có Vite 5175 proxy 3002 và Edge CDP 9241. Không chạy các bài ghi dữ liệu trên bảng ứng dụng. Trên Windows, dừng SAM/container Lambda dùng artifact trước khi build lại để tránh lỗi file đang bị mount; giữ container DynamoDB hoạt động.

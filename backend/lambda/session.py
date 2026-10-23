@@ -51,7 +51,9 @@ class SessionService:
             return {key: session[key] for key in ('username', 'role', 'csrfToken', 'expiresAt')}
         from buyer_auth import user_output
         account = BuyerRepository(self.repository.table).user(session['userId'])
-        if not account or account.get('role') != 'user':
+        if not account or account.get('deleting'):
+            raise ApiError(401, 'AUTH_REQUIRED', 'Tài khoản đã bị xóa hoặc đang được xóa.')
+        if account.get('role') != 'user':
             raise ApiError(403, 'FORBIDDEN', 'Tài khoản không còn quyền người tham gia.')
         return {'role': 'user', 'user': user_output(account),
                 'csrfToken': session['csrfToken'], 'expiresAt': session['expiresAt']}

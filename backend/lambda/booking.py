@@ -82,6 +82,11 @@ class BookingService:
                            {"registrationId": reference["registrationId"]})
         return None
 
+    def check_user(self, user_id):
+        account = self.repository.get_user_account(user_id)
+        if not account or account.get("role") != "user" or account.get("deleting"):
+            raise ApiError(401, "AUTH_REQUIRED", "Tài khoản không còn được phép đặt vé.")
+
     def check_availability(self, event_id):
         event = EventService(self.repository).get_event(event_id)
         if event["status"] in {"closed", "ended"}:
@@ -98,6 +103,7 @@ class BookingService:
                         "fullName": user["fullName"], "email": user["email"],
                         "phone": phone, "createdAt": now.isoformat()}
         for attempt in range(4):
+            self.check_user(user["userId"])
             saved = self.existing(user["userId"], event_id, key, fingerprint)
             if saved:
                 return saved, True
@@ -111,6 +117,7 @@ class BookingService:
                 reasons = {reason.get("Code") for reason in exc.response.get("CancellationReasons", [])}
                 if reasons - {None, "None", "TransactionConflict", "ConditionalCheckFailed"}:
                     raise
+                self.check_user(user["userId"])
                 # Even on the last attempt, read committed results before returning busy.
                 saved = self.existing(user["userId"], event_id, key, fingerprint)
                 if saved:

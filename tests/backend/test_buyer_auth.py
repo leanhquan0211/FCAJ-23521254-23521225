@@ -92,7 +92,7 @@ class BuyerAuthTests(unittest.TestCase):
         self.repo.get.return_value = self.session
         for account in [None, {**self.account, "role": "admin"}]:
             self.repo.user.return_value = account
-            self.assert_code("FORBIDDEN", lambda: self.service.require_user(self.event))
+            self.assert_code("FORBIDDEN" if account else "AUTH_REQUIRED", lambda: self.service.require_user(self.event))
 
     def test_mutations_require_origin_and_csrf(self):
         for headers, code in [({"origin": "http://127.0.0.1:5173"}, "CSRF_FAILED"),

@@ -1,6 +1,7 @@
 import { RegistrationError, type RegistrationErrorCode } from '@/types/registration'
 
 const ERROR_CODES: Record<string, RegistrationErrorCode> = {
+  ACCOUNT_NOT_FOUND: 'not-found', ACCOUNT_CHANGED: 'conflict', ACCOUNT_BUSY: 'unavailable',
   VALIDATION_ERROR: 'invalid', EVENT_NOT_FOUND: 'not-found', REGISTRATION_NOT_FOUND: 'not-found',
   DUPLICATE_REGISTRATION: 'duplicate', EVENT_FULL: 'full', REGISTRATION_CLOSED: 'closed',
   DATABASE_UNAVAILABLE: 'unavailable', INTERNAL_ERROR: 'internal',

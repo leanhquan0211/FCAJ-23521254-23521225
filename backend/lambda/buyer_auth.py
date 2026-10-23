@@ -71,7 +71,7 @@ class BuyerAuthService:
         except ValueError as exc:
             raise ApiError(400, "VALIDATION_ERROR", str(exc), {"password": str(exc)}) from None
         account = {"userId": str(uuid.uuid4()), "fullName": name.strip(), "email": email,
-                   "role": "user", "createdAt": datetime.now(timezone.utc).isoformat(), **record}
+                   "role": "user", "version": 1, "createdAt": datetime.now(timezone.utc).isoformat(), **record}
         try:
             self.repository.create_user(account)
         except ClientError as exc:
@@ -93,7 +93,7 @@ class BuyerAuthService:
             raise ApiError(400, "VALIDATION_ERROR", "Mật khẩu không hợp lệ.")
         account = self.repository.account_by_email(email)
         actual = password_digest(password, account["passwordSalt"] if account else "0" * 32)
-        if not hmac.compare_digest(actual, account["passwordHash"] if account else "0" * 128) or not account or account.get("role") != "user":
+        if not hmac.compare_digest(actual, account["passwordHash"] if account else "0" * 128) or not account or account.get("role") != "user" or account.get("deleting"):
             raise ApiError(401, "INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng.")
         from session import SessionService
         return SessionService(self.repository).issue(event, {"userId": account["userId"], "role": "user"})

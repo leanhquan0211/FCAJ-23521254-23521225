@@ -109,7 +109,7 @@ try {
   await click('button[type="submit"]')
   await until("location.pathname.startsWith('/registrations/') && document.body.innerText.includes('Đăng ký thành công')")
   const resultPath = await evaluate('location.pathname')
-  assert('recovered ticket clears pending intent', await evaluate("sessionStorage.length === 0 && !document.cookie.includes('event_session') && localStorage.length === 0"))
+  assert('recovered ticket clears pending intent', await evaluate("sessionStorage.length === 0 && !document.cookie.includes('event_session') && Object.keys(localStorage).every(key => key === 'event-workshop:sidebar-collapsed')"))
   await layoutCheck(resultPath, contains('Đăng ký thành công'))
   await layoutCheck('/my-tickets', contains('Mã vé:'))
   const tickets = await evaluate("fetch('/api/me/registrations').then(r => r.json())")

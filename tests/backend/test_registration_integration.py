@@ -8,6 +8,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend" / "lambda"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend" / "dynamodb_setup"))
+from auth import password_record
+from buyer_repository import BuyerRepository
 from configuration import local_table, local_client
 from init_db import initialize
 from repository import EventRepository
@@ -19,6 +21,7 @@ from booking import BookingService
 class TransactionIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        cls.fixture_password = password_record("Dedicated integration fixture only")
         name = os.environ["DYNAMODB_TABLE"]
         if not name.startswith("fcaj-event-workshop-local-test-"):
             raise RuntimeError("A dedicated test table is required")
@@ -47,7 +50,10 @@ class TransactionIntegrationTests(unittest.TestCase):
             return (exc.status, exc.code)
 
     def buyer(self):
-        return {"userId": str(uuid.uuid4()), "fullName": "Integration Test", "email": f"integration-{uuid.uuid4().hex}@example.com"}
+        user = {"userId": str(uuid.uuid4()), "fullName": "Integration Test", "email": f"integration-{uuid.uuid4().hex}@example.com",
+                "role": "user", "createdAt": "2026-10-23T00:00:00Z", "version": 1}
+        BuyerRepository(self.table).create_user({**user, **self.fixture_password})
+        return user
 
     def all_items(self):
         result = self.table.scan(ConsistentRead=True)

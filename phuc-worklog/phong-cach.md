@@ -52,7 +52,9 @@ Nếu dùng tài liệu bên ngoài, ưu tiên nguồn chính thức, liên kế
 
 ## 6. Nhật ký để người mới có thể tiếp tục
 
-Theo yêu cầu tuần 4, dùng [nhật ký hôm nay](week-4/23-10.md) và cập nhật xuyên suốt tiến trình: quyết định mới, việc đã làm, bằng chứng, lỗi, phần còn chờ và bước kế tiếp. Đây là yêu cầu hiện tại, thay cho quy tắc cũ không tạo nhật ký cho buổi chỉ hướng dẫn.
+**Chỉ dẫn mới nhất của Phúc:** mặc định không cần ghi thêm nhật ký. Các công việc từ lúc nhận yêu cầu bên ngoài thuộc phần của Phúc; không ghi nhận chúng thành công việc của Quân. Các quy tắc ghi nhật ký dưới đây chỉ áp dụng khi Phúc yêu cầu ghi lại. Bản ghi ứng dụng trước đây đặt nhầm khu đã chuyển về [nhật ký ứng dụng](week-4/23-10-ung-dung.md).
+
+Yêu cầu đầu tuần 4 từng dùng [nhật ký hôm nay](week-4/23-10.md) để theo dõi quyết định, bằng chứng và bước tiếp theo. Chỉ dẫn mới nhất ở trên thay thế việc tự động cập nhật này; chỉ ghi tiếp khi Phúc yêu cầu.
 
 Nhật ký cần có mục tiêu, tổng quan hệ thống, sơ đồ kiến trúc, trình tự lịch sử, tình trạng hiện tại, hướng dẫn tiếp tục và nguồn. Phân biệt đã làm / đang chờ / mới dự định. Số liệu database và trạng thái tiến trình chỉ đúng tại lần kiểm tra tương ứng.
 

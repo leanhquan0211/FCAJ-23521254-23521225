@@ -9,7 +9,7 @@ export interface EventFiltersValue {
   status: StatusFilter
 }
 
-function normalizeSearch(value: string) {
+export function normalizeSearch(value: string) {
   return value
     .toLocaleLowerCase('vi-VN')
     .normalize('NFD')

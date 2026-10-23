@@ -1,4 +1,4 @@
-# Frontend đăng ký sự kiện — API v4
+# Frontend đăng ký sự kiện — API 4.1
 
 React/TypeScript/Vite, Tailwind và shadcn/ui. Giữ hệ Almanac trong [DESIGN.md](DESIGN.md): nền giấy/xanh thông, Be Vietnam Pro và Geist; dùng component/Dialog/Lucide sẵn có, không thêm dependency.
 
@@ -42,6 +42,7 @@ Chỉ thêm Origin5175 vào ALLOWED_ORIGINS trong env test riêng; đừng đổ
 | /registrations/:registrationId, /my-tickets | Kết quả/vé của chủ tài khoản |
 | /admin/login | Chuyển tới /login |
 | /admin, /admin/events/new, /admin/events/:eventId/edit | Admin quản trị |
+| /admin/users | Admin tìm/sửa/xóa tài khoản User |
 
 API GET sự kiện vẫn công khai; giao diện API mode yêu cầu đăng nhập để vào khung ứng dụng. Route guard chỉ giúp điều hướng; backend quyết định quyền. Sai URL role đưa về trang chính đúng role.
 
@@ -60,8 +61,14 @@ check-buyer-browser.mjs thử signup/login/return path/đặt vé/Vé của tôi
 
 check-admin-browser.mjs gọi check-unified-browser.mjs: login chung, menu role, đổi tài khoản/đăng xuất nhiều tab, sidebar mobile, xóa event đã có vé và giữ vé khác. Credential test chỉ nhận qua stdin từ check_admin_api.py --browser; không lưu mật khẩu vào file.
 
-Các script mặc định frontend5173/API3001/CDP9241; dùng FRONTEND_TEST_URL/API_TEST_URL/CHROME_DEBUG_PORT để đổi sang5175/3002. Dùng Edge/Chrome headless profile riêng. Kiểm tra320/375/414/768/1280 và ảnh thực tế. Kết quả đã chạy xem [nhật ký, mục15](../quan-worklog/week-4/23-10.md), không coi mô tả test là kết quả đạt.
+Các script mặc định frontend5173/API3001/CDP9241; dùng FRONTEND_TEST_URL/API_TEST_URL/CHROME_DEBUG_PORT để đổi sang5175/3002. Dùng Edge/Chrome headless profile riêng. Kiểm tra320/375/414/768/1280 và ảnh thực tế. Kết quả đã chạy xem [nhật ký, mục15](../phuc-worklog/week-4/23-10-ung-dung.md), không coi mô tả test là kết quả đạt.
 
 Mock chỉ để xem sự kiện, không mô phỏng account/quyền/transaction. Chưa AWS, Organizer nhiều đơn vị, OTP, khôi phục mật khẩu, thanh toán, hủy vé, Firefox/Safari hoặc trình đọc màn hình. Hai warning Fast Refresh cũ ở ui/button.tsx và ui/badge.tsx còn nguyên.
 
 Nguồn: [API v4](../docs/api-contract.md), [data model](../docs/data-model.md), [security](../docs/security.md), [quy tắc](../phuc-worklog/phong-cach.md).
+
+## Quản lý User và thu gọn sidebar (API 4.1)
+
+Nhánh `feat/admin-accounts-sidebar`: Admin vào `/admin/users` để tìm tên/email, sửa tên/email và xóa User. Xóa sẽ hủy vé/trả chỗ; nếu trả 202, dùng nút tiếp tục xóa. Sidebar cả hai role có nút thu gọn trên navbar; mobile vẫn giữ menu đầy đủ. Chỉ tùy chọn giao diện được lưu localStorage.
+
+Kiểm tra HTTP và giao diện: từ gốc dự án chạy `python backend/tools/check_accounts_api.py --base-url http://127.0.0.1:3002 --browser`, với SAM test/database test riêng, Vite 5175 proxy tới 3002 và Edge CDP 9241. Script từ chối ghi nếu health không chỉ ra bảng có prefix `fcaj-event-workshop-local-test-`. Xem [contract](../docs/api-contract.md).
