@@ -34,7 +34,7 @@ export function AdminLoginPage() {
   }
   return <div className="max-w-lg py-12 sm:py-16">
     <h1 className="font-display text-3xl font-bold leading-tight">Đăng nhập quản trị viên</h1>
-    <p className="mt-4 text-base text-muted-foreground">Dùng tài khoản được cấp để quản lý sự kiện.</p>
+    <p className="mt-4 text-base text-muted-foreground">Dùng tài khoản quản trị được cấp để quản lý sự kiện. Tài khoản người tham gia dùng ở khu vực website.</p>
     <Card className="mt-8"><CardHeader><CardTitle className="font-display text-xl font-semibold">Thông tin đăng nhập</CardTitle></CardHeader><CardContent>
       <form onSubmit={submit} className="space-y-6">
         <div className="space-y-2"><Label htmlFor="username">Tên đăng nhập</Label><Input id="username" name="username" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={64} required value={username} onChange={(e) => setUsername(e.target.value)} className="h-11 text-base" /></div>

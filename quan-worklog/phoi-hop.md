@@ -1,5 +1,7 @@
 # Phối hợp song song — ứng dụng và kiểm thử
 
+> Bổ sung23/10: sau bàn giao API `feat/buyer-flow@a6ba0f2`, người dùng duyệt tách giao diện User/admin. Phần UI làm trên `feat/role-navigation` tại cùng worktree buyer, không đổi API/schema hoặc nhánh bàn giao. Bên test tiếp tục dùng SHA đã chốt cho tích hợp API; cập nhật selector/điều hướng nếu chọn kiểm tra UI mới. Kết quả mới nằm ở mục14 [nhật ký](week-4/23-10.md).
+
 Cập nhật23/10/2026 sau khi người dùng duyệt toàn plan. Nguồn: [biên bản](yeu-cau.md). Bên ứng dụng là cửa sổ nhận biên bản này; không tự suy người thực hiện từ tên thư mục. Contract chính thức: [API v3](../docs/api-contract.md).
 
 ## 1. Trạng thái Git thực tế

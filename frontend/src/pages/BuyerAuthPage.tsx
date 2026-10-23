@@ -51,7 +51,7 @@ export function BuyerAuthPage({ mode }: { mode: 'login' | 'signup' }) {
   const fieldError = (field: string) => errors[field] ? <p id={`${field}-error`} className="text-sm text-destructive">{errors[field]}</p> : null
   const invalid = (field: string) => ({ 'aria-invalid': !!errors[field], 'aria-describedby': errors[field] ? `${field}-error` : undefined })
   return <div className="max-w-lg py-12 sm:py-16">
-    <h1 className="font-display text-3xl font-bold leading-tight">{signingUp ? 'Tạo tài khoản' : 'Đăng nhập'}</h1>
+    <h1 className="font-display text-3xl font-bold leading-tight">{signingUp ? 'Tạo tài khoản người tham gia' : 'Đăng nhập người tham gia'}</h1>
     <p className="mt-4 text-base text-muted-foreground">{signingUp ? 'Tạo tài khoản người tham gia để đặt vé và xem lại các vé của bạn.' : 'Đăng nhập để tiếp tục đặt vé hoặc xem vé đã có.'}</p>
     {!signingUp && params.get('created') === '1' && <p role="status" className="mt-5 text-primary">Đã tạo tài khoản. Bạn có thể đăng nhập ngay.</p>}
     <Card className="mt-8"><CardContent><form onSubmit={submit} className="space-y-6">

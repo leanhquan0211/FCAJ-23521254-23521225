@@ -1,6 +1,17 @@
 [
   {
     "date": "2026-10-23",
+    "macrostructure": "Neutral entry and separate participant/management shells",
+    "theme": "Almanac",
+    "enrichment": "none",
+    "nav": "Area label, active links and scoped account actions",
+    "footer": "Ft2 scoped by area",
+    "brief": "Approved separation of participant and admin navigation; preserve URLs, tokens and API v3",
+    "verification": "Edge 320/375/414/768/1280, simultaneous sessions and independent logout; entry/admin/participant screenshots inspected",
+    "critique": "P4 H5 E4 S4 R5 V4; no theme change, separate context and account ownership"
+  },
+  {
+    "date": "2026-10-23",
     "macrostructure": "Account forms and divided ticket list",
     "theme": "Almanac",
     "enrichment": "none",

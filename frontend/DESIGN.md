@@ -1,5 +1,9 @@
 # Thiết kế màn hình danh sách sự kiện
 
+## Bổ sung23/10 — nhận biết khu vực
+
+Theo phản hồi và phương án đã được người dùng duyệt, giữ hệ Almanac nhưng tách khung điều hướng trung lập/người tham gia/quản trị. Nhãn khu vực đặt dưới logo, tài khoản có tên và nhãn User/admin rõ ràng, navigation đang xem có chữ gạch chân. Không dùng màu làm dấu phân biệt duy nhất. Trang chung không gắn menu tài khoản. Header cho phép các nhóm chuyển hàng ở màn nhỏ; từng nhãn/nút giữ một dòng, tên dài được xuống dòng. Không thêm sidebar, thư viện hay palette mới cho số chức năng hiện tại.
+
 ## Mục tiêu và định hướng
 
 Người dùng cần tìm một sự kiện phù hợp, đọc nhanh thời gian/địa điểm và biết ngay còn đăng ký được hay không. Màn hình dùng tiếng Việt, nội dung ngắn và trạng thái bằng cả chữ lẫn màu. Dữ liệu lấy từ API local hoặc mock tùy cấu hình; không đưa kiến trúc kỹ thuật vào giao diện.

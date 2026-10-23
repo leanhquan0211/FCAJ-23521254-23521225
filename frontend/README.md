@@ -34,9 +34,17 @@ npm.cmd --prefix frontend run dev
 
 ## Routes và trách nhiệm mã
 
+Giao diện được tách thành ba khung, giữ nguyên các URL và API v3:
+
+- `/` dùng `EntryLayout` trung lập: hai lối vào, không hiện tài khoản và không gọi API session.
+- Các trang người tham gia dùng `SiteLayout` bên trong `BuyerSessionProvider`: chỉ hiện tên User, menu sự kiện/vé và logout User. Logo quay về danh sách sự kiện; Chọn khu vực khác quay về trang chung.
+- `/admin/login` và các trang `/admin` dùng `AdminShell`: nhãn Khu vực quản trị, menu quản lý/tạo sự kiện và tên admin. `AdminLayout` kiểm tra phiên/quyền trước nội dung quản trị. Logout về `/admin/login`; Xem website mở khu người tham gia.
+
+Hai phiên có thể cùng tồn tại. Chuyển khu vực chỉ điều hướng, không đổi quyền hay đăng xuất. Logout chỉ thu hồi phiên của khu vực đang dùng. Trang admin không tự tải session User, trang User không tự tải session admin. Lỗi đường dẫn trong khu admin vẫn nằm trong khung admin sau khi kiểm tra quyền.
+
 | Route | Chức năng |
 | --- | --- |
-| / | Chọn vai trò, chỉ điều hướng |
+| / | Chọn khu vực, trung lập và chỉ điều hướng |
 | /events, /events/:eventId | Xem/tìm/lọc/chi tiết công khai |
 | /signup, /login | Tài khoản người tham gia |
 | /events/:eventId/register | Đặt vé, cần User |
@@ -65,6 +73,8 @@ npm.cmd --prefix frontend run lint
 `tests/frontend/check-buyer-browser.mjs` dùng Node WebSocket/CDP với Edge/Chrome headless, API thật trên bảng test. Mặc định frontend5173, API3001, debug9241; chọn `API_TEST_URL=http://127.0.0.1:3002` khi dùng bảng test. `FRONTEND_TEST_URL` và `CHROME_DEBUG_PORT` có thể đổi. Script tự chặn bảng không có prefix test. Fixture `http-open` được tạo bởi integration suite trong [Backend README](../backend/README.md#kiểm-thử), không chạy browser script trên dữ liệu ứng dụng.
 
 Buyer browser kiểm tra signup/login/return path/đặt vé/Vé của tôi/logout; chặn response sau server commit, reload và retry để chứng minh chỉ một vé. Kiểm tra320/375/414/768/1280px. `check-registration-browser.mjs` là tên tương thích trỏ sang bài v3. `check-admin-browser.mjs` kiểm tra hồi quy quản trị và nhận tài khoản test qua stdin từ `check_admin_api.py --browser`. Dùng profile trình duyệt riêng, không dùng profile cá nhân.
+
+Browser admin bổ sung kiểm tra menu/danh tính khi cả hai phiên cùng đăng nhập, không gọi session sai khu vực, và logout mỗi khu vẫn giữ phiên còn lại. Nếu frontend thử chạy ở5175 để không chiếm5173 đang dùng, chỉ thêm Origin5175 vào **env test riêng**, chạy Vite với `API_PROXY_TARGET` trỏ3002 và `--port 5175 --strictPort`; đặt `FRONTEND_TEST_URL=http://127.0.0.1:5175`. Không cần đổi allowlist ứng dụng chính hoặc template để thử qua proxy cùng origin.
 
 Kết quả và ảnh đã kiểm tra được ghi ở [nhật ký23/10](../quan-worklog/week-4/23-10.md). Chưa kiểm tra Firefox/Safari, trình đọc màn hình hoặc nhiều thiết bị. Hai warning Fast Refresh cũ ở `ui/button.tsx` và `ui/badge.tsx` vẫn còn.
 

@@ -22,6 +22,8 @@ await new Promise((resolve, reject) => { ws.onopen = resolve; ws.onerror = rejec
 let sequence = 0
 const pending = new Map()
 const exceptions = []
+const requests = []
+let currentLoaderId = ''
 const send = (method, params = {}) => new Promise((resolve, reject) => {
   const id = ++sequence
   pending.set(id, { resolve, reject })
@@ -34,6 +36,7 @@ ws.onmessage = ({ data }) => {
     pending.delete(message.id)
     message.error ? reject(new Error(message.error.message)) : resolve(message.result)
   } else if (message.method === 'Runtime.exceptionThrown') exceptions.push(message.params.exceptionDetails.text)
+  else if (message.method === 'Network.requestWillBeSent') requests.push({ url: message.params.request.url, loaderId: message.params.loaderId })
 }
 async function evaluate(expression) {
   const result = await send('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true })
@@ -49,7 +52,8 @@ async function until(expression) {
   throw new Error(`Timeout: ${expression}; page: ${await evaluate('document.body.innerText')}`)
 }
 function assert(name, value) { if (!value) throw new Error(`FAIL ${name}`); console.log(`PASS ${name}`) }
-async function navigate(path) { await send('Page.navigate', { url: frontend + path }) }
+async function navigate(path) { currentLoaderId = (await send('Page.navigate', { url: frontend + path })).loaderId }
+function sessionRequests(prefix) { return requests.filter(request => request.loaderId === currentLoaderId && request.url.includes(prefix)) }
 async function fill(selector, value) {
   await evaluate(`(() => { const input = document.querySelector(${JSON.stringify(selector)}); const prototype = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(prototype, 'value').set.call(input, ${JSON.stringify(value)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`)
 }
@@ -69,7 +73,10 @@ async function layoutCheck(path, ready) {
 try {
   await send('Page.enable')
   await send('Runtime.enable')
-  await layoutCheck('/', contains('Bạn muốn tham gia như thế nào?'))
+  await send('Network.enable')
+  await send('Network.clearBrowserCookies')
+  await layoutCheck('/', contains('Bạn muốn vào khu vực nào?'))
+  assert('entry is neutral and does not fetch account sessions', sessionRequests('/api/auth/').length === 0 && sessionRequests('/api/admin/').length === 0)
   await click('a[href="/events"]')
   await until('document.querySelectorAll(".event-card").length >= 8')
   await fill('#event-search', 'du lieu')
@@ -78,6 +85,7 @@ try {
   await navigate('/admin/events/new')
   await until("location.pathname === '/admin/login' && Boolean(document.querySelector('#username'))")
   await layoutCheck('/admin/login', 'Boolean(document.querySelector("#username"))')
+  assert('admin login never loads the buyer session or buyer menu', sessionRequests('/api/auth/').length === 0 && await evaluate("!document.querySelector('header a[href=\"/my-tickets\"]') && Boolean(document.querySelector('[data-area=\"admin\"]'))"))
   await until('Boolean(document.querySelector("button[type=submit]")) && !document.querySelector("button[type=submit]").disabled')
   await fill('#username', username)
   await fill('#password', 'incorrect-password')
@@ -90,6 +98,12 @@ try {
   await navigate('/admin')
   await until('Boolean(document.querySelector("#admin-search"))')
   assert('session survives reload', true)
+  assert('admin header identifies only the administrator', await evaluate(`document.querySelector('[data-admin-name]').textContent === ${JSON.stringify(username)} && !document.querySelector('[data-buyer-name]') && document.querySelector('header').innerText.includes('Đăng xuất quản trị')`))
+  await navigate('/admin/does-not-exist')
+  await until(contains('Không tìm thấy trang quản trị'))
+  assert('unknown admin page keeps its own area and navigation', await evaluate("Boolean(document.querySelector('[data-area=\"admin\"]')) && !document.querySelector('[data-buyer-name]')"))
+  await navigate('/admin')
+  await until('Boolean(document.querySelector("#admin-search"))')
   await click('a[href="/admin/events/new"]')
   await until('Boolean(document.querySelector("#title"))')
   const title = `Sự kiện do admin tạo ${randomUUID().slice(0, 6)}`
@@ -117,17 +131,24 @@ try {
   // Buyer signup UI is covered separately; here obtain a real buyer session to test admin seat guards.
   const buyerEmail = `browser-admin-${randomUUID()}@example.com`
   const buyerPassword = randomUUID() + '-test'
+  const buyerName = 'Người tham gia ' + 'Tên dài '.repeat(9).trim()
   await evaluate(`(async () => {
     const credentials = { email: ${JSON.stringify(buyerEmail)}, password: ${JSON.stringify(buyerPassword)} };
-    const signup = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: 'Browser Buyer', ...credentials }) });
+    const signup = await fetch('/api/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fullName: ${JSON.stringify(buyerName)}, ...credentials }) });
     if (signup.status !== 201) throw new Error('Buyer signup failed');
     const login = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(credentials) });
     if (!login.ok) throw new Error('Buyer login failed');
   })()`)
   await navigate(`/events/${created.id}/register`)
   await until('Boolean(document.querySelector("#phone"))')
+  assert('buyer header identifies only the participant while both sessions exist', await evaluate(`document.querySelector('[data-buyer-name]').textContent === ${JSON.stringify(buyerName)} && !document.querySelector('[data-admin-name]') && !document.querySelector('header').innerText.includes('Đăng xuất quản trị')`))
+  assert('buyer route does not load administrator session', sessionRequests('/api/admin/').length === 0)
   await click('button[type="submit"]')
   await until("location.pathname.startsWith('/registrations/') && document.body.innerText.includes('Đăng ký thành công')")
+  await layoutCheck('/my-tickets', contains('Mã vé:'))
+  await layoutCheck('/', contains('Bạn muốn vào khu vực nào?'))
+  assert('entry stays neutral with both accounts logged in', await evaluate("!document.querySelector('[data-buyer-name]') && !document.querySelector('[data-admin-name]') && !document.querySelector('header button')"))
+  assert('entry still makes no auth requests with both sessions', sessionRequests('/api/auth/').length === 0 && sessionRequests('/api/admin/').length === 0)
   await navigate(`/admin/events/${created.id}/edit`)
   await until('Boolean(document.querySelector("#capacity"))')
   await fill('#capacity', '0')
@@ -144,11 +165,41 @@ try {
   await until(contains('Sự kiện đã đóng đăng ký.'))
   await navigate('/admin')
   await until('Boolean(document.querySelector("#admin-search"))')
-  await evaluate("Array.from(document.querySelectorAll('main button')).find(button => button.textContent === 'Đăng xuất').click()")
-  await until("location.pathname === '/' && document.body.innerText.includes('Bạn muốn tham gia như thế nào?')")
+  assert('return to admin still hides participant identity and requests', sessionRequests('/api/auth/').length === 0 && await evaluate("!document.querySelector('[data-buyer-name]') && !document.querySelector('header').innerText.includes('Vé của tôi')"))
+  await evaluate("Array.from(document.querySelectorAll('header button')).find(button => button.textContent === 'Đăng xuất quản trị').click()")
+  await until("location.pathname === '/admin/login' && Boolean(document.querySelector('#username'))")
   await navigate('/admin')
   await until("location.pathname === '/admin/login' && Boolean(document.querySelector('#username'))")
   assert('logout revokes protected route access', true)
+  await navigate('/my-tickets')
+  await until(contains('Mã vé:'))
+  assert('admin logout preserves the buyer session', await evaluate(`document.querySelector('[data-buyer-name]').textContent === ${JSON.stringify(buyerName)}`))
+  await navigate('/admin/login')
+  await until("Boolean(document.querySelector('#username')) && !document.querySelector('button[type=submit]').disabled")
+  await fill('#username', username)
+  await fill('#password', password)
+  await click('button[type="submit"]')
+  await until("location.pathname === '/admin' && Boolean(document.querySelector('#admin-search'))")
+  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
+  await until('document.querySelectorAll("article").length > 0')
+  await writeFile(join(tmpdir(), 'event-role-admin-desktop.png'), Buffer.from((await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false })).data, 'base64'))
+  await navigate('/my-tickets')
+  await until(contains('Mã vé:'))
+  await send('Emulation.setDeviceMetricsOverride', { width: 375, height: 900, deviceScaleFactor: 1, mobile: false })
+  await writeFile(join(tmpdir(), 'event-role-buyer-mobile.png'), Buffer.from((await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true })).data, 'base64'))
+  await evaluate("Array.from(document.querySelectorAll('header button')).find(button => button.textContent === 'Đăng xuất').click()")
+  await until("location.pathname === '/events' && Boolean(document.querySelector('header a[href=\"/login\"]'))")
+  await navigate('/my-tickets')
+  await until("location.pathname === '/login' && Boolean(document.querySelector('#email'))")
+  await navigate('/admin')
+  await until('Boolean(document.querySelector("#admin-search"))')
+  assert('buyer logout preserves the administrator session', await evaluate(`document.querySelector('[data-admin-name]').textContent === ${JSON.stringify(username)}`))
+  await evaluate("Array.from(document.querySelectorAll('header button')).find(button => button.textContent === 'Đăng xuất quản trị').click()")
+  await until("location.pathname === '/admin/login' && Boolean(document.querySelector('#username'))")
+  await layoutCheck('/', contains('Bạn muốn vào khu vực nào?'))
+  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
+  await writeFile(join(tmpdir(), 'event-role-entry-desktop.png'), Buffer.from((await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true })).data, 'base64'))
   assert('no uncaught browser exceptions', exceptions.length === 0)
-  console.log(JSON.stringify({ browserChecks: 'passed', screenshot: join(tmpdir(), 'event-admin-editor-mobile.png') }))
+  console.log(JSON.stringify({ browserChecks: 'passed', roleSeparation: true, independentLogout: true,
+    screenshots: ['event-admin-editor-mobile.png', 'event-role-entry-desktop.png', 'event-role-admin-desktop.png', 'event-role-buyer-mobile.png'].map(name => join(tmpdir(), name)) }))
 } finally { ws.close() }

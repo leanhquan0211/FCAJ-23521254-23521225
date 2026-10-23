@@ -79,6 +79,7 @@ try {
   await navigate('/events/http-open/register')
   await until("location.pathname === '/login' && Boolean(document.querySelector('#email'))")
   assert('guest booking asks for login', true)
+  assert('auth page has no competing header login/signup links that lose return path', await evaluate("!document.querySelector('header a[href=\"/login\"]') && !document.querySelector('header a[href=\"/signup\"]')"))
   await click('a[href^="/signup?"]')
   await until('Boolean(document.querySelector("#confirmation"))')
   const email = `browser-${randomUUID()}@example.com`

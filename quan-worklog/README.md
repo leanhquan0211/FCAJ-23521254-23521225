@@ -12,7 +12,7 @@ Ngày bắt đầu **23/10/2026**, tuần4. Đây là khu ghi chép cho phần �
 
 ## Trạng thái cần nhớ
 
-- Code mới nằm trên `feat/buyer-flow` tại `.worktrees/buyer-flow`. Nền `f4e20b9` đã chứa quan-worklog trên GitHub main. Không đổi branch/file của cửa sổ ở repo gốc; lúc kiểm tra cuối, repo gốc đang ở `phuc`, cũng tại nền này.
+- Mốc API v3 đã bàn giao trên `feat/buyer-flow` tại `a6ba0f2`. Phản hồi UI tách User/admin sau đó được thực hiện trên `feat/role-navigation`, vẫn dùng worktree `.worktrees/buyer-flow`; không thay mốc API mà bên test đã nhận. Trạng thái triển khai/kiểm tra mới ở mục14 nhật ký. Nền `f4e20b9` đã chứa quan-worklog trên GitHub main; repo gốc ở `phuc` không bị đổi HEAD/file bởi cửa sổ này.
 - V3 có User/register/login/session/logout, đặt vé bằng session+CSRF+Idempotency-Key, Vé của tôi và owner-only. Admin có giờ mở bán. Dữ liệu legacy giữ nguyên, không tự nhận theo email chưa xác minh.
 - Bên ứng dụng đã kiểm tra unit, transaction DynamoDB, HTTP và Edge headless; số lượng/lệnh/kết quả cụ thể trong nhật ký. Chưa chạy bài k6 100 người, runner hoặc dashboard của bên đồng hành.
 - Chỉ local; đặt vé = giữ chỗ + mã xác nhận. Chưa thanh toán/OTP/Organizer nhiều đơn vị/AWS và chưa chứng minh autoscaling.
