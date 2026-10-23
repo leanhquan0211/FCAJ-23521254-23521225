@@ -56,7 +56,7 @@ async function navigate(path) { await send('Page.navigate', { url: frontend + pa
 async function fill(selector, value) {
   await evaluate(`(() => { const input = document.querySelector(${JSON.stringify(selector)}); const prototype = input.tagName === 'TEXTAREA' ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype; Object.getOwnPropertyDescriptor(prototype, 'value').set.call(input, ${JSON.stringify(value)}); input.dispatchEvent(new Event('input', { bubbles: true })); })()`)
 }
-async function click(selector) { await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`) }
+async function click(selector) { await until(`Boolean(document.querySelector(${JSON.stringify(selector)})) && !document.querySelector(${JSON.stringify(selector)}).disabled`); await evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`) }
 const contains = (text) => `document.body.innerText.includes(${JSON.stringify(text)})`
 async function layoutCheck(path, ready) {
   await navigate(path)
@@ -109,7 +109,7 @@ try {
   await click('button[type="submit"]')
   await until("location.pathname.startsWith('/registrations/') && document.body.innerText.includes('Đăng ký thành công')")
   const resultPath = await evaluate('location.pathname')
-  assert('recovered ticket clears pending intent', await evaluate("sessionStorage.length === 0 && !document.cookie.includes('event_user_session') && localStorage.length === 0"))
+  assert('recovered ticket clears pending intent', await evaluate("sessionStorage.length === 0 && !document.cookie.includes('event_session') && localStorage.length === 0"))
   await layoutCheck(resultPath, contains('Đăng ký thành công'))
   await layoutCheck('/my-tickets', contains('Mã vé:'))
   const tickets = await evaluate("fetch('/api/me/registrations').then(r => r.json())")
@@ -128,8 +128,9 @@ try {
   const afterGateway = await evaluate("fetch('/api/me/registrations').then(r => r.json())")
   assert('non-JSON gateway error also preserves intent and recovers one ticket', afterGateway.registrations.length === 2
     && afterGateway.registrations.filter(ticket => ticket.eventId === 'http-other').length === 1)
+  await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false })
   await evaluate("Array.from(document.querySelectorAll('button')).find(button => button.textContent === 'Đăng xuất').click()")
-  await until("location.pathname === '/events' && Boolean(document.querySelector('a[href=\"/login\"]'))")
+  await until("location.pathname === '/login' && Boolean(document.querySelector('#email'))")
   await navigate(resultPath)
   await until("location.pathname === '/login' && Boolean(document.querySelector('#email'))")
   assert('logout protects saved result URL', true)

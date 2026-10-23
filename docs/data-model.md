@@ -2,26 +2,26 @@
 
 Một bảng `fcaj-event-workshop-local`, khóa chuỗi `PK` + `SK`, không có GSI. Chọn mô hình này vì các truy vấn hiện tại là danh sách sự kiện và lấy từng sự kiện/đăng ký bằng ID. Với tập sự kiện Workshop nhỏ, danh sách dùng Query trên partition `EVENTS`, tránh Scan toàn bảng.
 
-| Loại item | PK | SK | Trạng thái triển khai v3 |
+| Loại item | PK | SK | Trạng thái triển khai v4 |
 | --- | --- | --- | --- |
 | Sự kiện | `EVENTS` | `EVENT#<eventId>` | Có bảng/seed và API đọc |
 | Đăng ký | `REGISTRATION#<registrationId>` | `METADATA` | Đã triển khai, ID là UUID v4 |
 | Khóa chống trùng email cũ | `EVENT#<eventId>` | `EMAIL#<email chuẩn hóa>` | Legacy giữ nguyên, không ghi mới theo v3 |
 | User | `USER#<userId>` | `PROFILE` | fullName/email/role/createdAt, passwordSalt/passwordHash |
 | Email duy nhất | `USER_EMAIL#<email chuẩn hóa>` | `METADATA` | userId, cùng transaction tạo User |
-| Phiên User | `USER_SESSION#<SHA-256 token>` | `METADATA` | userId/csrfToken/expiresAt |
+| Phiên chung | `APP_SESSION#<SHA-256 token>` | `METADATA` | role + userId hoặc username, csrfToken/expiresAt |
 | User/event reference | `USER#<userId>` | `REGISTRATION#<eventId>` | registrationId/eventId/createdAt, entityType USER_REGISTRATION |
 | Idempotency | `USER#<userId>` | `IDEMPOTENCY#<key>` | fingerprint/registrationId/registration snapshot |
 | Counter User | `USER_AUTH#<kind>#<digest>#<bucket>` | `METADATA` | attempts/expiresAt; riêng signup-ip/login-ip/login-account |
 | Tài khoản admin | `ADMIN#<username chữ thường>` | `METADATA` | role, passwordSalt và passwordHash scrypt; không trả ra API |
-| Phiên admin | `SESSION#<SHA-256 token>` | `METADATA` | username, role, csrfToken và expiresAt |
+| Phiên v3 cũ | `SESSION#<hash>` hoặc `USER_SESSION#<hash>` | `METADATA` | Không chấp nhận xác thực v4; thu hồi khi cookie cũ được gửi lúc login/logout |
 | Giới hạn đăng nhập | `LOGIN#<ip/account>#<SHA-256>#<cửa sổ 15 phút>` | `METADATA` | attempts atomic và expiresAt |
 
-Item sự kiện chứa các trường công khai trong [API contract v3](api-contract.md), cùng `entityType=EVENT`, `registrationOpen`, `startsAtEpoch` (giây), `startsAtEpochMs` và `salesOpenAtEpochMs` (milliseconds). salesOpenAt=null lưu epoch=0; legacy thiếu salesOpenAt được đọc null, thiếu startsAtEpochMs dùng epoch giây cũ. `status` tính khi đọc. Boto3 Decimal được đổi sang JSON number.
+Item sự kiện chứa các trường công khai trong [API contract v4](api-contract.md), cùng `entityType=EVENT`, `registrationOpen`, `startsAtEpoch` (giây), `startsAtEpochMs` và `salesOpenAtEpochMs` (milliseconds). salesOpenAt=null lưu epoch=0; legacy thiếu salesOpenAt được đọc null, thiếu startsAtEpochMs dùng epoch giây cũ. `status` tính khi đọc. Boto3 Decimal được đổi sang JSON number.
 
 API đăng ký dùng **một TransactWriteItems** gồm:
 
-1. Update sự kiện, giảm `remainingSeats` đúng một, điều kiện còn ghế, manual mở, đã tới salesOpenAt và chưa tới dateTime theo giờ server.
+1. Update sự kiện, giảm `remainingSeats` đúng một, điều kiện không có deleting, còn ghế, manual mở, đã tới salesOpenAt và chưa tới dateTime theo giờ server.
 2. Put User/event reference, điều kiện chưa tồn tại.
 3. Put đăng ký UUID có userId chủ sở hữu, điều kiện chưa tồn tại.
 4. Put User/Idempotency-Key gồm fingerprint và snapshot kết quả, điều kiện chưa tồn tại.
@@ -46,10 +46,18 @@ Compose dùng volume `fcaj-event-workshop-dynamodb-data` và `-sharedDb -dbPath 
 
 ## Quản lý sự kiện và session
 
-Sự kiện mới có `version=1`; sự kiện seed cũ thiếu version được xem là 0. Mỗi sửa tăng version một. Repository chỉ Put/Delete khi version và cặp capacity/remainingSeats vẫn giống bản đọc trước đó. Cần alias `#capacity` vì capacity là reserved word của DynamoDB. Một lượt đăng ký cạnh tranh làm điều kiện cập nhật/xóa thất bại thay vì bị ghi đè.
+Sự kiện mới có `version=1`; sự kiện seed cũ thiếu version được xem là 0. Mỗi sửa tăng version một. Repository chỉ Put sửa khi chưa có deleting và version/cặp capacity/remainingSeats vẫn giống bản đọc trước. Xóa dùng quy trình khóa theo version rồi dọn riêng. Cần alias `#capacity` vì capacity là reserved word của DynamoDB. Một lượt đăng ký cạnh tranh làm điều kiện cập nhật/xóa thất bại thay vì bị ghi đè.
 
-Sức chứa mới trừ số chỗ đã dùng sẽ ra remainingSeats mới. Xóa bị chặn nếu có bất kỳ chỗ đã dùng, kể cả dữ liệu nền từ seed. API quản trị đọc partition EVENTS, không Scan hoặc xuất tài khoản, session hay khóa email.
+Sức chứa mới trừ số chỗ đã dùng sẽ ra remainingSeats mới. Admin được xóa sự kiện bất kể ghế đã dùng; khóa deleting=true, registrationOpen=false trước khi dọn. Điều kiện sửa/booking từ chối khóa deleting. API quản trị đọc partition EVENTS, không Scan hoặc xuất tài khoản, session hay khóa email.
 
 `expiresAt` là Unix seconds. Backend luôn kiểm tra thời hạn session bằng code; không dựa vào việc DB có xóa item hết hạn hay không. Bộ đếm chỉ dùng key cửa sổ hiện tại. Mốc local chưa bật dọn TTL tự động, nên item hết hạn có thể còn trong DB; đăng xuất xóa session đang dùng. Không ghi token gốc hoặc mật khẩu rõ vào DB.
 
 Mọi client cần endpoint local rõ ràng. Code chỉ cho các hostname loopback hoặc alias Docker trên, URL HTTP có port; thiếu/sai cấu hình sẽ dừng trước khi tạo boto3 client. Client luôn dùng credentials giả `local`/`local`; không đọc profile AWS hoặc metadata để tìm credentials. Không có đường fallback tới DynamoDB AWS trong mốc này.
+
+## Xóa ghi danh theo sự kiện — v4
+
+Event có thêm deleting=true và deletionCursor (PK/SK trang scan cuối đã dọn), chỉ xuất deleting cho admin, không xuất cursor. Không tăng version khi khóa, để retry cùng version. Bốn ghi booking atomic được giữ; transaction không commit sau khi khóa xóa. Public list/detail và xem/replay vé ẩn event đang xóa.
+
+EventDeletionService scan nhất quán cả bảng theo trang100, xử lý tối đa5trang/request. Chọn đúng Ticket có eventId, User SK REGISTRATION#eventId, User IDEMPOTENCY# với registration.eventId, legacy partition EVENT#eventId. Batch dọn xong trang mới lưu cursor, hết trang xóa event. 202 cần tiếp tục DELETE; lỗi giữa chừng dùng cursor bền vững để retry, không reset bảng. Không dọn PROFILE/USER_EMAIL/APP_SESSION hoặc dữ liệu event khác.
+
+Chưa có GSI/index đảo theo event nên scan là giới hạn rõ ràng của local, không phải cách đã chứng minh hiệu quả trên AWS. Cần thiết kế index/backfill có kiểm soát trước quy mô lớn. Không tự đổi schema hoặc migrate bảng ứng dụng trong bản này.

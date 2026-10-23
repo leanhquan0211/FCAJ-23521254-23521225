@@ -1,5 +1,6 @@
 """Admin event rules. Authorization is enforced by the handler before entering here."""
 import uuid
+import re
 from datetime import datetime, timezone
 
 from botocore.exceptions import ClientError
@@ -62,7 +63,7 @@ def validate_event(body, editing=False):
 
 def admin_output(item):
     return {**event_output(item), "registrationOpen": item["registrationOpen"],
-            "version": item.get("version", 0), "occupiedSeats": item["capacity"] - item["remainingSeats"]}
+            "version": item.get("version", 0), "deleting": item.get("deleting", False), "occupiedSeats": item["capacity"] - item["remainingSeats"]}
 
 
 class AdminEventService:
@@ -106,11 +107,10 @@ class AdminEventService:
     def delete(self, event_id, body):
         if not isinstance(body, dict) or set(body) != {"version"} or type(body["version"]) is not int or body["version"] < 0:
             raise ApiError(400, "VALIDATION_ERROR", "Cần phiên bản sự kiện để xóa.")
-        current = self.current(event_id, body["version"])
-        if current["remainingSeats"] != current["capacity"]:
-            raise ApiError(409, "EVENT_HAS_REGISTRATIONS", "Sự kiện đã có chỗ được sử dụng nên không thể xóa. Bạn có thể đóng đăng ký.")
-        self.write(lambda: self.repository.delete_event(current))
-        return {"deleted": True}
+        if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", event_id or ""):
+            raise ApiError(400, "VALIDATION_ERROR", "Invalid event ID.")
+        from event_deletion import EventDeletionService
+        return EventDeletionService(self.repository).delete(event_id, body["version"])
 
     @staticmethod
     def write(operation):

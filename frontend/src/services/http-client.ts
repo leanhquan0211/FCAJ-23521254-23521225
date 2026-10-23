@@ -36,6 +36,7 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
     const body = await response.json().catch(() => null)
     if (!response.ok) {
       const error = body?.error
+      if (error?.code === 'AUTH_REQUIRED') window.dispatchEvent(new Event('account-session-expired'))
       if (path.startsWith('/admin/') && error?.code === 'AUTH_REQUIRED') window.dispatchEvent(new Event('admin-session-expired'))
       if (!path.startsWith('/admin/') && error?.code === 'AUTH_REQUIRED') window.dispatchEvent(new Event('buyer-session-expired'))
       throw new RegistrationError(ERROR_CODES[error?.code] ?? 'internal', error?.message ?? 'Không thể xử lý yêu cầu. Vui lòng thử lại.', error?.details)

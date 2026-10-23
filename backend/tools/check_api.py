@@ -33,7 +33,7 @@ def main():
     base = args.base_url.rstrip("/")
     health, _ = request(base, "/health")
     assert health["status"] == "ok" and health["database"]["status"] == "ready"
-    assert health["apiContractVersion"] == "3.0"
+    assert health["apiContractVersion"] == "4.0"
     assert datetime.fromisoformat(health["serverTime"]).utcoffset() is not None
     result, headers = request(base, "/events", origin="http://localhost:5173")
     assert headers["Access-Control-Allow-Origin"] == "http://localhost:5173"

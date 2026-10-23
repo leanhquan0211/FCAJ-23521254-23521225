@@ -13,6 +13,9 @@ from urllib.error import HTTPError
 from urllib.parse import urlparse
 from urllib.request import HTTPCookieProcessor, Request, build_opener
 
+# Host tools can load SDKs from the SAM artifact; bytecode writes would restart its warm container.
+sys.dont_write_bytecode = True
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "lambda"))
 from auth import password_record
 from auth_repository import AuthRepository
@@ -39,7 +42,7 @@ class Client:
         except HTTPError as exc:
             result = exc
         payload = json.loads(result.read().decode("utf-8"))
-        assert result.code == expected, (path, result.code, payload)
+        assert result.code in (expected if isinstance(expected, tuple) else (expected,)), (path, result.code, payload)
         return payload, result.headers
 
 
@@ -89,10 +92,6 @@ def main():
     registration, _ = buyer.call(f"/events/{event_id}/registrations", "POST", {}, 201, extra_headers=booking_headers)
     resized, _ = client.call(f"/admin/events/{event_id}", "PUT", {**fixture, "capacity": 7, "version": reopened["version"]})
     assert resized["remainingSeats"] == 6 and resized["occupiedSeats"] == 1
-    error, _ = client.call(f"/admin/events/{event_id}", "DELETE", {"version": resized["version"]}, 409)
-    assert error["error"]["code"] == "EVENT_HAS_REGISTRATIONS"
-    result, _ = buyer.call(f"/registrations/{registration['id']}")
-    assert result["id"] == registration["id"]
     # Both writes use the same version; precisely one edit may win.
     def edit(index):
         other = Client(client.base)
@@ -107,13 +106,22 @@ def main():
             return False
     with ThreadPoolExecutor(max_workers=2) as pool:
         assert sum(pool.map(edit, range(2))) == 1
+    latest = next(item for item in client.call("/admin/events")[0]["events"] if item["id"] == event_id)
+    for _ in range(30):
+        result, _ = client.call(f"/admin/events/{event_id}", "DELETE", {"version": latest["version"]}, (200, 202))
+        if result.get("deleted"):
+            break
+    assert result.get("deleted"), "Cleanup incomplete"
+    buyer.call(f"/registrations/{registration['id']}", expected=404)
+    buyer.call("/auth/session")
+    assert buyer.call("/me/registrations")[0]["registrations"] == []
     disposable, _ = client.call("/admin/events", "POST", fixture, 201)
-    client.call(f"/admin/events/{disposable['id']}", "DELETE", {"version": disposable["version"]})
+    client.call(f"/admin/events/{disposable['id']}", "DELETE", {"version": disposable["version"]}, (200, 202))
     client.call(f"/events/{disposable['id']}", expected=404)
-    cookie = next(cookie.value for cookie in client.jar if cookie.name == "event_admin_session")
+    cookie = next(cookie.value for cookie in client.jar if cookie.name == "event_session")
     client.call("/admin/logout", "POST")
     client.call("/admin/events", expected=401)
-    assert "Item" not in table.get_item(Key={"PK": "SESSION#" + hashlib.sha256(cookie.encode()).hexdigest(), "SK": "METADATA"})
+    assert "Item" not in table.get_item(Key={"PK": "APP_SESSION#" + hashlib.sha256(cookie.encode()).hexdigest(), "SK": "METADATA"})
     if args.browser:
         print("PASS admin HTTP: permissions, cookies, CSRF, CRUD, concurrent edits and logout", flush=True)
         script = Path(__file__).resolve().parents[2] / "tests" / "frontend" / "check-admin-browser.mjs"

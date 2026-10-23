@@ -1,6 +1,6 @@
-# API contract local — phiên bản 3.0
+# API contract local — phiên bản 4.0
 
-Áp dụng cho nhánh `feat/buyer-flow`, ngày 23/10/2026, theo [yêu cầu đã được duyệt](../quan-worklog/yeu-cau.md). Bằng chứng chạy nằm trong [nhật ký](../quan-worklog/week-4/23-10.md). Đây là hợp đồng của ứng dụng; k6/runner/dashboard do bên kiểm thử phát triển riêng.
+Áp dụng cho nhánh `feat/unified-account`, ngày 23/10/2026, theo yêu cầu đăng nhập chung/sidebar/xóa ghi danh đã được người dùng duyệt trong [nhật ký, mục 15](../quan-worklog/week-4/23-10.md), kế thừa [yêu cầu nền](../quan-worklog/yeu-cau.md). Bằng chứng chạy nằm trong [nhật ký](../quan-worklog/week-4/23-10.md). Đây là hợp đồng của ứng dụng; k6/runner/dashboard do bên kiểm thử phát triển riêng.
 
 ## 1. Địa chỉ và quy tắc chung
 
@@ -20,9 +20,9 @@ SAM ứng dụng mặc định `http://127.0.0.1:3001`; SAM test `http://127.0.0
 | GET /events | Công khai | Không → 200 `{events:Event[]}` |
 | GET /events/{eventId} | Công khai | Không → 200 Event |
 | POST /auth/register | Origin hợp lệ | `{fullName,email,password}` → 201 `{user:User}`, chưa login |
-| POST /auth/login | Origin hợp lệ | `{email,password}` → 200 UserSession + cookie |
-| GET /auth/session | User | Không → 200 UserSession |
-| POST /auth/logout | User + Origin + CSRF | `{}` → 200 `{loggedOut:true}`, thu hồi phiên |
+| POST /auth/login | Origin hợp lệ | `{identifier,password}` → 200 Session theo role + cookie (email/password cũ vẫn nhận) |
+| GET /auth/session | Đã đăng nhập | Không → 200 Session theo role |
+| POST /auth/logout | Đã đăng nhập + Origin + CSRF | `{}` → 200 `{loggedOut:true}`, thu hồi phiên |
 | POST /events/{eventId}/registrations | User + Origin + CSRF + key | `{phone?:string}` → 201 Ticket mới / 200 replay |
 | GET /registrations/{registrationId} | Chủ vé | Không → 200 Ticket |
 | GET /me/registrations | User | Không → 200 `{registrations:Ticket[]}` |
@@ -32,15 +32,19 @@ SAM ứng dụng mặc định `http://127.0.0.1:3001`; SAM test `http://127.0.0
 | GET /admin/events | Admin | Không → 200 `{events:AdminEvent[]}` |
 | POST /admin/events | Admin + Origin + CSRF | EventInput → 201 AdminEvent |
 | PUT /admin/events/{eventId} | Admin + Origin + CSRF | EventInput + version → 200 AdminEvent |
-| DELETE /admin/events/{eventId} | Admin + Origin + CSRF | `{version}` → 200 `{deleted:true}` |
+| DELETE /admin/events/{eventId} | Admin + Origin + CSRF | `{version}` → 200 `{deleted:true}` hoặc 202 `{deleted:false,deleting:true,version}` |
 
 ## 3. Tài khoản và phiên
 
 User có đúng `userId` UUID v4, `fullName`, `email`, `role:"user"`, `createdAt` ISO UTC. Register trim fullName (1–120 ký tự), trim/lowercase email (đúng dạng, tối đa 254), password 15–128 ký tự không trim. Không nhận role/userId hoặc trường lạ. Email duy nhất được bảo vệ bằng transaction. Chưa OTP/xác minh email/khôi phục mật khẩu.
 
-UserSession: `{user:User,csrfToken:string,expiresAt:number}`. AdminSession: `{username,role:"admin",csrfToken,expiresAt}`. expiresAt là Unix seconds, thời hạn tuyệt đối 8 giờ. Server kiểm tra lại tài khoản và role mỗi request. Cookie admin không cấp quyền User và ngược lại. Admin tạo qua CLI `backend/tools/create_admin.py`, không có đăng ký admin công khai.
+Session theo role: UserSession `{role:"user",user:User,csrfToken:string,expiresAt:number}`; AdminSession `{username,role:"admin",csrfToken,expiresAt}`. expiresAt là Unix seconds, thời hạn tuyệt đối 8 giờ. Login chung nhận identifier là email User hoặc username admin; backend tự xác định role, không nhận role do client chọn. Admin vẫn tạo qua CLI `backend/tools/create_admin.py`.
 
-Cookie User `event_user_session`, cookie admin `event_admin_session`: token ngẫu nhiên 256 bit, HttpOnly, SameSite=Strict, Path=/, Max-Age=28800. DB lưu SHA-256 token. Login thay phiên cùng loại nếu cookie cũ được gửi, logout xóa phiên server và cookie. CSRF lấy từ JSON phiên, giữ trong bộ nhớ UI, gửi `X-CSRF-Token` trên thao tác ghi sau login. Register/login cần Origin allowlist, chưa cần CSRF trước phiên. Không đưa token vào URL/localStorage/sessionStorage/log.
+Một cookie `event_session` cho cả hai role: token ngẫu nhiên 256 bit, HttpOnly, SameSite=Strict, Path=/, Max-Age=28800. DB lưu SHA-256 token ở APP_SESSION#. Đăng nhập thành công thu hồi phiên cũ được trình duyệt gửi, kể cả phiên của role còn lại. Logout thu hồi phiên chung. Cookie cũ event_user_session/event_admin_session không còn được chấp nhận để phân quyền; login/logout gửi Set-Cookie xóa cả hai và thu hồi record tương ứng nếu được gửi. Nâng cấp từ v3 cần đăng nhập lại; không migrate profile/vé.
+
+Đây là một tài khoản đang dùng cho cùng browser/profile, chia sẻ giữa các tab. Trình duyệt/profile khác và từng cookie jar k6 vẫn độc lập. UI đồng bộ thay đổi bằng BroadcastChannel và kiểm tra lại khi quay về tab; backend luôn là nơi quyết định quyền. Có phiên đúng nhưng sai role trả403, thiếu/hết hạn phiên trả401. GET /auth/session trả role hiện tại; /admin/session là alias cần admin. /admin/login và /admin/logout còn để tương thích URL API nhưng cũng dùng cùng cookie, không tạo phiên riêng.
+
+CSRF lấy từ JSON phiên, chỉ giữ trong bộ nhớ UI, gửi X-CSRF-Token trên thao tác ghi sau login. Register/login cần Origin allowlist, chưa cần CSRF trước phiên. Không đưa token vào URL/localStorage/sessionStorage/log.
 
 Mật khẩu dùng scrypt N=32768/r=8/p=3, salt riêng ngẫu nhiên 128 bit. Sai tài khoản/mật khẩu dùng cùng thông báo. Bộ đếm atomic DynamoDB tính cả lượt thành công:
 
@@ -65,12 +69,12 @@ EventInput gồm title/category/dateTime/salesOpenAt/location/organizer/capacity
 - Trim chuỗi; giới hạn title160/location240/organizer160/summary300/description5000 ký tự.
 - Category: Công nghệ / Thiết kế / Kỹ năng / Cộng đồng. Capacity nguyên 1–100000, không nhận boolean/thập phân. dateTime có timezone, năm 2000–2100; tạo mới cần tương lai. Form admin nhập giờ Việt Nam.
 - ID `event-<uuid hex>` do server tạo. Không nhận id/remainingSeats/status/PK/SK/role/trường lạ từ client.
-- AdminEvent = Event + registrationOpen/version/occupiedSeats. Version mới=1, legacy thiếu=0. occupiedSeats=capacity−remainingSeats, có thể gồm chỗ giả từ seed cũ.
-- Sửa capacity giữ chỗ đã dùng; kiểm tra version/capacity/remainingSeats tại DB. Xung đột 409 EVENT_CHANGED. Không xóa sự kiện đã dùng chỗ; có thể đóng đăng ký.
+- AdminEvent = Event + registrationOpen/version/occupiedSeats/deleting (boolean). Version mới=1, legacy thiếu=0. occupiedSeats=capacity−remainingSeats, có thể gồm chỗ giả từ seed cũ.
+- Sửa capacity giữ chỗ đã dùng; kiểm tra version/capacity/remainingSeats tại DB. Xung đột 409 EVENT_CHANGED. Admin được xóa cả sự kiện có người đăng ký; xem quy trình dưới đây.
 - Ưu tiên status: tới dateTime → ended; manual đóng → closed; chưa tới salesOpenAt → not_open; hết chỗ → full; còn lại open. Chưa có endTime riêng.
 - Giờ server quyết định. Đúng salesOpenAt thì mở; đúng dateTime thì dừng. Transaction kiểm tra epoch milliseconds, không dựa đồng hồ UI. Legacy startsAtEpoch giây vẫn được hỗ trợ.
 
-Health: `{status:"ok",database:{status:"ready",table:string},apiContractVersion:"3.0",serverTime:ISO_UTC}`. Health chỉ đọc, không tạo/seed bảng. serverTime giúp đối chiếu clock, không bảo đảm request đến đúng thời điểm client phát.
+Health: `{status:"ok",database:{status:"ready",table:string},apiContractVersion:"4.0",serverTime:ISO_UTC}`. Health chỉ đọc, không tạo/seed bảng. serverTime giúp đối chiếu clock, không bảo đảm request đến đúng thời điểm client phát.
 
 ## 5. Đặt vé, replay và quyền xem
 
@@ -90,13 +94,21 @@ Body chỉ nhận phone tùy chọn, trim, tối đa32 ký tự; `{}` tương đ
 | Cùng User/event, key mới | 409 DUPLICATE_REGISTRATION + details.registrationId của chính User |
 | User khác dùng cùng chuỗi key | Yêu cầu độc lập |
 
-Thứ tự: auth/Origin/CSRF/input → đọc replay nhất quán → User/event reference → event tồn tại → đóng/kết thúc → chưa mở bán → hết chỗ → transaction. Vì replay được đọc trước điều kiện bán nên vẫn nhận lại vé sau khi full/closed/ended.
+Thứ tự: auth/Origin/CSRF/input → event tồn tại và không đang xóa → đọc replay nhất quán → User/event reference (đọc lại replay nếu reference vừa xuất hiện) → đóng/kết thúc → chưa mở bán → hết chỗ → transaction. Vì replay được đọc trước điều kiện bán nên vẫn nhận lại vé sau khi full/closed/ended.
 
 Transaction gồm bốn ghi atomic: giảm ghế có điều kiện bán; tạo User/event reference duy nhất; tạo Ticket; tạo idempotency record chứa fingerprint và Ticket snapshot. Cả bốn thành công hoặc không có ghi dở. Xung đột đọc lại rồi retry tối đa4 lượt có jitter; chưa phân loại được sau giới hạn trả503 REGISTRATION_BUSY, Retry-After1. Record idempotency chưa đặt TTL, giữ cùng vòng đời vé.
 
 Timeout/mất phản hồi là chưa rõ kết quả. Retry cùng key/body hoặc xem Vé của tôi; không tự cho rằng thất bại. UI lưu key/phone đang chờ trong sessionStorage theo User/event, giữ qua reload, không lưu secret. Kết quả rõ thì xóa ý định đang chờ. Không tự retry ghi trong nền.
 
-GET result/me cần User. Thiếu/hết hạn phiên401; vé không có, thuộc người khác hoặc legacy không userId đều404 REGISTRATION_NOT_FOUND. Không gán vé cũ theo email chưa xác minh. Dữ liệu/chỗ legacy được giữ nguyên; chưa có API nhận lại vé legacy. Admin cookie không tự cấp quyền xem mọi vé.
+GET result/me cần User. Thiếu/hết hạn phiên401; vé không có, thuộc người khác hoặc legacy không userId đều404 REGISTRATION_NOT_FOUND. Sự kiện đang xóa/đã xóa không trả lại vé hoặc replay; danh sách vé bỏ qua vé đã mất/sự kiện đang xóa, vẫn trả vé còn lại. Không gán vé cũ theo email chưa xác minh. Dữ liệu/chỗ legacy được giữ nguyên; chưa có API nhận lại vé legacy. Admin cookie không tự cấp quyền xem mọi vé.
+
+### Xóa sự kiện và ghi danh
+
+DELETE giữ body version và quyền admin/Origin/CSRF. Admin không bị chặn vì đã dùng ghế, kể cả ghế seed. Khóa deleting=true và registrationOpen=false trước khi dọn, cùng điều kiện version; booking transaction từ chối sự kiện đang xóa, sửa sự kiện cũng không được ghi đè khóa. Public GET/list ẩn sự kiện đang xóa; admin list giữ để tiếp tục, deleting=true.
+
+Dọn Ticket, User/event reference, idempotency snapshot và email reference legacy của đúng event. Không xóa tài khoản, phiên, email unique hoặc vé ở event khác. Đọc scan nhất quán từng trang tối đa100 item; batch_writer xử lý batch/retry. Lưu deletionCursor sau trang hoàn tất; tối đa5trang/request. Nếu còn việc trả202, gọi lại DELETE cùng version; UI hiển thị Tiếp tục xóa. Khi hết trang mới xóa event và trả200 deleted=true. Lỗi giữa chừng có thể retry; không báo hoàn tất sớm. Gọi lại ID đã mất trả200 deleted=true sau khi kiểm tra quyền/schema. Version sai khi event còn tồn tại trả409 EVENT_CHANGED.
+
+Không phải transaction xóa nguyên khối. Hiện scan toàn bảng để hỗ trợ dữ liệu cũ chưa có index theo event; chưa phù hợp đánh giá chi phí/scaling production. Sau khóa, người dùng mất quyền xem vé sự kiện đó ngay cả khi quá trình dọn chưa xong. Không tạo Undo/khôi phục.
 
 ## 6. Lỗi
 
@@ -109,7 +121,7 @@ Envelope: `{"error":{"code":"EVENT_FULL","message":"Sự kiện đã hết chỗ
 | 403 | FORBIDDEN, FORBIDDEN_ORIGIN, CSRF_FAILED |
 | 404 | EVENT_NOT_FOUND, REGISTRATION_NOT_FOUND, ROUTE_NOT_FOUND |
 | 409 | EMAIL_ALREADY_EXISTS, SALES_NOT_OPEN, REGISTRATION_CLOSED, EVENT_FULL, DUPLICATE_REGISTRATION, IDEMPOTENCY_KEY_REUSED |
-| 409 | EVENT_CHANGED, CAPACITY_TOO_SMALL, EVENT_HAS_REGISTRATIONS |
+| 409 | EVENT_CHANGED, CAPACITY_TOO_SMALL |
 | 413 / 415 | PAYLOAD_TOO_LARGE / UNSUPPORTED_MEDIA_TYPE |
 | 429 | AUTH_RATE_LIMITED (User), LOGIN_RATE_LIMITED (admin) |
 | 503 | REGISTRATION_BUSY, DATABASE_UNAVAILABLE |
@@ -126,3 +138,5 @@ Kỳ vọng trên sự kiện mới:100 người/200 chỗ →100 vé; tranh10 �
 - Triển khai: [buyer_auth.py](../backend/lambda/buyer_auth.py), [booking.py](../backend/lambda/booking.py), [repository.py](../backend/lambda/repository.py), [template](../backend/template.yaml), [data model](data-model.md), [security](security.md).
 - [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html), [AWS idempotent APIs](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/): nguyên tắc atomic/retry; tên header/status ở đây do dự án chọn.
 - [OWASP CSRF](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html), [k6 cookies](https://grafana.com/docs/k6/latest/using-k6/cookies/): tham khảo bảo vệ thao tác và tách phiên thử.
+
+Mốc v3 để bên kiểm thử đối chiếu: `feat/buyer-flow@a6ba0f21e41cc73cfadb3242ff9bd9d30e2f234a`. Không đọc contract v4 rồi áp dụng cho API v3; lấy code và tài liệu cùng commit.

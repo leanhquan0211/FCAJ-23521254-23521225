@@ -67,7 +67,7 @@ class BookingTests(unittest.TestCase):
         self.repo.get_event.return_value = event_item(remainingSeats=0, registrationOpen=False)
         self.repo.get_event.reset_mock()
         self.assertEqual(self.service.register('example', {}, self.user, self.key), (ticket, True))
-        self.repo.get_event.assert_not_called()
+        self.repo.get_event.assert_called_with("example")
         self.assertEqual(self.repo.create_booking.call_count, 1)
 
     def test_same_key_different_body_is_rejected(self):
@@ -75,9 +75,17 @@ class BookingTests(unittest.TestCase):
         self.assert_code('IDEMPOTENCY_KEY_REUSED', lambda: self.service.register('example', {}, self.user, self.key))
         self.repo.create_booking.assert_not_called()
 
+    def test_commit_between_idempotency_and_owner_read_is_replayed(self):
+        ticket = {'id': str(uuid.uuid4()), 'eventId': 'example'}
+        fingerprint = validate_booking('example', {}, self.key)[1]
+        self.repo.get_user_item.side_effect = [None, {'registrationId': ticket['id']},
+                                               {'fingerprint': fingerprint, 'registration': ticket}]
+        self.assertEqual(self.service.register('example', {}, self.user, self.key), (ticket, True))
+        self.repo.create_booking.assert_not_called()
+
     def test_new_key_same_user_event_is_duplicate_with_owned_id(self):
         ticket_id = str(uuid.uuid4())
-        self.repo.get_user_item.side_effect = [None, {'registrationId': ticket_id}]
+        self.repo.get_user_item.side_effect = [None, {'registrationId': ticket_id}, None]
         error = self.assert_code('DUPLICATE_REGISTRATION', lambda: self.service.register('example', {}, self.user, self.key))
         self.assertEqual(error.details['registrationId'], ticket_id)
         self.repo.create_booking.assert_not_called()

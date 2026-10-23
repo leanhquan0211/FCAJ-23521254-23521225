@@ -48,16 +48,22 @@ class BookingService:
         item = self.repository.get_registration(registration_id)
         if not item or item.get("userId") != user_id:
             raise ApiError(404, "REGISTRATION_NOT_FOUND", "Không tìm thấy vé thuộc tài khoản của bạn.")
+        EventService(self.repository).get_event(item["eventId"])
         return {field: item[field] for field in TICKET_FIELDS}
 
     def list_registrations(self, user_id):
         tickets = []
         for reference in self.repository.list_user_registrations(user_id):
-            tickets.append(self.get_registration(reference["registrationId"], user_id))
+            try:
+                tickets.append(self.get_registration(reference["registrationId"], user_id))
+            except ApiError as exc:
+                if exc.status != 404:
+                    raise
         tickets.sort(key=lambda item: (-datetime.fromisoformat(item["createdAt"]).timestamp(), item["id"]))
         return {"registrations": tickets}
 
     def existing(self, user_id, event_id, key, fingerprint):
+        EventService(self.repository).get_event(event_id)
         saved = self.repository.get_user_item(user_id, f"IDEMPOTENCY#{key}")
         if saved:
             if saved["fingerprint"] != fingerprint:
@@ -65,6 +71,13 @@ class BookingService:
             return saved["registration"]
         reference = self.repository.get_user_item(user_id, f"REGISTRATION#{event_id}")
         if reference:
+            # A concurrent transaction can commit between the two reads above.
+            # Re-read the intent before calling this a different-key duplicate.
+            saved = self.repository.get_user_item(user_id, f"IDEMPOTENCY#{key}")
+            if saved:
+                if saved["fingerprint"] != fingerprint:
+                    raise ApiError(409, "IDEMPOTENCY_KEY_REUSED", "Mã yêu cầu đã được dùng cho nội dung khác.")
+                return saved["registration"]
             raise ApiError(409, "DUPLICATE_REGISTRATION", "Bạn đã có vé của sự kiện này.",
                            {"registrationId": reference["registrationId"]})
         return None

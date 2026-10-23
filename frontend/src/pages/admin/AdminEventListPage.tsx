@@ -35,12 +35,15 @@ export function AdminEventListPage() {
     setBusy(true)
     setError('')
     try {
-      await deleteEvent(deleting, session)
-      setEvents((items) => items.filter((item) => item.id !== deleting.id))
+      const result = await deleteEvent(deleting, session)
+      if (result.deleted) setEvents((items) => items.filter((item) => item.id !== deleting.id))
+      else { setLoading(true); setReload((n) => n + 1) }
       setDeleting(null)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Không thể xóa sự kiện.')
       setDeleting(null)
+      setLoading(true)
+      setReload((n) => n + 1)
     } finally { sending.current = false; setBusy(false) }
   }
   const visible = filterEvents(events, { query, category: 'all', status: 'all' }) as AdminEvent[]
@@ -52,14 +55,14 @@ export function AdminEventListPage() {
     {loading ? <p role="status" className="mt-8">Đang tải sự kiện…</p> : <>
       <p role="status" className="mt-8 text-sm text-muted-foreground">{visible.length} sự kiện phù hợp</p>
       <div className="mt-4 divide-y divide-border border-y border-border">{visible.map((event) => <article key={event.id} className="flex min-w-0 flex-wrap items-start justify-between gap-5 py-6">
-        <div className="min-w-0 flex-1 basis-64"><div className="flex flex-wrap items-center gap-3"><h2 className="font-display text-lg font-semibold">{event.title}</h2><Badge data-status={event.status} className="status-badge">{STATUS_LABELS[event.status]}</Badge></div><p className="mt-2 text-sm text-muted-foreground">{formatEventDateTime(event.dateTime)} · {event.location}</p><p className="mt-2 text-sm tabular-nums">Sức chứa: {event.capacity} · Đã dùng: {event.occupiedSeats} · Còn: {event.remainingSeats}</p>{event.occupiedSeats > 0 && <p className="mt-2 text-sm text-muted-foreground">Đã có chỗ được sử dụng; có thể đóng đăng ký, không thể xóa.</p>}</div>
-        <div className="flex flex-wrap gap-3"><Button asChild variant="outline" className="min-h-11"><Link to={`/admin/events/${event.id}/edit`}><Pencil aria-hidden="true" />Chỉnh sửa</Link></Button><Button variant="destructive" className="min-h-11" disabled={event.occupiedSeats > 0} onClick={() => { setError(''); setDeleting(event) }}>Xóa</Button></div>
+        <div className="min-w-0 flex-1 basis-64"><div className="flex flex-wrap items-center gap-3"><h2 className="font-display text-lg font-semibold">{event.title}</h2><Badge data-status={event.status} className="status-badge">{STATUS_LABELS[event.status]}</Badge></div><p className="mt-2 text-sm text-muted-foreground">{formatEventDateTime(event.dateTime)} · {event.location}</p>{event.deleting && <p role="status" className="mt-2 text-sm text-destructive">Đang dọn ghi danh. Bấm “Tiếp tục xóa” để hoàn tất.</p>}<p className="mt-2 text-sm tabular-nums">Sức chứa: {event.capacity} · Đã dùng: {event.occupiedSeats} · Còn: {event.remainingSeats}</p>{event.occupiedSeats > 0 && <p className="mt-2 text-sm text-muted-foreground">Xóa sự kiện sẽ xóa các vé và ghi danh thuộc sự kiện này.</p>}</div>
+        <div className="flex flex-wrap gap-3">{!event.deleting && <Button asChild variant="outline" className="min-h-11"><Link to={`/admin/events/${event.id}/edit`}><Pencil aria-hidden="true" />Chỉnh sửa</Link></Button>}<Button variant="destructive" className="min-h-11" disabled={busy} onClick={() => { setError(''); setDeleting(event) }}>{event.deleting ? 'Tiếp tục xóa' : 'Xóa'}</Button></div>
       </article>)}</div>
       {visible.length === 0 && <p className="py-10 text-muted-foreground">{query.trim() ? 'Không tìm thấy sự kiện phù hợp.' : 'Chưa có sự kiện. Hãy thêm sự kiện đầu tiên.'}</p>}
     </>}
     <Dialog open={!!deleting} onOpenChange={(open) => { if (!open && !busy) setDeleting(null) }}><DialogContent showCloseButton={!busy} onEscapeKeyDown={(e) => { if (busy) e.preventDefault() }} onPointerDownOutside={(e) => { if (busy) e.preventDefault() }}>
-      <DialogHeader><DialogTitle>Xóa sự kiện?</DialogTitle><DialogDescription>Sự kiện “{deleting?.title}” sẽ bị xóa. Chỉ sự kiện chưa có chỗ được sử dụng mới được phép xóa.</DialogDescription></DialogHeader>
-      <DialogFooter><DialogClose asChild><Button variant="outline" className="min-h-11" disabled={busy}>Giữ lại</Button></DialogClose><Button variant="destructive" className="min-h-11" disabled={busy} onClick={confirmDelete}>{busy ? 'Đang xóa…' : 'Xác nhận xóa'}</Button></DialogFooter>
+      <DialogHeader><DialogTitle>{deleting?.deleting ? 'Tiếp tục xóa sự kiện?' : 'Xóa sự kiện?'}</DialogTitle><DialogDescription>Sự kiện “{deleting?.title}” cùng các vé và ghi danh sẽ bị xóa. Tài khoản và vé ở sự kiện khác vẫn giữ nguyên. Không thể hoàn tác.</DialogDescription></DialogHeader>
+      <DialogFooter><DialogClose asChild><Button variant="outline" className="min-h-11" disabled={busy}>{deleting?.deleting ? 'Đóng' : 'Giữ lại'}</Button></DialogClose><Button variant="destructive" className="min-h-11" disabled={busy} onClick={confirmDelete}>{busy ? 'Đang xóa…' : 'Xác nhận xóa'}</Button></DialogFooter>
     </DialogContent></Dialog>
   </div>
 }

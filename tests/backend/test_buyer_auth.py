@@ -9,7 +9,8 @@ from botocore.exceptions import ClientError
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend" / "lambda"))
 from auth import password_record
-from buyer_auth import BuyerAuthService, buyer_session_key
+from buyer_auth import BuyerAuthService
+from session import shared_key
 from service import ApiError
 
 
@@ -23,13 +24,16 @@ class BuyerAuthTests(unittest.TestCase):
     def setUp(self):
         self.repo = Mock()
         self.service = BuyerAuthService(self.repo)
+        buyer_repository = patch("session.BuyerRepository", return_value=self.repo)
+        buyer_repository.start()
+        self.addCleanup(buyer_repository.stop)
         self.repo.account_by_email.return_value = self.account
         self.token = "a" * 43
-        self.session = {"userId": self.account["userId"], "csrfToken": "buyer-csrf", "expiresAt": int(time.time()) + 300}
+        self.session = {"userId": self.account["userId"], "role": "user", "csrfToken": "buyer-csrf", "expiresAt": int(time.time()) + 300}
         self.repo.get.return_value = self.session
         self.repo.user.return_value = self.account
         self.event = {"headers": {"origin": "http://127.0.0.1:5173", "x-csrf-token": "buyer-csrf"},
-                      "cookies": [f"event_user_session={self.token}"]}
+                      "cookies": [f"event_session={self.token}"]}
 
     def assert_code(self, code, function):
         with self.assertRaises(ApiError) as caught:
@@ -60,16 +64,16 @@ class BuyerAuthTests(unittest.TestCase):
         self.repo.create_user.side_effect = ClientError({"Error": {"Code": "TransactionCanceledException"}}, "TransactWriteItems")
         self.assert_code("EMAIL_ALREADY_EXISTS", lambda: self.service.register(self.event, body))
 
-    def test_login_cookie_is_separate_and_rotated(self):
+    def test_login_uses_shared_cookie_and_rotates(self):
         result, cookie = self.service.login(self.event, {"email": " BUYER@example.com ", "password": self.password})
         self.assertEqual(result["user"]["userId"], self.account["userId"])
         self.assertNotIn("passwordHash", str(result))
-        self.assertIn("event_user_session=", cookie)
+        self.assertIn("event_session=", cookie)
         self.assertIn("HttpOnly", cookie)
         self.assertIn("SameSite=Strict", cookie)
-        self.repo.delete.assert_called_once_with(buyer_session_key(self.token))
+        self.repo.delete.assert_called_once_with(shared_key(self.token))
         key, value = self.repo.create.call_args.args
-        self.assertTrue(key.startswith("USER_SESSION#"))
+        self.assertTrue(key.startswith("APP_SESSION#"))
         self.assertEqual(value["userId"], self.account["userId"])
 
     def test_login_wrong_password_and_unknown_account_same_error(self):
@@ -103,10 +107,10 @@ class BuyerAuthTests(unittest.TestCase):
         error = self.assert_code("AUTH_RATE_LIMITED", lambda: self.service.rate_limit(self.event, "signup"))
         self.assertGreater(int(error.headers["Retry-After"]), 0)
 
-    def test_logout_deletes_session_and_clears_only_buyer_cookie(self):
+    def test_logout_deletes_shared_session_and_clears_cookie(self):
         cookie = self.service.logout(self.event)
-        self.repo.delete.assert_called_once_with(buyer_session_key(self.token))
-        self.assertIn("event_user_session=", cookie)
+        self.repo.delete.assert_called_once_with(shared_key(self.token))
+        self.assertIn("event_session=", cookie)
         self.assertIn("Max-Age=0", cookie)
 
 

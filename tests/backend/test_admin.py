@@ -12,6 +12,7 @@ import app
 from admin_events import AdminEventService, validate_event
 from auth import AuthService, password_record, session_cookie, session_key
 from auth_repository import AuthRepository
+from session import shared_key
 from repository import EventRepository
 from service import ApiError
 
@@ -40,7 +41,7 @@ class AuthTests(unittest.TestCase):
         self.token = "a" * 43
         self.session = {"username": "admin", "role": "admin", "csrfToken": "test-csrf", "expiresAt": int(time.time()) + 300}
         self.repo.get.side_effect = lambda key: self.account if key == "ADMIN#admin" else self.session
-        self.event = {"headers": {"origin": "http://localhost:5173", "x-csrf-token": "test-csrf"}, "cookies": [f"event_admin_session={self.token}"]}
+        self.event = {"headers": {"origin": "http://localhost:5173", "x-csrf-token": "test-csrf"}, "cookies": [f"event_session={self.token}"]}
 
     def assert_code(self, code, function):
         with self.assertRaises(ApiError) as raised:
@@ -58,9 +59,9 @@ class AuthTests(unittest.TestCase):
     def test_login_rotates_session_and_returns_http_only_cookie(self):
         session, cookie = self.service.login(self.event, {"username": " ADMIN ", "password": "A long test password 123!"})
         self.assertEqual(session["role"], "admin")
-        self.repo.delete.assert_called_once_with(session_key(self.token))
+        self.repo.delete.assert_called_once_with(shared_key(self.token))
         key, stored = self.repo.create.call_args.args
-        self.assertTrue(key.startswith("SESSION#"))
+        self.assertTrue(key.startswith("APP_SESSION#"))
         self.assertNotIn(cookie.split(";")[0].split("=")[1], key)
         self.assertIn("HttpOnly", cookie)
         self.assertIn("SameSite=Strict", cookie)
@@ -96,7 +97,7 @@ class AuthTests(unittest.TestCase):
 
     def test_logout_deletes_session_and_clears_cookie(self):
         cookie = self.service.logout(self.event)
-        self.repo.delete.assert_called_once_with(session_key(self.token))
+        self.repo.delete.assert_called_once_with(shared_key(self.token))
         self.assertIn("Max-Age=0", cookie)
         with patch.dict("os.environ", {"COOKIE_SECURE": "true"}):
             self.assertIn("; Secure", session_cookie(self.token))
@@ -158,21 +159,16 @@ class AdminEventTests(unittest.TestCase):
         self.repo.replace_event.side_effect = ClientError({"Error": {"Code": "ConditionalCheckFailedException"}}, "PutItem")
         self.assert_code("EVENT_CHANGED", lambda: self.service.update("example", event_input(version=0)))
 
-    def test_delete_blocked_when_any_seat_used(self):
-        self.assert_code("EVENT_HAS_REGISTRATIONS", lambda: self.service.delete("example", {"version": 0}))
-        self.repo.delete_event.assert_not_called()
+    def test_delete_with_registrations_delegates_to_resumable_cleanup(self):
+        with patch("event_deletion.EventDeletionService") as cleanup:
+            cleanup.return_value.delete.return_value = {"deleted": True}
+            self.assertEqual(self.service.delete("example", {"version": 0}), {"deleted": True})
+            cleanup.return_value.delete.assert_called_once_with("example", 0)
 
-    def test_delete_only_empty_event_and_guards_concurrent_registration(self):
-        current = event_item(remainingSeats=10)
-        self.repo.get_event.return_value = current
-        self.assertEqual(self.service.delete("example", {"version": 0}), {"deleted": True})
-        table = Mock()
-        EventRepository(table).delete_event(current)
-        condition = table.delete_item.call_args.kwargs
-        self.assertIn("remainingSeats = :seats", condition["ConditionExpression"])
-        self.assertEqual(condition["ExpressionAttributeValues"][":seats"], 10)
-        self.repo.delete_event.side_effect = ClientError({"Error": {"Code": "ConditionalCheckFailedException"}}, "DeleteItem")
-        self.assert_code("EVENT_CHANGED", lambda: self.service.delete("example", {"version": 0}))
+    def test_delete_validates_id_and_version_before_cleanup(self):
+        for body in [{}, {"version": True}, {"version": -1}, {"version": 0, "role": "admin"}]:
+            self.assert_code("VALIDATION_ERROR", lambda: self.service.delete("example", body))
+        self.assert_code("VALIDATION_ERROR", lambda: self.service.delete("../example", {"version": 0}))
 
 
 class AdminHandlerTests(unittest.TestCase):

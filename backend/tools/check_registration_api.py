@@ -1,4 +1,4 @@
-"""Buyer v3 smoke checks; writes only to a dedicated localhost test table."""
+"""Buyer v4 smoke checks; writes only to a dedicated localhost test table."""
 import argparse
 import json
 import secrets
@@ -26,7 +26,7 @@ def main():
     health, _ = admin.call("/health")
     table_name = health["database"]["table"]
     assert table_name.startswith("fcaj-event-workshop-local-test-"), "No writes: test table required"
-    assert health["apiContractVersion"] == "3.0"
+    assert health["apiContractVersion"] == "4.0"
     table = local_table(args.endpoint_url, table_name)
     password = secrets.token_urlsafe(24)
     username = "smoke-" + uuid.uuid4().hex[:10]
@@ -46,7 +46,7 @@ def main():
         client.csrf = session["csrfToken"]
         assert "HttpOnly" in headers["Set-Cookie"] and "SameSite=Strict" in headers["Set-Cookie"]
         assert client.call("/auth/session")[0]["user"]["userId"] == profile["user"]["userId"]
-        client.call("/admin/events", expected=401)
+        client.call("/admin/events", expected=403)
         return client
 
     fixture = {"title": "Buyer API smoke", "category": "Công nghệ", "dateTime": "2099-06-01T09:00:00+07:00",
@@ -57,7 +57,7 @@ def main():
     guest, owner, other = Client(admin.base), buyer(), buyer()
     key = {"Idempotency-Key": str(uuid.uuid4())}
     guest.call(path, "POST", {}, 401, extra_headers=key)
-    admin.call(path, "POST", {}, 401, extra_headers=key)
+    admin.call(path, "POST", {}, 403, extra_headers=key)
     owner.call(path, "POST", {}, 403, csrf=False, extra_headers=key)
     owner.call(path, "POST", {}, 403, origin="https://attacker.example", extra_headers=key)
     owner.call(path, "POST", {"email": "spoof@example.com"}, 400, extra_headers=key)
@@ -83,14 +83,18 @@ def main():
     admin.call(f"/admin/events/{event['id']}", "PUT", {**fixture, "registrationOpen": False, "version": event["version"]})
     assert owner.call(path, "POST", {"phone": "0901234567"}, extra_headers=key)[0] == ticket
 
-    opening = datetime.now(timezone.utc) + timedelta(seconds=5)
+    # Cold local containers can take longer than five seconds to start.
+    # Boundary instants are covered by unit tests with an explicit server clock.
+    opening = datetime.now(timezone.utc) + timedelta(hours=1)
     scheduled, _ = admin.call("/admin/events", "POST", {**fixture, "capacity": 10, "salesOpenAt": opening.isoformat()}, 201)
     scheduled_path = f"/events/{scheduled['id']}/registrations"
     schedule_key = {"Idempotency-Key": str(uuid.uuid4())}
     assert other.call(f"/events/{scheduled['id']}")[0]["status"] == "not_open"
     not_open, _ = other.call(scheduled_path, "POST", {}, 409, extra_headers=schedule_key)
     assert not_open["error"]["code"] == "SALES_NOT_OPEN"
-    time.sleep(max(0, opening.timestamp() - time.time()) + 0.1)
+    admin.call(f"/admin/events/{scheduled['id']}", "PUT", {
+        **fixture, "capacity": 10, "salesOpenAt": (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(),
+        "version": scheduled['version']})
     other.call(scheduled_path, "POST", {}, 201, extra_headers=schedule_key)
 
     race, _ = admin.call("/admin/events", "POST", fixture, 201)
@@ -111,7 +115,7 @@ def main():
     owner.call("/auth/logout", "POST", {}, 403, csrf=False)
     owner.call("/auth/logout", "POST", {})
     owner.call("/auth/session", expected=401)
-    print(json.dumps({"checks": "passed", "contract": "3.0", "table": table_name,
+    print(json.dumps({"checks": "passed", "contract": "4.0", "table": table_name,
                       "lastSeatRequests": 8, "lastSeatWinners": 1, "ownerIsolation": True,
                       "schedule": True, "replayAfterFullAndClosed": True}))
 

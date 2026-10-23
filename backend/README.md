@@ -1,6 +1,8 @@
+> Bản hiện hành trên feat/unified-account là API4.0: cookie chung event_session, login identifier/password, sai role403; admin xóa có dọn ghi danh,202 cần tiếp tục cùng version. [Contract](../docs/api-contract.md) và [nhật ký mục15](../quan-worklog/week-4/23-10.md). Mốc feat/buyer-flow@a6ba0f2 vẫn giữ API3.0; lấy code/tài liệu cùng commit. Nâng cấp cần đăng nhập lại, không reset bảng.
+
 # Backend local — sự kiện và đăng ký
 
-Backend dùng Lambda **Python 3.13**, API Gateway **HTTP API payload v2** do SAM giả lập, và **DynamoDB Local** trong Docker. API ứng dụng đã nâng lên [contract v3](../docs/api-contract.md): User/account/session riêng, đặt vé có key, owner-only và giờ mở bán. Payload v2 của Gateway là định dạng sự kiện Lambda, khác phiên bản contract ứng dụng v3. Mock chỉ để xem giao diện sự kiện.
+Backend dùng Lambda **Python 3.13**, API Gateway **HTTP API payload v2** do SAM giả lập, và **DynamoDB Local** trong Docker. API ứng dụng đã nâng lên [contract v4](../docs/api-contract.md): User/account, session chung hai role, đặt vé có key, owner-only và giờ mở bán. Payload v2 của Gateway là định dạng sự kiện Lambda, khác phiên bản contract ứng dụng v4. Mock chỉ để xem giao diện sự kiện.
 
 ## Kiến trúc và cấu hình
 
@@ -16,7 +18,7 @@ Backend dùng Lambda **Python 3.13**, API Gateway **HTTP API payload v2** do SAM
 
 `localhost` trong Lambda là chính container Lambda, vì vậy không dùng nó làm endpoint DB của Lambda. Compose chỉ publish DB trên loopback. Thư mục `lambda/` tách handler (`app.py`), logic (`service.py`), repository và cấu hình. Xem [mô hình dữ liệu](../docs/data-model.md) cho khóa bảng, seed và transaction đã triển khai.
 
-`buyer_auth.py` xử lý tài khoản/phiên, `booking.py` xử lý vé/replay, repository ghi DB. POST đặt vé lấy danh tính từ phiên; transaction giảm chỗ + reference User/event + Ticket + idempotency. Retry tối đa4 lượt khi xung đột, phân biệt503 busy với409 hết chỗ. GET kết quả và Vé của tôi chỉ cho chủ vé. Admin vẫn dùng `auth.py` và `admin_events.py`.
+`buyer_auth.py` xử lý tài khoản User, `session.py` giữ phiên chung, `event_deletion.py` dọn ghi danh, `booking.py` xử lý vé/replay, repository ghi DB. POST đặt vé lấy danh tính từ phiên; transaction giảm chỗ + reference User/event + Ticket + idempotency. Retry tối đa4 lượt khi xung đột, phân biệt503 busy với409 hết chỗ. GET kết quả và Vé của tôi chỉ cho chủ vé. Admin vẫn dùng `auth.py` và `admin_events.py`.
 
 Dependency được khóa trong `lambda/requirements.txt`: **boto3 1.43.114**. `backend/requirements.txt` tham chiếu file này cho công cụ chạy trên host nếu cần. SAM build cài dependency vào `.aws-sam/build/EventsFunction`, không phụ thuộc boto3 hay Python 3.13 cài trên Windows.
 
@@ -79,7 +81,7 @@ Nếu chủ động cần dữ liệu demo, thêm `--seed-demo` (nên dùng bả
 docker compose -f backend/compose.yaml run --rm tools backend/dynamodb_setup/init_db.py --endpoint-url http://fcaj-dynamodb-local:8000 --table-name fcaj-event-workshop-local-test-demo --seed-demo
 ```
 
-Demo có tám sự kiện, gồm còn chỗ, hết chỗ và đã kết thúc. Số chỗ đã dùng là số giả lập, không có người đăng ký tương ứng, nên một số sự kiện demo sẽ bị chặn xóa theo quy tắc bảo vệ chỗ. Ngày tính tương đối theo lần seed đầu ở múi giờ `+07:00`. Seed lại chỉ thêm ID còn thiếu, không ghi đè hoặc dời ngày bản ghi cũ. Chế độ mock của frontend vẫn giữ dữ liệu mẫu riêng, không phải dữ liệu trong database.
+Demo có tám sự kiện, gồm còn chỗ, hết chỗ và đã kết thúc. Số chỗ đã dùng là số giả lập, không có người đăng ký tương ứng, admin vẫn được xóa sự kiện demo; khi xóa không tạo thêm hay hoàn lại ghi danh giả. Ngày tính tương đối theo lần seed đầu ở múi giờ `+07:00`. Seed lại chỉ thêm ID còn thiếu, không ghi đè hoặc dời ngày bản ghi cũ. Chế độ mock của frontend vẫn giữ dữ liệu mẫu riêng, không phải dữ liệu trong database.
 
 Đọc trạng thái bảng trực tiếp từ container tools:
 
@@ -90,6 +92,8 @@ docker compose -f backend/compose.yaml run --rm tools backend/check_db.py --endp
 Nếu chủ động dùng Python trên host với boto3 đã cài, lệnh tương đương là `python backend/check_db.py --endpoint-url http://127.0.0.1:8000`. Không bỏ `--endpoint-url`; thiếu endpoint sẽ dừng. Không có lệnh reset/xóa dữ liệu tự động.
 
 ## Kiểm thử
+
+Nếu chạy Python trên host với `PYTHONPATH` trỏ vào `.aws-sam/build/EventsFunction`, đặt `$env:PYTHONDONTWRITEBYTECODE='1'` trước lệnh test để file cache không kích hoạt SAM warm watcher. Tool HTTP quản trị/người mua đã tự tắt ghi bytecode. Chờ `/health` báo đúng contract4.0 và bảng test rồi mới chạy smoke test.
 
 Unit test dùng mock, không ghi DB/gọi AWS; chạy trong Python3.13 sau khi SAM build. Ba test integration được skip trong lệnh mặc định:
 
@@ -120,9 +124,9 @@ Trong terminal local có các biến SAM giả như phần chạy ở trên, kh�
 python backend/tools/check_registration_api.py --base-url http://127.0.0.1:3002
 ```
 
-Smoke test ghi xác nhận `/health` trỏ bảng test và contract3.0, tự tạo admin fixture/User và session thật; thử owner, validation, lịch mở bán, replay sau full/closed, logout và8 request HTTP tranh chỗ cuối. Khi chạy trên host cần `python -m pip install -r backend/requirements.txt`; hoặc chạy tools container với `--endpoint-url http://fcaj-dynamodb-local:8000`. Khác `check_api.py` chỉ đọc.
+Smoke test ghi xác nhận `/health` trỏ bảng test và contract4.0, tự tạo admin fixture/User và session thật; thử owner, validation, lịch mở bán, replay sau full/closed, logout và8 request HTTP tranh chỗ cuối. Khi chạy trên host cần `python -m pip install -r backend/requirements.txt`; hoặc chạy tools container với `--endpoint-url http://fcaj-dynamodb-local:8000`. Khác `check_api.py` chỉ đọc.
 
-Kết quả lịch sử v1/v2 dưới đây được giữ để tham khảo, không đại diện v3. Kết quả v3 mới nhất tại [nhật ký 23/10](../quan-worklog/week-4/23-10.md).
+Các kết quả lịch sử dưới đây được giữ để tham khảo; kết quả v4 hiện hành nằm ở nhật ký mục15. Kết quả v4 mới nhất tại [nhật ký 23/10](../quan-worklog/week-4/23-10.md).
 
 | Kiểm tra | Kết quả |
 | --- | --- |
@@ -138,7 +142,7 @@ Kết quả lịch sử v1/v2 dưới đây được giữ để tham khảo, kh
 | Stop/start DB, không xóa volume | Đạt: health trả 503 khi DB dừng, API phục hồi sau start, fingerprint của 8 sự kiện giữ nguyên |
 | Lần gọi Lambda đầu | Ban đầu timeout 15 giây; đã sửa cache client và timeout 60 giây, kiểm thử HTTP sau sửa đạt |
 
-V3 đã có tài khoản User/ownership/idempotency. Chưa có email xác nhận/thanh toán/AWS. Frontend không tự retry POST trong nền; người dùng chủ động thử lại cùng key. Chưa kiểm tra Git Bash, Firefox/Safari hoặc nhiều thiết bị cho mốc mới.
+V4 đã có tài khoản User/ownership/idempotency. Chưa có email xác nhận/thanh toán/AWS. Frontend không tự retry POST trong nền; người dùng chủ động thử lại cùng key. Chưa kiểm tra Git Bash, Firefox/Safari hoặc nhiều thiết bị cho mốc mới.
 
 Tham chiếu: [DynamoDB Local và Docker Compose](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html), [SAM HTTP API](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-httpapi.html).
 
@@ -165,9 +169,9 @@ Nhập mật khẩu 15–128 ký tự hai lần (terminal không hiện ký tự
 
 Chạy SAM như trên. Frontend dùng `VITE_DATA_MODE=api`, `VITE_API_BASE_URL=/api`, rồi `npm.cmd --prefix frontend run dev`. Truy cập `http://127.0.0.1:5173/`, chọn Quản trị viên và đăng nhập. Proxy `/api` của Vite chuyển đến SAM cổng 3001; không trộn localhost/127.0.0.1 giữa các địa chỉ khi dùng URL API tuyệt đối cũ.
 
-Quản trị cho phép thêm/sửa tên, danh mục, thời gian (giờ Việt Nam), địa điểm, đơn vị tổ chức, sức chứa, giới thiệu, nội dung và mở/đóng đăng ký. Sự kiện đã có chỗ dùng không được xóa; không giảm sức chứa xuống dưới số chỗ đã dùng. Chỗ nền trong dữ liệu seed cũng được giữ nguyên.
+Quản trị cho phép thêm/sửa tên, danh mục, thời gian (giờ Việt Nam), địa điểm, đơn vị tổ chức, sức chứa, giới thiệu, nội dung và mở/đóng đăng ký. Không giảm sức chứa xuống dưới số chỗ đã dùng. Admin xóa được sự kiện có người; vé/ghi danh của sự kiện bị dọn, tài khoản/vé khác được giữ. Nếu trả202, tiếp tục DELETE cùng version đến khi deleted=true.
 
-Session trong cookie HttpOnly, hạn 8 giờ; thao tác ghi kiểm tra Origin và CSRF. Đăng xuất thu hồi session ở server. Chi tiết tại [contract](../docs/api-contract.md) và [bảo mật](../docs/security.md). Khách không cần đăng nhập.
+Session chung trong cookie HttpOnly, hạn 8 giờ; thao tác ghi kiểm tra Origin và CSRF. Đăng xuất thu hồi session ở server. Chi tiết tại [contract](../docs/api-contract.md) và [bảo mật](../docs/security.md). API đọc sự kiện công khai; UI mặc định yêu cầu đăng nhập, đặt vé/xem vé cần User.
 
 ### Kiểm tra quản trị trên bảng riêng
 
@@ -179,10 +183,12 @@ python backend/tools/check_admin_api.py --base-url http://127.0.0.1:3002
 
 Script kiểm tra health trỏ bảng test trước khi ghi, tạo admin với mật khẩu ngẫu nhiên chỉ trong bộ nhớ, rồi kiểm tra quyền, login/logout, cookie, CSRF và CRUD. Không tạo admin thật trong bảng ứng dụng. Các test bổ sung nằm tại `tests/backend/test_admin.py`.
 
-Mốc nâng cấp quản trị: 45 unit test đạt trên Python 3.13 container; hai integration test tranh chỗ/trùng email đạt trên DynamoDB Local (lượt integration chạy bằng Python host 3.11). SAM build và validate/lint đạt. HTTP admin đạt thêm/sửa/xóa, chống CSRF, giữ chỗ, chặn xóa có đăng ký, logout và hai lượt sửa cùng version chỉ một lượt thành công. Edge headless đã kiểm tra toàn bộ luồng vai trò/quản trị và responsive 320/375/414/768/1280 px. Frontend build/lint đạt; hai cảnh báo Fast Refresh cũ không đổi.
+Lịch sử mốc quản trị v2: 45 unit test đạt trên Python 3.13 container; hai integration test tranh chỗ/trùng email đạt trên DynamoDB Local (lượt integration chạy bằng Python host 3.11). SAM build và validate/lint đạt. HTTP admin đạt thêm/sửa/xóa, chống CSRF, giữ chỗ, chặn xóa có đăng ký, logout và hai lượt sửa cùng version chỉ một lượt thành công. Edge headless đã kiểm tra luồng quản trị và responsive 320/375/414/768/1280 px. Đây là bằng chứng cũ; v4 đã đổi quy tắc xóa, xem nhật ký mục15 cho kết quả hiện hành.
 
 Để kiểm tra UI, dùng browser profile riêng có remote-debugging port 9241, frontend proxy trỏ cùng API test, đặt `API_TEST_URL` theo cổng API rồi thêm `--browser`. Script truyền credentials test trực tiếp qua stdin cho `tests/frontend/check-admin-browser.mjs`, không ghi mật khẩu vào file.
 
 ### Giảm tài nguyên sau dùng thử
 
 Ctrl+C ở SAM và Vite, rồi `docker compose -f backend/compose.yaml down` để gỡ container/network của dự án và giữ volume. Nếu muốn tiết kiệm đĩa hơn, sau khi không còn container SAM dùng image, có thể gỡ riêng image `public.ecr.aws/sam/build-python3.13:latest-x86_64` và các image Lambda Python 3.13 đã dùng. Lần build/chạy sau cần tải lại. Không dùng `docker system prune -a --volumes` vì ảnh hưởng dự án khác và dữ liệu.
+
+Bài xóa/phiên chung opt-in: cùng RUN_DYNAMODB_INTEGRATION=1, bảng mới prefix test, chạy unittest discover để bao gồm test_unified_integration.py. File này chỉ dọn dữ liệu event fixture trong bảng test, không xóa bảng/volume. Không chạy lại fixture transaction vào cùng bảng đã có dữ liệu; tạo env test mới mỗi lượt.

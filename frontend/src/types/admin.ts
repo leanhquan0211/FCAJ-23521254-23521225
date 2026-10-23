@@ -10,6 +10,7 @@ export interface AdminSession {
 export interface AdminEvent extends EventItem {
   registrationOpen: boolean
   version: number
+  deleting: boolean
   occupiedSeats: number
 }
 

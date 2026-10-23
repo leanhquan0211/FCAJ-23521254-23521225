@@ -18,6 +18,7 @@ from auth_repository import AuthRepository
 from buyer_auth import BuyerAuthService
 from buyer_repository import BuyerRepository
 from booking import BookingService
+from session import SessionService, response_cookies
 
 logger = logging.getLogger(__name__)
 
@@ -75,24 +76,25 @@ def lambda_handler(event, context):
         table = local_table()
         repository = EventRepository(table)
         buyer = BuyerAuthService(BuyerRepository(table))
+        sessions = SessionService(AuthRepository(table))
         if route == "POST /auth/register":
             return response(201, buyer.register(event, registration_body(event)), event)
         if route == "POST /auth/login":
-            body, cookie = buyer.login(event, registration_body(event))
-            return response(200, body, event, cookies=[cookie])
+            body, cookie = sessions.login(event, registration_body(event))
+            return response(200, body, event, cookies=response_cookies(cookie))
         if route == "GET /auth/session":
-            return response(200, buyer.require_user(event), event)
+            return response(200, sessions.require(event), event)
         if route == "POST /auth/logout":
-            cookie = buyer.logout(event)
-            return response(200, {"loggedOut": True}, event, cookies=[cookie])
+            cookie = sessions.logout(event)
+            return response(200, {"loggedOut": True}, event, cookies=response_cookies(cookie))
         if "/admin/" in route:
             auth = AuthService(AuthRepository(table))
             if route == "POST /admin/login":
                 session, cookie = auth.login(event, registration_body(event))
-                return response(200, session_output(session), event, cookies=[cookie])
+                return response(200, session_output(session), event, cookies=response_cookies(cookie))
             if route == "POST /admin/logout":
                 cookie = auth.logout(event)
-                return response(200, {"loggedOut": True}, event, cookies=[cookie])
+                return response(200, {"loggedOut": True}, event, cookies=response_cookies(cookie))
             session = auth.require_admin(event, mutation=not route.startswith("GET "))
             if route == "GET /admin/session":
                 return response(200, session_output(session), event)
@@ -106,11 +108,11 @@ def lambda_handler(event, context):
                 body = admin.update(event_id, registration_body(event))
             else:
                 body = admin.delete(event_id, registration_body(event))
-            return response(200, body, event)
+            return response(202 if body.get("deleting") else 200, body, event)
         if route == "GET /health":
             table_name = repository.health()
             body = {"status": "ok", "database": {"status": "ready", "table": table_name},
-                    "apiContractVersion": "3.0", "serverTime": datetime.now(timezone.utc).isoformat()}
+                    "apiContractVersion": "4.0", "serverTime": datetime.now(timezone.utc).isoformat()}
         elif route == "GET /events":
             body = EventService(repository).list_events()
         elif route == "GET /events/{eventId}":

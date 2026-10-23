@@ -1,6 +1,16 @@
 [
   {
     "date": "2026-10-23",
+    "scope": "app",
+    "macrostructure": "Workbench shell with Catalogue event content",
+    "theme": "Almanac",
+    "enrichment": "none",
+    "brief": "Approved unified login, role-based sidebar/navbar and event deletion confirmation",
+    "verification": "Edge 320/375/414/768/1280; role menu, mobile drawer/Escape/focus, cross-tab logout/account replacement and cascade deletion passed; screenshots inspected",
+    "critique": "P4 H5 E4 S4 R5 V4; preserve locked palette and type, no new dependencies"
+  },
+  {
+    "date": "2026-10-23",
     "macrostructure": "Neutral entry and separate participant/management shells",
     "theme": "Almanac",
     "enrichment": "none",

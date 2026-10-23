@@ -1,4 +1,5 @@
-import { createContext, useContext } from 'react'
+import { useSession } from '@/hooks/useSession'
+import { createContext } from 'react'
 import type { BuyerSession } from '@/types/buyer'
 
 interface BuyerSessionState {
@@ -11,7 +12,7 @@ interface BuyerSessionState {
 export const BuyerSessionContext = createContext<BuyerSessionState | null>(null)
 
 export function useBuyerSession() {
-  const context = useContext(BuyerSessionContext)
-  if (!context) throw new Error('Thiếu BuyerSessionProvider.')
-  return context
+  const account = useSession()
+  return { ...account, session: account.session?.role === 'user' ? account.session : null,
+    setSession: (session: BuyerSession | null) => account.setSession(session ? { ...session, role: 'user' } : null) }
 }

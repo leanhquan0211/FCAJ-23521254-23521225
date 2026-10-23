@@ -3,18 +3,15 @@ import hashlib
 import hmac
 import os
 import re
-import secrets
 import time
 import uuid
 from datetime import datetime, timezone
 
 from botocore.exceptions import ClientError
 
-from auth import (SESSION_SECONDS, password_digest, password_record, request_headers,
-                  session_cookie, session_token, verify_origin)
+from auth import password_digest, password_record, verify_origin
 from service import ApiError
 
-COOKIE_NAME = "event_user_session"
 USER_FIELDS = ("userId", "fullName", "email", "role", "createdAt")
 
 
@@ -30,9 +27,6 @@ def normalize_email(value):
 def user_output(account):
     return {key: account[key] for key in USER_FIELDS}
 
-
-def buyer_session_key(token):
-    return "USER_SESSION#" + hashlib.sha256(token.encode()).hexdigest()
 
 
 class BuyerAuthService:
@@ -101,34 +95,17 @@ class BuyerAuthService:
         actual = password_digest(password, account["passwordSalt"] if account else "0" * 32)
         if not hmac.compare_digest(actual, account["passwordHash"] if account else "0" * 128) or not account or account.get("role") != "user":
             raise ApiError(401, "INVALID_CREDENTIALS", "Email hoặc mật khẩu không đúng.")
-        previous = session_token(event, COOKIE_NAME)
-        if previous:
-            self.repository.delete(buyer_session_key(previous))
-        token = secrets.token_urlsafe(32)
-        session = {"userId": account["userId"], "csrfToken": secrets.token_urlsafe(32),
-                   "expiresAt": int(time.time()) + SESSION_SECONDS}
-        self.repository.create(buyer_session_key(token), session)
-        return self.output(session, account), session_cookie(token, cookie_name=COOKIE_NAME)
+        from session import SessionService
+        return SessionService(self.repository).issue(event, {"userId": account["userId"], "role": "user"})
 
     def require_user(self, event, mutation=False):
-        token = session_token(event, COOKIE_NAME)
-        session = self.repository.get(buyer_session_key(token)) if token else None
-        if not session or int(session["expiresAt"]) <= int(time.time()):
-            raise ApiError(401, "AUTH_REQUIRED", "Vui lòng đăng nhập để xem hoặc đặt vé.")
-        account = self.repository.user(session["userId"])
-        if not account or account.get("role") != "user":
-            raise ApiError(403, "FORBIDDEN", "Tài khoản không còn quyền người tham gia.")
-        if mutation:
-            verify_origin(event)
-            csrf = request_headers(event).get("x-csrf-token", "")
-            if not hmac.compare_digest(csrf.encode(), session["csrfToken"].encode()):
-                raise ApiError(403, "CSRF_FAILED", "Phiên thao tác không hợp lệ. Vui lòng tải lại trang.")
-        return self.output(session, account)
+        from session import SessionService
+        return SessionService(self.repository).require(event, role="user", mutation=mutation)
 
     def logout(self, event):
+        from session import SessionService
         self.require_user(event, mutation=True)
-        self.repository.delete(buyer_session_key(session_token(event, COOKIE_NAME)))
-        return session_cookie("", clear=True, cookie_name=COOKIE_NAME)
+        return SessionService(self.repository).logout(event)
 
     @staticmethod
     def output(session, account):

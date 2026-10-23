@@ -10,7 +10,7 @@ from http.cookies import CookieError, SimpleCookie
 from service import ApiError
 
 SESSION_SECONDS = 8 * 60 * 60
-COOKIE_NAME = "event_admin_session"
+COOKIE_NAME = "event_session"
 SCRYPT_N, SCRYPT_R, SCRYPT_P = 2 ** 15, 8, 3
 
 
@@ -90,33 +90,17 @@ class AuthService:
         expected = account["passwordHash"] if account else "0" * 128
         if not hmac.compare_digest(actual, expected) or not account or account.get("role") != "admin":
             raise ApiError(401, "INVALID_CREDENTIALS", "Tên đăng nhập hoặc mật khẩu không đúng.")
-        previous = session_token(event)
-        if previous:
-            self.repository.delete(session_key(previous))
-        token = secrets.token_urlsafe(32)
-        session = {"username": username, "role": "admin", "csrfToken": secrets.token_urlsafe(32), "expiresAt": now + SESSION_SECONDS}
-        self.repository.create(session_key(token), session)
-        return session, session_cookie(token)
+        from session import SessionService
+        return SessionService(self.repository).issue(event, {"username": username, "role": "admin"})
 
     def require_admin(self, event, mutation=False):
-        token = session_token(event)
-        session = self.repository.get(session_key(token)) if token else None
-        if not session or int(session["expiresAt"]) <= int(time.time()):
-            raise ApiError(401, "AUTH_REQUIRED", "Vui lòng đăng nhập quản trị viên.")
-        # Re-read the account, so removing its role immediately removes access.
-        account = self.repository.get("ADMIN#" + session["username"])
-        if session.get("role") != "admin" or not account or account.get("role") != "admin":
-            raise ApiError(403, "FORBIDDEN", "Tài khoản không có quyền quản trị.")
-        if mutation:
-            verify_origin(event)
-            if not hmac.compare_digest(request_headers(event).get("x-csrf-token", "").encode(), session["csrfToken"].encode()):
-                raise ApiError(403, "CSRF_FAILED", "Phiên thao tác không hợp lệ. Vui lòng tải lại trang.")
-        return session
+        from session import SessionService
+        return SessionService(self.repository).require(event, role="admin", mutation=mutation)
 
     def logout(self, event):
+        from session import SessionService
         self.require_admin(event, mutation=True)
-        self.repository.delete(session_key(session_token(event)))
-        return session_cookie("", clear=True)
+        return SessionService(self.repository).logout(event)
 
 
 def session_output(session):

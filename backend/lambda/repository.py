@@ -38,7 +38,7 @@ class EventRepository:
     def event_guard(self, current):
         # Both seats and admin version must still match: never overwrite a concurrent booking.
         return {
-            "ConditionExpression": "#capacity = :capacity AND remainingSeats = :seats AND (attribute_not_exists(#version) OR #version = :version)",
+            "ConditionExpression": "attribute_not_exists(deleting) AND #capacity = :capacity AND remainingSeats = :seats AND (attribute_not_exists(#version) OR #version = :version)",
             "ExpressionAttributeNames": {"#version": "version", "#capacity": "capacity"},
             "ExpressionAttributeValues": {":capacity": current["capacity"], ":seats": current["remainingSeats"], ":version": current.get("version", 0)},
         }
@@ -95,7 +95,7 @@ class EventRepository:
                 "Key": attributes({"PK": "EVENTS", "SK": f"EVENT#{registration['eventId']}"}),
                 "UpdateExpression": "SET remainingSeats = remainingSeats - :one",
                 "ConditionExpression": (
-                    "attribute_exists(PK) AND registrationOpen = :open AND remainingSeats >= :one "
+                    "attribute_exists(PK) AND attribute_not_exists(deleting) AND registrationOpen = :open AND remainingSeats >= :one "
                     "AND (attribute_not_exists(salesOpenAtEpochMs) OR salesOpenAtEpochMs <= :now) "
                     "AND ((attribute_exists(startsAtEpochMs) AND startsAtEpochMs > :now) "
                     "OR (attribute_not_exists(startsAtEpochMs) AND startsAtEpoch > :seconds))"),

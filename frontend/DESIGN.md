@@ -1,8 +1,10 @@
 # Thiết kế màn hình danh sách sự kiện
 
-## Bổ sung23/10 — nhận biết khu vực
+## Bổ sung23/10 — đăng nhập chung và khung ứng dụng
 
-Theo phản hồi và phương án đã được người dùng duyệt, giữ hệ Almanac nhưng tách khung điều hướng trung lập/người tham gia/quản trị. Nhãn khu vực đặt dưới logo, tài khoản có tên và nhãn User/admin rõ ràng, navigation đang xem có chữ gạch chân. Không dùng màu làm dấu phân biệt duy nhất. Trang chung không gắn menu tài khoản. Header cho phép các nhóm chuyển hàng ở màn nhỏ; từng nhãn/nút giữ một dòng, tên dài được xuống dòng. Không thêm sidebar, thư viện hay palette mới cho số chức năng hiện tại.
+Thay yêu cầu tách hai phiên của vòng trước bằng phương án người dùng đã duyệt ở nhật ký mục15: một form login, một tài khoản đang dùng trong cùng browser, sidebar theo quyền. App pages dùng Workbench: sidebar trái rộng256px, navbar trên cùng và vùng nội dung; danh sách sự kiện bên trong vẫn là Catalogue. Giữ toàn bộ Almanac/font/token/component. Không thêm ảnh, biểu đồ hoặc dịch vụ chưa có.
+
+Desktop sidebar cao theo viewport, logo/nhãn role trên, menu cuộn ở giữa, tài khoản/logout dưới. Menu có chữ và icon, trạng thái hiện tại bằng nền nhạt và aria-current; navbar ghi trang/role/tên tài khoản. Ở màn dưới1024px dùng ngăn kéo Dialog có tên/description, giữ focus, Escape đóng và trả về nút mở. Nút/link giữ một dòng; tên tài khoản dài có thể xuống dòng. Trang login/signup dùng EntryLayout trung lập, form giữa trang, không có chọn khu vực. Global stylesheet chỉ bổ sung nếu cần; không thay font/palette.
 
 ## Mục tiêu và định hướng
 
@@ -47,11 +49,11 @@ Spacing theo nhịp 4 px: 4, 8, 12, 16, 24, 40, 64 px. Card và Input bo 10–12
 
 Nút “Xem chi tiết” mở trang chi tiết riêng. Trang chi tiết dùng cùng header, nhịp chữ, bảng màu và đường kẻ; khối thông tin thời gian, địa điểm, đơn vị tổ chức và sức chứa được trình bày thành các cặp nhãn/giá trị. Trạng thái hết chỗ hoặc đã kết thúc có giải thích rõ và không có CTA đăng ký. Form dùng một Card cho trường nhập và một Card tóm tắt sự kiện, xếp dọc trên mobile; lỗi hiển thị cạnh trường hoặc ngay trước nút gửi. Trang kết quả dùng cùng ngôn ngữ thị giác, nhấn vào mã đăng ký và thông tin sự kiện. Chuyển động chỉ giới hạn ở hover/nhấn và tôn trọng `prefers-reduced-motion`.
 
-## Luồng vai trò và quản trị (tuần 3)
+## Luồng vai trò và quản trị
 
-Giữ nguyên Almanac, font, màu và component hiện có. Trang `/` dùng hai lựa chọn rõ ràng: Người tham gia và Quản trị viên. Login là form một cột. Trang quản lý dùng danh sách có đường phân cách, tìm kiếm ở đầu và hành động cạnh từng sự kiện; form chỉnh sửa chia nhóm thông tin, một cột trên mobile. Không thêm ảnh hoặc thư viện giao diện.
+Form login nhận email hoặc username; server xác định quyền. Root điều hướng theo phiên, /admin/login chuyển về /login. Không có lựa chọn role ở UI. User có menu sự kiện/vé, admin có menu quản lý/tạo sự kiện; logout chung. Các thao tác vẫn có loading, lỗi và disabled.
 
-Các thao tác có loading, lỗi cụ thể và trạng thái disabled; phiên hết hạn quay về đăng nhập. Xóa cần xác nhận, nút bị khóa kèm giải thích khi đã có chỗ dùng. Đây là thao tác không có Undo nên dùng hộp xác nhận. Mọi nội dung admin nhập được render như văn bản.
+Admin xóa được cả sự kiện đã có người đăng ký. Hộp xác nhận phải nêu vé và ghi danh bị xóa, tài khoản/vé ở event khác được giữ, không hoàn tác. Event đang dọn có nhãn trạng thái và Tiếp tục xóa, ẩn sửa; chỉ bỏ khỏi danh sách khi backend báo deleted=true. Không cập nhật lạc quan cho xóa không thể hoàn tác.
 
 ## Exports
 

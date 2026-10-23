@@ -38,7 +38,7 @@ class EventService:
         self.repository = repository
 
     def list_events(self):
-        items = self.repository.list_events()
+        items = [item for item in self.repository.list_events() if not item.get("deleting")]
         items.sort(key=lambda item: (datetime.fromisoformat(item["dateTime"]), item["id"]))
         return {"events": [event_output(item) for item in items]}
 
@@ -46,6 +46,6 @@ class EventService:
         if not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", event_id or ""):
             raise ApiError(400, "VALIDATION_ERROR", "Mã sự kiện không hợp lệ.")
         item = self.repository.get_event(event_id)
-        if item is None:
+        if item is None or item.get("deleting"):
             raise ApiError(404, "EVENT_NOT_FOUND", "Không tìm thấy sự kiện.")
         return event_output(item)

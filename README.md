@@ -20,7 +20,7 @@ Quản trị viên:
 - Mở hoặc đóng đăng ký.
 - Xem số lượt đăng ký.
 
-API v3 chống trùng bằng `userId` và `eventId`. Người tham gia tự tạo tài khoản,
+API v4 chống trùng bằng `userId` và `eventId`. Người tham gia tự tạo tài khoản,
 đăng nhập rồi đặt vé; tên/email lấy từ phiên. `Idempotency-Key` giữ nguyên khi thử
 lại để nhận vé cũ, tránh trừ chỗ lần nữa. `registrationId` là mã vé, chỉ chủ vé được xem.
 
@@ -65,10 +65,11 @@ Terraform sẽ quản lý hạ tầng AWS.
 
 ## Trạng thái hiện tại
 
-- Frontend có trang chọn vai trò User/Admin; khách xem/tìm kiếm/đăng ký sự kiện, admin đăng nhập để thêm/sửa/xóa hoặc mở/đóng đăng ký. Luồng khách đã tích hợp HTTP API. Chọn API hoặc mock rõ ràng bằng `VITE_DATA_MODE`; xem [Frontend README](frontend/README.md).
+- Frontend có đăng nhập chung, sidebar/navbar theo role; User xem sự kiện và vé của mình, admin quản lý/tạo/sửa/xóa hoặc mở/đóng đăng ký. Không còn trang chọn khu vực; các tab cùng browser dùng một tài khoản. Chọn API hoặc mock rõ ràng bằng `VITE_DATA_MODE`; xem [Frontend README](frontend/README.md).
 - Backend SAM Python 3.13 có `GET /health`, `GET /events`, `GET /events/{eventId}`, `POST /events/{eventId}/registrations`, `GET /registrations/{registrationId}`. Đăng ký giữ chỗ và chống trùng bằng DynamoDB transaction; xem [Backend README](backend/README.md).
 - Có [API contract](docs/api-contract.md), [mô hình dữ liệu](docs/data-model.md), unit test, kiểm tra transaction đồng thời và HTTP smoke test local. Khởi tạo mặc định không thêm dữ liệu mẫu; chỉ seed demo khi chủ động dùng `--seed-demo`, không ghi đè bản ghi cũ. Dữ liệu ứng dụng và dữ liệu kiểm thử dùng bảng riêng.
-- Đã bổ sung đăng ký/đăng nhập User, Vé của tôi, quyền chủ vé, giờ mở bán và replay API v3 trên nhánh `feat/buyer-flow`; xem [nhật ký bàn giao](quan-worklog/week-4/23-10.md) và [contract](docs/api-contract.md). Session User/admin riêng, cookie HttpOnly, CSRF và giới hạn auth. Chặn xóa sự kiện có chỗ đã dùng. Dữ liệu legacy giữ nguyên nhưng không đọc công khai. Chưa email, thanh toán hoặc tài nguyên AWS.
+- Bản v4 trên `feat/unified-account` kế thừa User/booking/lịch mở bán/idempotency, chuyển sang cookie chung và cho admin xóa vé/ghi danh theo sự kiện, giữ tài khoản/vé khác. Event đang dọn bị khóa;202 cần tiếp tục. [Contract](docs/api-contract.md), [data model](docs/data-model.md), [nhật ký mục15](quan-worklog/week-4/23-10.md) ghi chi tiết kết quả và giới hạn. Bản v3 bàn giao cũ `feat/buyer-flow@a6ba0f2` được giữ nguyên. Code/tài liệu phải lấy cùng commit; nâng cấp cần đăng nhập lại, không reset bảng. Chưa email, thanh toán hoặc AWS.
+
 
 ## Chạy toàn bộ local
 
