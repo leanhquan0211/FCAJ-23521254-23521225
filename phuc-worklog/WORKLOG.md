@@ -10,7 +10,9 @@ Báo cáo cũ chưa có đủ mốc ngày chi tiết; giữ riêng giai đoạn 
 - Xây backend SAM/DynamoDB Local với API health, danh sách/chi tiết sự kiện, tạo/đọc đăng ký; transaction giữ chỗ và chống trùng email. Tích hợp toàn bộ luồng người tham gia với API thật, xử lý lỗi và lưu dữ liệu bền vững.
 - Báo cáo giai đoạn ghi nhận 26 unit, 2 integration đạt cùng HTTP/browser/build; đây là bằng chứng cũ, chưa có tài khoản User hoặc idempotency giữa các lần gửi HTTP ở mốc đó.
 
-Nguồn: [báo cáo nền lưu trong Git](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/Reports/BC.txt).
+### Nguồn tham khảo
+
+- [Báo cáo nền lưu trong Git](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/Reports/BC.txt): đối chiếu các chức năng và kết quả kiểm tra đã ghi nhận trước đợt quản trị; báo cáo không đủ mốc ngày chi tiết.
 
 ## 16/10/2026 — Tuần 3
 
@@ -29,7 +31,12 @@ Nguồn: [báo cáo nền lưu trong Git](https://github.com/leanhquan0211/FCAJ-
 - Đợt dọn mẫu: 46 unit đạt, 2 integration bỏ qua; handler/service với DB thật xác nhận danh sách trống và dữ liệu ngoài sự kiện không đổi. Không chạy lại SAM HTTP/browser trong đợt dọn.
 - Các số liệu trên thuộc từng lượt kiểm tra ngày 16/10, không cộng thành một suite hoặc coi là trạng thái DB hiện tại.
 
-Nguồn lịch sử: [nâng cấp quản trị](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/week-3/2026-10-16-role-admin-event-management.md), [dọn mẫu](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/week-3/2026-10-16-don-du-lieu-mau.md). Các bản này giữ trong Git để truy nguyên, không dùng làm hướng dẫn chạy hiện hành.
+### Nguồn tham khảo
+
+- [Bản ghi nâng cấp quản trị](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/week-3/2026-10-16-role-admin-event-management.md): chức năng Admin, quy tắc giữ chỗ và các lượt kiểm tra của đợt nâng cấp.
+- [Bản ghi dọn dữ liệu mẫu](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/week-3/2026-10-16-don-du-lieu-mau.md): xác minh tám sự kiện mẫu, điều kiện bảo toàn dữ liệu và kiểm tra sau dọn.
+
+Đây là nguồn lịch sử được giữ trong Git, không phải hướng dẫn chạy hoặc trạng thái hệ thống hiện hành.
 
 ## 23/10/2026 — Tuần 4
 
@@ -62,8 +69,19 @@ Nguồn lịch sử: [nâng cấp quản trị](https://github.com/leanhquan0211
 
 Các bài ghi/xóa dùng bảng test riêng. Bài tranh chỗ đã kiểm tra ở quy mô 8 người/1 chỗ; **chưa phải kết quả 100 người hoặc bằng chứng scaling AWS**. Unit/build của test lab chỉ xác nhận phần công cụ được kiểm tra, không thay bài tích hợp với ứng dụng hiện hành.
 
-### Đối chiếu thay đổi
+### Nguồn tham khảo
 
-- Các commit triển khai: [tài khoản và đặt vé](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/1688c9809ec27eed1a03a01cde262b6afce0f8c3), [phiên chung và xóa ghi danh](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/a10907f0287acd7c664b3902b55968565e66042b), [quản lý User và sidebar](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/9d47cff71a8f75e9c42845700d497cf029a56b16).
-- Mã xử lý: [booking.py](../backend/lambda/booking.py), [session.py](../backend/lambda/session.py), [event_deletion.py](../backend/lambda/event_deletion.py), [account_repository.py](../backend/lambda/account_repository.py), [AppShell.tsx](../frontend/src/components/AppShell.tsx), [AdminAccountsPage.tsx](../frontend/src/pages/admin/AdminAccountsPage.tsx).
-- Bằng chứng hồi quy: [tests backend](../tests/backend/test_unified_integration.py), [HTTP account](../backend/tools/check_accounts_api.py), [browser account](../tests/frontend/check-accounts-browser.mjs), cùng đầu ra kiểm tra đã chạy trong phiên phát triển. Các kết quả trên được tổng hợp từ lượt phát triển/kiểm tra, không phải chạy lại khi sắp xếp tài liệu.
+- [Commit tài khoản và đặt vé](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/1688c9809ec27eed1a03a01cde262b6afce0f8c3): thay đổi User, lịch mở bán, quyền sở hữu vé và idempotency.
+- [Commit phiên chung và xóa ghi danh](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/a10907f0287acd7c664b3902b55968565e66042b): đăng nhập chung, điều hướng theo vai trò và xóa sự kiện kèm ghi danh.
+- [Commit quản lý User và sidebar](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/9d47cff71a8f75e9c42845700d497cf029a56b16): quản lý tài khoản, hủy vé/trả chỗ và thu gọn sidebar.
+- [booking.py](../backend/lambda/booking.py): quy tắc đặt vé, chống trùng, gửi lại và quyền xem vé.
+- [session.py](../backend/lambda/session.py): cookie chung, kiểm tra phiên và phân quyền.
+- [event_deletion.py](../backend/lambda/event_deletion.py): khóa và dọn dữ liệu theo sự kiện.
+- [account_repository.py](../backend/lambda/account_repository.py): sửa/xóa User, hủy vé và hoàn chỗ bằng transaction.
+- [AppShell.tsx](../frontend/src/components/AppShell.tsx): menu theo vai trò, navbar và sidebar thu gọn.
+- [AdminAccountsPage.tsx](../frontend/src/pages/admin/AdminAccountsPage.tsx): tìm kiếm, chỉnh sửa và xác nhận xóa tài khoản.
+- [Test backend](../tests/backend/test_unified_integration.py): các ca hồi quy session, xóa đồng thời, tiếp tục sau gián đoạn và bảo toàn dữ liệu.
+- [HTTP account](../backend/tools/check_accounts_api.py): kịch bản kiểm tra API quản lý tài khoản trên bảng test riêng.
+- [Browser account](../tests/frontend/check-accounts-browser.mjs): kịch bản kiểm tra thao tác quản lý tài khoản và sidebar trên trình duyệt.
+
+Kết quả đạt ở trên dựa trên đầu ra kiểm tra trong phiên phát triển. Các file test mô tả ca kiểm tra, không tự chứng minh đã chạy đạt; lượt chỉnh tài liệu này không chạy lại các bài chức năng.
