@@ -73,6 +73,7 @@ Khởi động và lệnh kiểm tra xem [Backend README](../backend/README.md),
 ## 6. Trạng thái và phần còn lại
 
 - Làm ở thư mục gốc `D:\aws-workshop\event-registration`, nhánh **phuc**; GitHub/local còn main/phuc. Các nhánh feature đã gộp, lịch sử commit được giữ. Xem [git-workflow.md](../docs/git-workflow.md); không quay lại sửa worktree detached như một nhánh đang phát triển.
+- Cập nhật Git ngày **24/10/2026**: theo yêu cầu bàn giao, main được đồng bộ tới cùng bản phuc trong đợt này, gồm ứng dụng, test lab và tài liệu. Những lần phát triển tiếp vẫn dùng phuc; trạng thái chức năng và các giới hạn kiểm thử bên dưới không thay đổi vì đồng bộ nhánh.
 - Ở lần kết thúc dùng thử gần nhất, web/API/Docker Desktop đã dừng; dữ liệu DynamoDB được giữ và kiểm hash trước–sau dọn tài nguyên. Phiên sau kiểm tra process/health rồi khởi động theo README, không suy trạng thái máy chỉ từ tài liệu.
 - Trong ngày đã đạt 75 bài backend với DB và HTTP/browser/SAM/frontend checks. Sau gộp Git chạy lại 63 bài backend không DB, 28 unit lab và build/lint cả hai web; 12 integration bỏ qua vì Docker tắt. Chi tiết và nguồn tại [WORKLOG.md](WORKLOG.md); không diễn giải thành vừa chạy lại toàn bộ ở mọi lượt sửa tài liệu.
 - **Điểm tiếp tục chính:** [adapter lab](../tests/load/contract-v3-draft.json) vẫn ghim health3.0/cookie `event_user_session`, app dùng4.1/`event_session`. Bài purchase bị guard chặn; cần mô tả/duyệt plan đồng bộ rồi thử 1–2 User trước 100/200,100/10,100/1. Không bỏ guard hoặc đổi version backend để làm test qua.

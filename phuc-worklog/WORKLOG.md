@@ -2,6 +2,8 @@
 
 Ghi các công việc chính đã hoàn thành và kết quả kiểm tra theo ngày, phục vụ báo cáo tiến độ. Bối cảnh hiện hành xem [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md); quy cách cộng tác xem [AI_RULE.md](AI_RULE.md).
 
+Tài liệu tham khảo là nguồn trên internet dùng để giải thích, đề xuất và áp dụng giải pháp; được đối chiếu lại ngày **24/10/2026**. Mã nguồn, commit và kết quả kiểm tra được dẫn riêng ở phần minh chứng thực hiện.
+
 ## Giai đoạn nền — trước 16/10/2026
 
 Báo cáo cũ chưa có đủ mốc ngày chi tiết; giữ riêng giai đoạn này, không tính lại thành công việc mới ngày 16/10 hoặc 23/10.
@@ -10,7 +12,15 @@ Báo cáo cũ chưa có đủ mốc ngày chi tiết; giữ riêng giai đoạn 
 - Xây backend SAM/DynamoDB Local với API health, danh sách/chi tiết sự kiện, tạo/đọc đăng ký; transaction giữ chỗ và chống trùng email. Tích hợp toàn bộ luồng người tham gia với API thật, xử lý lỗi và lưu dữ liệu bền vững.
 - Báo cáo giai đoạn ghi nhận 26 unit, 2 integration đạt cùng HTTP/browser/build; đây là bằng chứng cũ, chưa có tài khoản User hoặc idempotency giữa các lần gửi HTTP ở mốc đó.
 
-### Nguồn tham khảo
+### Tài liệu tham khảo
+
+- [AWS — Deploying DynamoDB locally](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/DynamoDBLocal.DownloadingAndRunning.html): hướng dẫn chạy DynamoDB Local bằng Docker; áp dụng cho môi trường database local trong Compose.
+- [AWS — AWS::Serverless::HttpApi](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-httpapi.html): tham khảo khai báo HTTP API và CORS; áp dụng trong template SAM của backend.
+- [AWS — DynamoDB Transactions: How it works](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html): tham khảo nguyên tắc các thao tác cùng thành công hoặc cùng thất bại; áp dụng khi giảm chỗ và ghi đăng ký/khóa chống trùng.
+
+Các nguồn này đã được dẫn trong tài liệu backend/contract, nhưng chưa xác định được ngày tham khảo ban đầu của giai đoạn nền; không gán ngày đối chiếu lại thành ngày triển khai.
+
+### Minh chứng thực hiện
 
 - [Báo cáo nền lưu trong Git](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/Reports/BC.txt): đối chiếu các chức năng và kết quả kiểm tra đã ghi nhận trước đợt quản trị; báo cáo không đủ mốc ngày chi tiết.
 
@@ -31,7 +41,19 @@ Báo cáo cũ chưa có đủ mốc ngày chi tiết; giữ riêng giai đoạn 
 - Đợt dọn mẫu: 46 unit đạt, 2 integration bỏ qua; handler/service với DB thật xác nhận danh sách trống và dữ liệu ngoài sự kiện không đổi. Không chạy lại SAM HTTP/browser trong đợt dọn.
 - Các số liệu trên thuộc từng lượt kiểm tra ngày 16/10, không cộng thành một suite hoặc coi là trạng thái DB hiện tại.
 
-### Nguồn tham khảo
+### Tài liệu tham khảo
+
+- [OWASP — Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html): kiểm tra quyền ở backend trên từng request; áp dụng để chặn truy cập API Admin khi chưa đủ quyền.
+- [OWASP — Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html): tham khảo băm mật khẩu với salt riêng; áp dụng scrypt cho tài khoản Admin.
+- [OWASP — Authentication Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html): tham khảo thông báo đăng nhập sai và giới hạn lượt thử; áp dụng trong luồng đăng nhập Admin.
+- [OWASP — Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html): tham khảo cookie HttpOnly/SameSite, thời hạn và thu hồi phiên; áp dụng cho session và đăng xuất Admin.
+- [OWASP — CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html): tham khảo CSRF token và kiểm tra Origin; áp dụng cho thao tác ghi đã xác thực.
+- [Schema.org — Event](https://schema.org/Event): tham khảo thông tin tên, mô tả, thời gian, địa điểm, đơn vị tổ chức và sức chứa; chọn các trường phù hợp cho mô hình sự kiện của dự án.
+- [AWS — DynamoDB Transactions: How it works](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html): tham khảo transaction có điều kiện; áp dụng để dọn đúng dữ liệu mẫu đã xác minh và dừng nếu bản ghi vừa thay đổi.
+
+Nhật ký gốc ghi nhận các nguồn này được dùng và kiểm tra ngày 16/10/2026. Thời hạn phiên, ngưỡng giới hạn đăng nhập và quy tắc xóa là lựa chọn của dự án, không phải giá trị bắt buộc từ tài liệu.
+
+### Minh chứng thực hiện
 
 - [Bản ghi nâng cấp quản trị](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/week-3/2026-10-16-role-admin-event-management.md): chức năng Admin, quy tắc giữ chỗ và các lượt kiểm tra của đợt nâng cấp.
 - [Bản ghi dọn dữ liệu mẫu](https://github.com/leanhquan0211/FCAJ-23521254-23521225/blob/b7e1b889029938e0a68ab1acd89bf1f6dffc156b/phuc-worklog/week-3/2026-10-16-don-du-lieu-mau.md): xác minh tám sự kiện mẫu, điều kiện bảo toàn dữ liệu và kiểm tra sau dọn.
@@ -69,7 +91,19 @@ Báo cáo cũ chưa có đủ mốc ngày chi tiết; giữ riêng giai đoạn 
 
 Các bài ghi/xóa dùng bảng test riêng. Bài tranh chỗ đã kiểm tra ở quy mô 8 người/1 chỗ; **chưa phải kết quả 100 người hoặc bằng chứng scaling AWS**. Unit/build của test lab chỉ xác nhận phần công cụ được kiểm tra, không thay bài tích hợp với ứng dụng hiện hành.
 
-### Nguồn tham khảo
+### Tài liệu tham khảo
+
+- [AWS — DynamoDB Transactions: How it works](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html): áp dụng transaction và điều kiện ghi để kiểm tra tài khoản, giảm chỗ, lưu vé/liên kết/idempotency cùng nhau; cũng dùng khi hủy vé và trả chỗ để tránh hoàn hai lần.
+- [AWS Builders’ Library — Making retries safe with idempotent APIs](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/): tham khảo khóa yêu cầu theo người gọi, gửi lại nhận kết quả tương đương và từ chối cùng khóa nhưng đổi nội dung; áp dụng vào luồng đặt vé khi mất phản hồi. Tên header, mã HTTP và thời gian giữ key là lựa chọn của dự án.
+- [OWASP — Authorization Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Authorization_Cheat_Sheet.html): áp dụng kiểm tra quyền từng request cho User/Admin và kiểm tra chủ sở hữu vé; menu theo vai trò chỉ hỗ trợ điều hướng.
+- [OWASP — Password Storage Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html): tiếp tục áp dụng băm mật khẩu bằng scrypt với salt riêng khi bổ sung tài khoản User.
+- [OWASP — Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html): áp dụng cookie HttpOnly, kiểm tra và thu hồi phiên phía server khi thống nhất đăng nhập User/Admin. Quyết định dùng một cookie chung trong browser/profile đến từ yêu cầu dự án.
+- [OWASP — CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html): tiếp tục kiểm tra Origin và CSRF token khi đặt vé, sửa/xóa sự kiện và quản lý User.
+- [Git — git-worktree](https://git-scm.com/docs/git-worktree): tham khảo cách tạo thư mục làm việc riêng để phát triển ứng dụng song song với bộ kiểm thử. Sau đó các nhánh được hợp nhất vào phuc theo yêu cầu; giữ thư mục detached có dữ liệu local cần bảo toàn.
+
+Nguồn transaction, idempotency, session, CSRF và worktree đã được ghi nhận trong tài liệu phối hợp của phiên 23/10; nguồn phân quyền và mật khẩu được kế thừa từ đợt 16/10. Đây là cơ sở giải pháp, không phải xác nhận từ AWS/OWASP rằng hệ thống đã vượt qua kiểm thử.
+
+### Minh chứng thực hiện
 
 - [Commit tài khoản và đặt vé](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/1688c9809ec27eed1a03a01cde262b6afce0f8c3): thay đổi User, lịch mở bán, quyền sở hữu vé và idempotency.
 - [Commit phiên chung và xóa ghi danh](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/a10907f0287acd7c664b3902b55968565e66042b): đăng nhập chung, điều hướng theo vai trò và xóa sự kiện kèm ghi danh.

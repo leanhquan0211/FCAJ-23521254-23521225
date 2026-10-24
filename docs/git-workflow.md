@@ -1,6 +1,6 @@
 # Làm việc sau khi gộp nhánh vào phuc
 
-Theo yêu cầu trực tiếp của Phúc, dùng **phuc** làm nhánh làm việc chung; giữ **main** ở mốc cũ. Các nhánh `feat/*` đã được hợp nhất rồi xóa tên nhánh, không xóa commit hoặc nội dung của chúng. Lượt này hợp nhất Git, không đổi chức năng ứng dụng hoặc adapter test.
+Theo yêu cầu hiện hành, dùng **phuc** làm nhánh làm việc chung. Ngày **24/10/2026**, cập nhật cả **main** tới cùng bản phuc khi bàn giao lên GitHub; main không còn giữ ở mốc cũ. Các nhánh `feat/*` đã được hợp nhất rồi xóa tên nhánh, không xóa commit hoặc nội dung của chúng. Việc đồng bộ Git không thay đổi chức năng ứng dụng hoặc adapter test.
 
 ## 1. Nội dung đã giữ
 
@@ -19,7 +19,7 @@ Bốn mốc ứng dụng nối tiếp nhau, bản fbfd055 đã chứa cả bốn
 - Folder chính `D:\aws-workshop\event-registration`, nhánh **phuc**, chứa ứng dụng, tài liệu và bộ kiểm thử.
 - `.worktrees/buyer-flow` giữ lại ở detached HEAD để bảo toàn file local/SDK/cache/env đã có; không phải nhánh phát triển mới. Không tiếp tục sửa đồng thời hai folder hoặc xóa folder này khi chưa kiểm tra các file ignored.
 - Các hướng dẫn đầu phiên nói repo gốc còn code cũ hoặc phải clone `feat/*` đã được thay bằng tài liệu này. Build artifact không nằm trong Git: `.aws-sam` ở folder gốc có thể cũ, cần build lại đúng code trước khi chạy SAM.
-- main được giữ nguyên tại `f4e20b90095e2519b0dfefd212fb1a1146abbe57`; không tự deploy/merge main trong lượt này.
+- Khi gộp nhánh trước đây, main được giữ tại `f4e20b90095e2519b0dfefd212fb1a1146abbe57`. Theo yêu cầu ngày 24/10/2026, main được cập nhật bằng fast-forward tới bản phuc của đợt bàn giao này, giữ toàn bộ lịch sử. Những lần sửa tiếp vẫn làm trên phuc; lần đồng bộ này không tự cho phép các lần merge main hoặc deploy sau đó.
 
 Máy đang có thay đổi chưa commit thì kiểm tra và giữ nguyên trước khi pull; không dùng reset/clean để lấy bản mới. Với một clone đang sạch, có thể cập nhật theo giai đoạn:
 

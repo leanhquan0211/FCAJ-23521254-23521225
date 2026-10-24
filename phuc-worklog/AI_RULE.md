@@ -35,8 +35,9 @@
 
 - Mặc định **không tự ghi nhật ký** nếu chưa được yêu cầu. Hai lệnh **Checkpoint** và **Kết phiên** là yêu cầu cập nhật rõ ràng theo mục 5; không cần xin xác nhận lại việc ghi chép/bàn giao đó. Sau khi hoàn tất lệnh, không bật tự ghi cho mọi lượt sau.
 - Nhật ký phục vụ báo cáo đóng góp, viết trung tính, không gọi tên người dùng, không ghi các lần xin duyệt/lỗi dán lệnh hoặc quy công việc bên đồng hành thành phần ứng dụng.
-- **Mỗi giai đoạn/mục ngày trong WORKLOG.md phải có phần “Nguồn tham khảo” riêng, viết thành danh sách gạch đầu dòng.** Mỗi mục nêu tên nguồn, liên kết hoặc đường dẫn cụ thể và nội dung đã tham khảo/đối chiếu; không gộp nhiều nguồn vào một đoạn văn chung cho toàn nhật ký.
-- Nguồn có thể là tài liệu chính thức, mã nguồn, commit hoặc báo cáo kiểm tra thực tế. Chỉ liệt kê nguồn đã dùng/có căn cứ; phân biệt tài liệu hướng dẫn với bằng chứng đã triển khai/chạy đạt, không thêm nguồn cho đủ danh sách.
+- **Mỗi giai đoạn/mục ngày trong WORKLOG.md phải có phần “Tài liệu tham khảo” riêng, viết thành danh sách gạch đầu dòng.** Đây là các tài liệu trên internet AI thực sự đã tham khảo để giải thích, gợi ý giải pháp và áp dụng vào dự án; ưu tiên tài liệu chính thức. Mỗi mục nêu tên tài liệu, liên kết trực tiếp và phần cụ thể đã áp dụng; nếu mới dùng để đề xuất thì ghi rõ chưa triển khai.
+- Mã nguồn của dự án, commit, nhật ký cũ và báo cáo kiểm tra là **minh chứng thực hiện**, không thay thế tài liệu tham khảo dù được đặt trên GitHub. Nếu cần dẫn, đặt riêng dưới mục “Minh chứng thực hiện”. Tài liệu bên ngoài không chứng minh dự án đã chạy đạt.
+- Không thêm nguồn chưa đọc cho đủ danh sách hoặc gán nguồn vừa tìm được thành nguồn đã dùng trong quá khứ. Khi bổ sung/kiểm tra lại nguồn sau đợt thực hiện, ghi rõ thời điểm đó; nếu chưa xác định được nguồn lịch sử thì nêu đúng phần thiếu.
 - Không lặp kiến trúc/trạng thái vào WORKLOG; dẫn PROJECT_CONTEXT. Schema/lệnh khởi động chi tiết giữ trong docs/README tương ứng. Phiên bản cũ tra Git, không tạo bản lưu trùng trong thư mục.
 - Không ghi password, cookie, token, credential hoặc dữ liệu cá nhân vào tài liệu/Git.
 
