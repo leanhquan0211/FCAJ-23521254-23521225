@@ -9,8 +9,8 @@ export function EntryLayout() {
   return <div className="entry-shell flex min-h-svh flex-col bg-background text-foreground" data-area="entry">
     <header className="entry-header">
       <div className="entry-nav">
-        <Link to="/" className="entry-wordmark font-display inline-flex min-h-11 items-center gap-2 text-lg font-bold whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
-          <BrandMark className="size-10" />Sự kiện
+        <Link to="/" aria-label="Sự kiện" className="entry-wordmark font-display inline-flex min-h-11 items-center gap-2 text-lg font-bold whitespace-nowrap focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring">
+          <BrandMark className="size-10" /><span>Sự kiện</span>
         </Link>
         <p className="entry-nav-note">Gặp gỡ. Kết nối. Trải nghiệm.</p>
         <div className="entry-actions"><AppearanceControls /><ThemeToggle /></div>

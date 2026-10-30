@@ -1,10 +1,10 @@
 import { useLayoutEffect, useState } from 'react'
 import { Popover } from 'radix-ui'
-import { Droplets, Layers3, Lightbulb } from '@/components/DimensionalIcons'
+import { Droplets, Layers3, Lightbulb, Palette } from '@/components/DimensionalIcons'
 import { Button } from '@/components/ui/button'
 
 const STORAGE_KEY = 'event-workshop:appearance'
-const defaults = { transparency: 65, neon: 70, elevation: 60 }
+const defaults = { transparency: 65, neon: 70, elevation: 60, hue: 350 }
 type Appearance = typeof defaults
 
 function bounded(value: unknown, fallback: number, maximum: number) {
@@ -18,6 +18,7 @@ function readAppearance(): Appearance {
       transparency: bounded(saved?.transparency, defaults.transparency, 100),
       neon: bounded(saved?.neon, defaults.neon, 100),
       elevation: bounded(saved?.elevation, defaults.elevation, 100),
+      hue: bounded(saved?.hue, defaults.hue, 360),
     }
   } catch { return defaults }
 }
@@ -31,26 +32,33 @@ export function AppearanceControls() {
     style.setProperty('--header-opacity', String(opacity * (25 / 35)))
     style.setProperty('--neon-intensity', String(appearance.neon / 70))
     style.setProperty('--elevation-strength', String(appearance.elevation / 60))
+    style.setProperty('--brand-hue', String(appearance.hue))
+    // Cyan/green need a slightly deeper accent to keep light-theme text readable.
+    const lightAccent = .52 - .05 * Math.max(0, Math.cos((appearance.hue - 180) * Math.PI / 180))
+    style.setProperty('--light-accent-lightness', String(lightAccent))
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appearance)) } catch { /* Controls work without storage. */ }
   }, [appearance])
 
   return <div className="appearance-actions" role="group" aria-label="Tùy chỉnh giao diện">
     {([
-      { key: 'transparency', title: 'Trong suốt', label: 'Độ trong suốt', icon: Droplets },
-      { key: 'neon', title: 'Neon', label: 'Độ neon', icon: Lightbulb },
-      { key: 'elevation', title: 'Bóng nổi', label: 'Độ bóng nổi', icon: Layers3 },
-    ] as const).map(({ key, title, label, icon: Icon }) => <Popover.Root key={key}>
+      { key: 'transparency', title: 'Trong suốt', label: 'Độ trong suốt', icon: Droplets, max: 100, unit: '%' },
+      { key: 'neon', title: 'Neon', label: 'Độ neon', icon: Lightbulb, max: 100, unit: '%' },
+      { key: 'elevation', title: 'Bóng nổi', label: 'Độ bóng nổi', icon: Layers3, max: 100, unit: '%' },
+      { key: 'hue', title: 'Sắc màu chủ đạo', label: 'Sắc màu chủ đạo', icon: Palette, max: 360, unit: '°' },
+    ] as const).map(({ key, title, label, max, unit, icon: Icon }) => <Popover.Root key={key}>
       <Popover.Trigger asChild><Button type="button" variant="ghost" size="icon" className="size-11 shrink-0"
         data-appearance={key} aria-label={`Điều chỉnh ${label.toLowerCase()}`} title={`Điều chỉnh ${label.toLowerCase()}`}>
         <Icon size={20} aria-hidden="true" />
       </Button></Popover.Trigger>
       <Popover.Portal><Popover.Content className="appearance-popover" side="bottom" align="end" sideOffset={8} collisionPadding={12} aria-label={label}>
-        <label className="appearance-setting" htmlFor={`appearance-${key}`}>
-          <span>{title}<output htmlFor={`appearance-${key}`}>{appearance[key]}%</output></span>
-          <input id={`appearance-${key}`} type="range" min="0" max="100" step="1" value={appearance[key]}
-            aria-label={label} aria-valuetext={`${appearance[key]}%`}
+        <label className="appearance-setting" data-setting={key} htmlFor={`appearance-${key}`}>
+          <span>{title}<output htmlFor={`appearance-${key}`}>{appearance[key]}{unit}</output></span>
+          <input id={`appearance-${key}`} type="range" min="0" max={max} step="1" value={appearance[key]}
+            aria-label={label} aria-valuetext={key === 'hue' ? `${appearance[key]} độ` : `${appearance[key]}%`}
             onChange={event => setAppearance(previous => ({ ...previous, [key]: Number(event.target.value) }))} />
         </label>
+        {key === 'hue' && <Button type="button" variant="outline" className="mt-2 min-h-11 w-full" data-reset-hue
+          onClick={() => setAppearance(previous => ({ ...previous, hue: defaults.hue }))}>Về màu mặc định</Button>}
       </Popover.Content></Popover.Portal>
     </Popover.Root>)}
   </div>

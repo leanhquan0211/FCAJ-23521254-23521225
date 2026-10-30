@@ -2,6 +2,18 @@
   {
     "date": "2026-10-30",
     "scope": "app",
+    "theme": "studied-DNA",
+    "name": "Sakura Night / hue preference",
+    "brief": "User-requested hue slider and reset; preserve existing UI and business flow",
+    "uiScope": "Palette icon with 0-360 degree range, default 350, reset only hue; existing appearance storage migrated; semantic error/full colors stable; responsive header adjustment",
+    "verification": "Build/lint passed (two existing warnings); browser-only fixtures: 100 layouts, 10 screens x 5 widths x 2 themes, header controls within viewport, hue update/reset/persistence/keyboard and existing UI flows passed. 361 hues x 2 themes checked for opaque body/primary/link/open Badge/focus token pairs; text minimum 4.712:1, focus 3.868:1. No DB writes or Backend integration rerun.",
+    "contrast": "Open Badge foreground separated; light accent deepens continuously around cyan/green. Token checks only, not all glass/neon combinations.",
+    "critique": "P4 H5 E4 S5 R4 V4; desktop dark/blue and light/green screenshots inspected; SVG spectrum/icon, no dependency.",
+    "categoryInteraction": "User-requested Event Listing action update: native smooth scroll for hero CTA and category shortcuts, synchronized existing filters, decorative separators. Browser fixtures verified intermediate scroll positions, four categories/repeat/combined filters/clear/keyboard Enter, reduced motion instant; 10 layouts (5 widths x 2 themes), no horizontal overflow. Ribbon height retained at 70px desktop/114px mobile; font/color unchanged. No DB writes."
+  },
+  {
+    "date": "2026-10-30",
+    "scope": "app",
     "macrostructure": "Fading horizontal navigation / Split Hero / asymmetric discovery / Catalogue and management card grids",
     "theme": "studied-DNA",
     "name": "Sakura Night",
