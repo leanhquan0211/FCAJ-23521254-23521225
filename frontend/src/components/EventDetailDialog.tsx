@@ -1,4 +1,4 @@
-import { CalendarDays, MapPin, UsersRound } from 'lucide-react'
+import { CalendarDays, MapPin, UsersRound } from '@/components/DimensionalIcons'
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'

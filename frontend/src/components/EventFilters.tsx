@@ -1,4 +1,4 @@
-import { Search, X } from 'lucide-react'
+import { Search, X } from '@/components/DimensionalIcons'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,7 +28,7 @@ export function EventFilters({
   onClear,
 }: EventFiltersProps) {
   return (
-    <section aria-label="Tìm và lọc sự kiện" className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
+    <section aria-label="Tìm và lọc sự kiện" className="event-filters grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
       <div className="min-w-0 space-y-2">
         <Label htmlFor="event-search">Tìm theo tên sự kiện</Label>
         <div className="relative">

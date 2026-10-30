@@ -1,7 +1,7 @@
 // Hallmark · Almanac · management navigation · critique: P4 H5 E4 S4 R5 V4
 import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router'
-import { ShieldCheck } from 'lucide-react'
+import { ShieldCheck } from '@/components/DimensionalIcons'
 import { Button } from '@/components/ui/button'
 
 type AdminShellProps = {

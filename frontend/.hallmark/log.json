@@ -1,5 +1,27 @@
 [
   {
+    "date": "2026-10-30",
+    "scope": "app",
+    "macrostructure": "Fading horizontal navigation / Split Hero / asymmetric discovery / Catalogue and management card grids",
+    "theme": "studied-DNA",
+    "name": "Sakura Night",
+    "source": "user-provided screenshot",
+    "nav": "N9 transparent fading bar, square controls; compact desktop menu removed by user request",
+    "footer": "Ft2 inline",
+    "enrichment": "Original shaded blossom logo and raised Lucide geometry (extrusion, gradient face, highlight); neon fan; global 28-petal SVG backdrop, 16 on mobile, pointer-free and reduced-motion aware.",
+    "brief": "Approved frontend-only redesign on quan; layout as reference, gentle object motion, preserve functions",
+    "verification": "Build/lint passed; two existing warnings. Latest elevation browser fixture report: 100 responsive layouts, 10 screens/5 widths/2 themes, compact 1366x768 auth forms; actual panel/button/input shadows change at elevation 0/60/100; surface glow zero with neon/elevation zero, base depth preserved at neon zero; keyboard, reload persistence and legacy preferences passed. Popover bounds, Escape/focus, 100% transparency, existing UI flows and reduced motion passed; no uncaught exceptions or DB writes. Backend integration not rerun.",
+    "critique": "P4 H5 E4 S5 R4 V4; final desktop/mobile dark/light screenshots inspected; glass opacity prioritizes reading.",
+    "themeModes": [
+      "dark",
+      "light"
+    ],
+    "contrast": "Previously checked opaque token pairs; final adjustable glass changes contrast with backdrop and slider values. Screenshots reviewed at default 65% transparency in both themes; not full accessibility certification at every setting.",
+    "material": "Liquid Glass within existing pink/navy theme: raised reflective content buttons, glass cards/forms/inputs; separate unboxed introduction; 56px pink header, close 24px icons on 44px targets. Removed entry Explore link that returned unauthenticated visitors to login.",
+    "uiScope": "Three adjacent header Popovers: transparency/neon/elevation 0-100%, defaults 65/70/60; persistent UI preferences with legacy elevation fallback. Elevation changes shared panel/button/input shadow tokens; pink surface-neon depends on both elevation and neon.",
+    "nativeSelectFix": "Opaque theme-token backgrounds and contrasting text for option/optgroup, selected/disabled states; closed field retains glass. Build/lint passed with two existing warnings. Chromium native popup screenshots inspected in dark/light; admin category keyboard selection, event category/status filtering and clearing passed using browser fixtures, including glass transparency 100%. Computed option color pairs were opaque with contrast >=11.89:1; native OS highlight may override the selected row."
+  },
+  {
     "date": "2026-10-23",
     "scope": "app",
     "macrostructure": "Workbench shell with searchable account rows",

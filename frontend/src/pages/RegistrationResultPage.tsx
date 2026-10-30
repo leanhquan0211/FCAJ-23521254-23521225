@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2 } from '@/components/DimensionalIcons'
 import { Link, Navigate, useParams } from 'react-router'
 import { useBuyerSession } from '@/hooks/useBuyerSession'
 import { EventFacts } from '@/components/EventFacts'

@@ -1,4 +1,4 @@
-import { ArrowUpRight, CalendarDays, MapPin, UsersRound } from 'lucide-react'
+import { ArrowUpRight, CalendarDays, MapPin, UsersRound } from '@/components/DimensionalIcons'
 import { Link } from 'react-router'
 
 import { Badge } from '@/components/ui/badge'
@@ -16,7 +16,7 @@ export function EventCard({ event }: EventCardProps) {
       <Card className="event-card h-full bg-card py-6">
         <CardHeader className="gap-5">
           <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-            <span className="text-sm font-medium text-muted-foreground">
+            <span className="event-category text-sm font-medium text-muted-foreground">
               {event.category}
             </span>
             <Badge data-status={event.status} className="status-badge h-7 px-2.5 text-sm">

@@ -1,17 +1,72 @@
+/* Hallmark · macrostructure: Split Hero / Catalogue / Workbench · theme: studied-DNA (source: image) · Sakura Night · designed-as-app */
+/* Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V5 */
 :root {
-  --color-paper: oklch(0.975 0.009 95);
-  --color-card-paper: oklch(0.992 0.005 95);
-  --color-ink: oklch(0.245 0.024 166);
-  --color-ink-muted: oklch(0.45 0.018 166);
-  --color-rule: oklch(0.855 0.016 150);
-  --color-accent: oklch(0.43 0.105 169);
-  --color-accent-ink: oklch(0.985 0.005 95);
-  --color-focus: oklch(0.37 0.12 169);
-  --color-open-paper: oklch(0.92 0.04 166);
-  --color-full-paper: oklch(0.94 0.035 84);
-  --color-full-ink: oklch(0.37 0.065 65);
-  --color-ended-paper: oklch(0.93 0.008 95);
-  --color-ended-ink: oklch(0.42 0.012 95);
+  color-scheme: dark;
+  --color-paper: oklch(0.195 0.032 263);
+  --color-card-paper: oklch(0.255 0.033 264);
+  --color-paper-raised: oklch(0.29 0.037 265);
+  --color-field: oklch(0.22 0.031 264);
+  --color-ink: oklch(0.965 0.008 330);
+  --color-ink-muted: oklch(0.77 0.022 270);
+  --color-rule: oklch(0.375 0.036 268);
+  --color-accent: oklch(0.75 0.17 350);
+  --color-accent-ink: oklch(0.19 0.035 290);
+  --color-accent-hover: oklch(0.83 0.12 350);
+  --color-nav-paper: oklch(0.875 0.075 345);
+  --color-focus: oklch(0.87 0.12 345);
+  --color-open-paper: oklch(0.32 0.075 345);
+  --color-full-paper: oklch(0.31 0.045 80);
+  --color-full-ink: oklch(0.88 0.12 90);
+  --color-ended-paper: oklch(0.285 0.026 265);
+  --color-ended-ink: oklch(0.79 0.024 270);
+  --color-error: oklch(0.79 0.12 20);
+  --color-shadow: oklch(0.09 0.025 270 / 0.24);
+  --color-glow: oklch(0.69 0.28 350 / calc(.38 * var(--neon-intensity)));
+  --color-petal-light: oklch(0.96 0.025 345);
+  --color-petal: oklch(0.8 0.19 345);
+  --color-petal-deep: oklch(0.64 0.28 350);
+  --color-wood: oklch(0.32 0.055 340);
+  --color-wood-light: oklch(0.56 0.08 345);
+  --color-icon-shine: oklch(0.98 0.012 345);
+  --color-icon-edge: oklch(0.48 0.18 345);
+  --color-icon-shadow: oklch(0.24 0.065 300);
+  --color-glass-rim: oklch(0.9 0.04 340 / .3);
+  --color-glass-highlight: oklch(0.99 0.008 345 / .15);
+  --color-liquid-rim: oklch(0.91 0.065 345 / .42);
+  --color-liquid-shine: oklch(0.99 0.008 345 / calc(.48 * var(--elevation-strength)));
+  --color-liquid-shade: oklch(0.1 0.03 280 / calc(.36 * var(--elevation-strength)));
+  --color-liquid-edge: color-mix(in oklch, var(--color-accent) min(100%,calc(26% * var(--elevation-strength))), transparent);
+  --color-surface-neon: oklch(0.7 0.25 350 / calc(.28 * var(--elevation-strength) * var(--neon-intensity)));
+  --color-liquid-reflection: color-mix(in oklch, var(--color-petal-light) calc(var(--glass-opacity) * 24%), transparent);
+  --color-liquid-primary-top: color-mix(in oklch, var(--color-accent) 84%, var(--color-petal-light));
+  --color-liquid-primary-face: color-mix(in oklch, var(--color-accent) 92%, transparent);
+  --color-liquid-primary-deep: color-mix(in oklch, var(--color-accent) 91%, var(--color-icon-edge));
+  --glass-opacity: .35;
+  --header-opacity: .25;
+  --neon-intensity: 1;
+  --elevation-strength: 1;
+  --elevation-unit: calc(var(--elevation-strength) * 1px);
+  --shadow-glass-panel:
+    inset var(--elevation-unit) calc(2 * var(--elevation-unit)) calc(2 * var(--elevation-unit)) var(--color-liquid-shine),
+    inset calc(-1 * var(--elevation-unit)) calc(-3 * var(--elevation-unit)) calc(5 * var(--elevation-unit)) var(--color-liquid-edge),
+    0 calc(3 * var(--elevation-unit)) 0 var(--color-liquid-edge),
+    0 calc(16 * var(--elevation-unit)) calc(36 * var(--elevation-unit)) var(--color-liquid-shade),
+    0 0 calc(22 * var(--elevation-unit)) var(--color-surface-neon);
+  --shadow-glass-button:
+    inset 0 calc(2 * var(--elevation-unit)) calc(2 * var(--elevation-unit)) var(--color-liquid-shine),
+    inset 0 calc(-3 * var(--elevation-unit)) calc(5 * var(--elevation-unit)) var(--color-liquid-edge),
+    0 calc(3 * var(--elevation-unit)) 0 var(--color-liquid-edge),
+    0 calc(8 * var(--elevation-unit)) calc(18 * var(--elevation-unit)) var(--color-liquid-shade),
+    0 0 calc(12 * var(--elevation-unit)) var(--color-surface-neon);
+  --shadow-glass-input:
+    inset 0 calc(2 * var(--elevation-unit)) calc(5 * var(--elevation-unit)) var(--color-liquid-shade),
+    inset 0 var(--elevation-unit) var(--elevation-unit) var(--color-liquid-shine),
+    0 0 calc(8 * var(--elevation-unit)) var(--color-surface-neon);
+  --color-header-tint: oklch(0.55 0.12 345);
+  --color-glass-top: color-mix(in oklch, var(--color-card-paper) calc(var(--glass-opacity) * 100%), transparent);
+  --color-glass-bottom: color-mix(in oklch, var(--color-card-paper) min(100%, calc(var(--glass-opacity) * 123%)), transparent);
+  --color-glass-field: color-mix(in oklch, var(--color-field) min(100%, calc(var(--glass-opacity) * 172%)), transparent);
+  --glass-blur: calc(var(--glass-opacity) * 22.857px);
 
   --font-display: 'Be Vietnam Pro', system-ui, sans-serif;
   --font-body: 'Geist Variable', system-ui, sans-serif;
@@ -22,12 +77,53 @@
   --space-lg: 1.5rem;
   --space-xl: 2.5rem;
   --space-2xl: 4rem;
+  --space-3xl: 6rem;
 
-  --radius-control: 0.625rem;
-  --radius-card: 0.75rem;
+  --radius-control: 0.75rem;
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+  --text-display: clamp(2.25rem, 3.8vw, 3.75rem);
+  --text-display-small: clamp(2rem, 3.2vw, 3.25rem);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in: cubic-bezier(0.7, 0, 0.84, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-micro: 120ms;
   --dur-short: 220ms;
+  --dur-float: 6.5s;
+  --dur-petal: 8.5s;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  --color-paper: oklch(0.975 0.012 345);
+  --color-card-paper: oklch(0.995 0.004 345);
+  --color-paper-raised: oklch(0.94 0.022 345);
+  --color-field: oklch(0.96 0.013 345);
+  --color-ink: oklch(0.25 0.045 285);
+  --color-ink-muted: oklch(0.49 0.04 285);
+  --color-rule: oklch(0.69 0.045 335);
+  --color-accent: oklch(0.52 0.23 350);
+  --color-accent-ink: oklch(0.99 0.005 345);
+  --color-accent-hover: oklch(0.46 0.21 350);
+  --color-nav-paper: oklch(0.94 0.035 345);
+  --color-focus: oklch(0.52 0.23 350);
+  --color-open-paper: oklch(0.92 0.04 345);
+  --color-full-paper: oklch(0.94 0.045 90);
+  --color-full-ink: oklch(0.38 0.08 70);
+  --color-ended-paper: oklch(0.93 0.012 300);
+  --color-ended-ink: oklch(0.46 0.03 285);
+  --color-error: oklch(0.52 0.2 20);
+  --color-shadow: oklch(0.4 0.09 340 / 0.09);
+  --color-glow: oklch(0.65 0.25 350 / calc(.2 * var(--neon-intensity)));
+  --color-icon-edge: oklch(0.56 0.2 345);
+  --color-icon-shadow: oklch(0.36 0.09 310);
+  --color-glass-rim: oklch(0.72 0.075 340 / .6);
+  --color-glass-highlight: oklch(1 0 0 / .9);
+  --color-liquid-rim: oklch(0.76 0.09 345 / .5);
+  --color-liquid-shine: oklch(1 0 0 / calc(.95 * var(--elevation-strength)));
+  --color-liquid-shade: oklch(0.4 0.08 320 / calc(.16 * var(--elevation-strength)));
+  --color-surface-neon: oklch(0.62 0.23 350 / calc(.16 * var(--elevation-strength) * var(--neon-intensity)));
+  --color-header-tint: oklch(0.82 0.1 345);
 }
 
 html:root {
@@ -46,5 +142,16 @@ html:root {
   --border: var(--color-rule);
   --input: var(--color-rule);
   --ring: var(--color-focus);
+  --destructive: var(--color-error);
+  --accent: var(--color-open-paper);
+  --accent-foreground: var(--color-ink);
+  --sidebar: var(--color-card-paper);
+  --sidebar-foreground: var(--color-ink);
+  --sidebar-primary: var(--color-accent);
+  --sidebar-primary-foreground: var(--color-accent-ink);
+  --sidebar-accent: var(--color-open-paper);
+  --sidebar-accent-foreground: var(--color-ink);
+  --sidebar-border: var(--color-rule);
+  --sidebar-ring: var(--color-focus);
   --radius: var(--radius-control);
 }

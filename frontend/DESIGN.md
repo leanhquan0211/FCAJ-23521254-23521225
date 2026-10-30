@@ -1,127 +1,119 @@
-# Thiết kế màn hình danh sách sự kiện
+# Thiết kế Frontend — Sakura Night
 
-## Bổ sung23/10 — đăng nhập chung và khung ứng dụng
+## Phạm vi được duyệt — 30/10/2026
 
-Thay yêu cầu tách hai phiên của vòng trước bằng phương án người dùng đã duyệt ở nhật ký mục15: một form login, một tài khoản đang dùng trong cùng browser, sidebar theo quyền. App pages dùng Workbench: sidebar trái rộng256px, navbar trên cùng và vùng nội dung; danh sách sự kiện bên trong vẫn là Catalogue. Giữ toàn bộ Almanac/font/token/component. Không thêm ảnh, biểu đồ hoặc dịch vụ chưa có.
+Redesign giao diện trên nhánh quan theo screenshot người dùng cung cấp. Đây là hệ thiết kế hiện hành, thay thế bảng màu Almanac trước đó. Giữ route, ownership component, state nghiệp vụ, validation, API, dữ liệu, handlers nghiệp vụ và luồng User/Admin. Thay đổi state UI đã được duyệt: bỏ thu gọn menu desktop và thêm sáng/tối. Các thay đổi mật khẩu có sẵn trước đợt này được bảo toàn.
 
-Desktop sidebar cao theo viewport, logo/nhãn role trên, menu cuộn ở giữa, tài khoản/logout dưới. Menu có chữ và icon, trạng thái hiện tại bằng nền nhạt và aria-current; navbar ghi trang/role/tên tài khoản. Ở màn dưới1024px dùng ngăn kéo Dialog có tên/description, giữ focus, Escape đóng và trả về nút mở. Nút/link giữ một dòng; tên tài khoản dài có thể xuống dòng. Trang login/signup dùng EntryLayout trung lập, form giữa trang, không có chọn khu vực. Global stylesheet chỉ bổ sung nếu cần; không thay font/palette.
+## Điều chỉnh được duyệt tiếp — thanh trong suốt và sáng/tối
 
-## Mục tiêu và định hướng
+Thanh trên cùng chuyển sang nền trong suốt nhạt dần, không bo tròn; nút và liên kết trên thanh dùng hình chữ nhật. Menu desktop luôn hiện nhãn; bỏ state/nút thu gọn desktop theo yêu cầu mới. Drawer mobile và các đường dẫn theo role giữ nguyên. Logo là SVG hoa có chiều sâu bằng geometry/gradient/highlight, không phải ký tự hoặc text art. Tăng nhịp vật thể lên khoảng 6.5 giây, cánh hoa khoảng 8.5 giây; tăng số cánh và sắc neon. Reduced motion vẫn dừng hoàn toàn.
 
-Người dùng cần tìm một sự kiện phù hợp, đọc nhanh thời gian/địa điểm và biết ngay còn đăng ký được hay không. Màn hình dùng tiếng Việt, nội dung ngắn và trạng thái bằng cả chữ lẫn màu. Dữ liệu lấy từ API local hoặc mock tùy cấu hình; không đưa kiến trúc kỹ thuật vào giao diện.
+Thêm nút giao diện sáng/tối trên cả hai header. Chỉ lưu tùy chọn giao diện trong localStorage, mặc định tối; không dùng theme để thay đổi quyền hoặc dữ liệu. Biến màu của hai mode cùng nằm trong tokens.css, focus/label/trạng thái luôn đọc được.
 
-Hallmark: **Catalogue** làm cấu trúc chính vì các sự kiện là những mục ngang hàng cần so sánh và lọc. Phong cách **Almanac** dùng nền giấy sáng, chữ mực đậm, đường kẻ mảnh và một điểm nhấn xanh thông. Header theo **N9 Edge-aligned minimal**, footer theo **Ft2 Inline rule**. Không dùng hero chiếm màn hình, ảnh giả, thống kê quảng cáo hay hiệu ứng cuộn. Bộ lọc đứng ngay trước lưới để hành động tìm sự kiện luôn rõ ràng.
+## Hallmark và ảnh tham chiếu
 
-## Token thị giác
+### Bổ sung được yêu cầu — kính mờ và cánh hoa toàn trang
 
-| Vai trò | Giá trị/Quy tắc |
-| --- | --- |
-| Nền giấy | `oklch(0.975 0.009 95)`; bề mặt Card `oklch(0.992 0.005 95)` |
-| Mực chính | `oklch(0.245 0.024 166)` |
-| Chữ phụ | `oklch(0.45 0.018 166)` |
-| Đường kẻ | `oklch(0.855 0.016 150)` |
-| Điểm nhấn/xu hướng còn chỗ | xanh thông `oklch(0.43 0.105 169)` |
-| Focus | viền xanh `oklch(0.37 0.12 169)`, hiện tức thì và đủ tương phản |
-| Hết chỗ | nền vàng giấy nhạt, chữ nâu đậm; luôn ghi “Hết chỗ” |
-| Đã kết thúc | nền xám giấy, chữ xám đậm; luôn ghi “Đã kết thúc” |
+Ảnh tham chiếu mới được dùng cho chất liệu: khung kính lớn, viền bắt sáng, lớp nền tán mờ và các phần thông tin phân cấp bên trong. Không sao chép hình nền, nội dung tuyển dụng, màu be hoặc font serif của ảnh. Giữ Sakura Night hồng–navy, hai theme và typography hỗ trợ tiếng Việt hiện có.
 
-Mọi màu và font trong code tham chiếu token CSS; token bổ sung nằm ở `tokens.css`. Token `--background`, `--foreground`, `--primary`, `--card`, `--border` của shadcn được ánh xạ sang bảng màu này để Button, Input, Card và Dialog cùng một hệ. Không dùng màu làm tín hiệu trạng thái duy nhất.
+- Đăng nhập/đăng ký: phần giới thiệu nằm riêng bên trái, không có khung; chỉ form bên phải dùng kính trong suốt. Mobile xếp dọc. Vùng đầu form có logo nổi, liên kết chuyển đăng nhập/đăng ký rõ ràng. Giữ nguyên field, validation, submit và điều hướng. Trên desktop rộng, bốn field đăng ký chia hai cột để bớt chiều cao.
+- Thanh trên cùng phẳng, cao khoảng 56px; nền hồng mặc định che phủ 25%, nhạt dần. Card, bộ lọc, Dialog và form mặc định che phủ khoảng 35–43%, blur 8px để thấy được cánh hoa phía sau. Chỉ giảm alpha nền, không giảm opacity chữ hoặc control. Có fallback nền đặc khi không hỗ trợ backdrop-filter.
+- Icon chức năng giữ hình nghĩa Lucide nhưng render bằng nhiều lớp SVG: cạnh đùn, mặt gradient và ánh sáng tạo khối; đây là vector có chiều sâu mô phỏng 3D, không phải mô hình WebGL. Không dùng emoji/ký tự ghép hình; logo hoa SVG hiện có được giữ và dùng cả trên form.
+- Cánh hoa SVG nằm ở một lớp nền fixed dùng chung toàn ứng dụng, dưới nội dung, không nhận click/focus và không đọc bởi screen reader. Chuyển động rơi có độ trễ so le, chỉ transform/opacity, giảm mật độ trên mobile. Reduced motion dừng cánh hoa; không tác động dữ liệu hay state nghiệp vụ.
+- Kiểm tra lại cả hai theme, 320/375/414/768/1280px, form đăng nhập/đăng ký, bộ lọc, drawer/Dialog và khả năng thao tác qua lớp nền. Không thêm dependency hoặc sửa Backend.
+- Hai icon nổi cạnh nút sáng/tối mở Popover chứa range mảnh: Trong suốt 0–100% (mặc định 65%), Neon 0–100% (mặc định 70%). Ba nút có khoảng cách giữa vùng bấm bằng 0, vẫn giữ target 44px; icon 24px để dễ nhận biết. Mặc định ẩn thanh kéo; Escape/bấm ngoài đóng và trả focus. Giá trị lưu riêng trong localStorage dưới khóa event-workshop:appearance; không liên quan phiên đăng nhập. Không còn thanh cố định ở cuối trang. Tại 100% trong suốt, alpha nền kính và blur đều về 0, giữ nguyên chữ, viền và nút chính. Bỏ nút Khám phá ở entry header vì API mode yêu cầu đăng nhập; các nút đăng nhập/đăng ký và điều hướng sau đăng nhập giữ nguyên.
+- Ảnh Liquid Glass bổ sung được dùng cho chất liệu: mặt cong bắt sáng, viền sáng, cạnh nổi và bóng mềm trên Card/form/khung lọc; nút primary có khối hồng, nút phụ dùng kính xuyên nền. Input có phản xạ nhẹ và bóng phía trong, vẫn là native Input. Không sao chép chữ, màu tím/xanh hoặc layout demo trong ảnh. Header vẫn phẳng; chỉ các nút nội dung dùng dạng kính nổi. Reduced motion tắt hover lift; không làm biến dạng chữ hoặc thêm hiệu ứng khúc xạ nặng.
+- Bổ sung icon lớp xếp chồng mở thanh Bóng nổi 0–100% (mặc định 60%), cùng nhóm Trong suốt/Neon/Theme. Bóng nổi điều chỉnh độ đùn cạnh, highlight và bóng của Card/form/nút/ô nhập; 0% bỏ các lớp bóng này, 100% tăng chiều sâu. Bóng có quầng neon hồng: cường độ phụ thuộc cả Bóng nổi và Neon; Neon 0% tắt quầng nhưng giữ bóng tạo khối. Lưu thêm elevation trong tùy chọn appearance; giá trị cũ chưa có trường này tự dùng 60%. Ở 320px, brand của khung sau đăng nhập hiện logo đồ họa với aria-label, giữ các vùng bấm 44px và không tràn header.
+- Danh sách xổ xuống của select dùng nền đặc theo theme và chữ tương phản, mục đang chọn có nền nhấn riêng. Không áp dụng alpha kính hoặc neon cho option/optgroup vì menu native có thể được vẽ ngoài khung trang. Ô select khi đóng vẫn dùng kính; giữ nguyên native select, giá trị và sự kiện thay đổi.
+- Chuyển mục điều hướng dùng PageMotion với Web Animations API, tương thích BrowserRouter hiện có: nội dung vào mờ/lướt nhẹ 320ms. Không remount nội dung bằng pathname hoặc giữ trang cũ để tránh tác động state nghiệp vụ. Giảm chuyển động tắt animation. Logo cạnh dòng Những kết nối bắt đầu từ đây dùng BrandMark có cánh hoa tô khối thay glyph nét.
 
-Typography: **Be Vietnam Pro** (weight 600/700) cho tiêu đề/wordmark, **Geist Variable** hiện có cho nội dung và nhãn. Cả hai hỗ trợ dấu tiếng Việt; font dự phòng là `system-ui, sans-serif`. Chữ nội dung tối thiểu 16 px, dòng 1.5; tiêu đề gọn, không in nghiêng; số chỗ và ngày dùng số tabular. Các mức chữ chính: 14, 16, 20, 30/36 px. Dùng không quá hai font trên màn hình.
+- Genre: atmospheric; theme: studied-DNA, tên nội bộ Sakura Night.
+- DNA ảnh: nền navy liền mạch, điểm nhấn hồng hoa, thanh điều hướng bo tròn, hero hai cột, vật thể đồ họa riêng, Card tối và nhịp khoảng trống thoáng.
+- Không sao chép ảnh chân dung, nội dung portfolio, thống kê hoặc logo trong screenshot.
+- Ảnh tĩnh không xác định được font hoặc chuyển động chính xác. Dùng Be Vietnam Pro và Geist Variable đã cài, cùng chuyển động nhẹ theo yêu cầu bổ sung.
+- Khung ứng dụng: thanh điều hướng ngang nền trong suốt chuyển mờ (N9), thay sidebar desktop. Giữ các mục theo role, đăng xuất và drawer mobile; bỏ điều khiển thu gọn, thêm theme toggle.
+- Đăng nhập/đăng ký: Split Hero + form. Danh sách: hero giới thiệu + Catalogue có bộ lọc. Admin và các form: Workbench, ưu tiên thao tác và khả năng đọc.
 
-Spacing theo nhịp 4 px: 4, 8, 12, 16, 24, 40, 64 px. Card và Input bo 10–12 px, Button 8–10 px, Badge bo tròn vừa phải. Viền mảnh là cách phân tách chính; bóng đổ chỉ dùng rất nhẹ khi hover. Icon chỉ dùng Lucide nét đều 1.75–2 px, cỡ 16–20 px, đặt cạnh thông tin thời gian, địa điểm hoặc hành động; không dùng icon như hình minh họa độc lập.
+## Bảng màu và typography
 
-## Bố cục
+Nguồn duy nhất: tokens.css; màu khai báo OKLCH, component dùng biến hoặc semantic utility Tailwind.
+- Nền: navy đậm; Card: navy sáng hơn; chữ chính: trắng hồng nhạt; chữ phụ: xanh xám sáng.
+- Primary: hồng sáng/chữ navy ở mode tối; hồng đậm/chữ sáng ở mode sáng để giữ tương phản.
+- Header: trong suốt nhạt dần, chữ theo theme, thanh và control không bo tròn. Mode sáng dùng nền hồng trắng và Card sáng. Không dùng chữ gradient hoặc glow sau mọi đoạn chữ.
+- Còn chỗ: hồng nhạt trên nền hồng tối; hết chỗ: vàng nhạt trên nền vàng tối; kết thúc/đóng/chưa mở: xám sáng trên nền navy.
+- Trạng thái luôn có chữ, không chỉ màu. Error dùng semantic destructive.
+- Heading: Be Vietnam Pro 600/700, roman. Body: Geist Variable, 16px trở lên, line-height 1.5–1.65.
+- Display: clamp 2rem–3.75rem; dòng không vượt khung. Heading/body tối đa hai font; giữ hỗ trợ tiếng Việt.
 
-- Desktop: khung nội dung tối đa khoảng 1200 px, header trái/phải. Tiêu đề và mô tả căn trái. Thanh tìm kiếm rộng hơn hai bộ lọc. Danh sách 3 cột ở màn rộng, 2 cột ở cỡ trung bình; các Card cùng nhịp thông tin.
-- Mobile: header gọn, tiêu đề tự xuống dòng, tìm kiếm và bộ lọc xếp dọc, danh sách 1 cột. Không có cuộn ngang ở 320, 375, 414 hoặc 768 px; nhãn nút/điều hướng không xuống hai dòng.
-- Mỗi Card trình bày danh mục và trạng thái ở đầu, tên sự kiện ở giữa, thời gian/địa điểm/số chỗ phía dưới, “Xem chi tiết” ở cuối. Không lồng Card trong Card.
-- Không có kết quả: nêu rõ không tìm thấy sự kiện phù hợp và có nút “Xóa bộ lọc”. Số kết quả được thông báo qua vùng `aria-live`.
+## Khoảng cách và component
 
-## Quy tắc thành phần và trạng thái
+Nhịp 4px; token khoảng cách 8/12/16/24/40/64/96px. Container tối đa 1280px. Card bo 20px, input bo 12px; CTA nội dung dạng pill, header/control trên header không bo.
+- Button: tối thiểu 44px với thao tác chính; hover tăng tương phản, active dịch 1px, focus hiện ngay, disabled giảm nhấn và không thao tác.
+- Input/select/textarea: nhãn thật, nền navy, border cố định 1px; focus hồng, lỗi gắn aria-invalid và thông báo; không thay validation.
+- Card: bề mặt tối, border mềm; hover nâng tối đa 2px trên thiết bị có hover. Nội dung sự kiện và các liên kết hiện có được giữ.
+- Badge: nhãn trạng thái hiện có, đủ tương phản, không giả thành nút.
+- Dialog: giữ shadcn/Radix, tên/mô tả, focus trap, Escape và trả focus về trigger.
+- Icon: hình nghĩa Lucide cho chức năng, dùng chung DimensionalIcons.tsx để dựng cạnh đùn, mặt gradient và nét bắt sáng. Logo hoa có khối dùng BrandMark.tsx. Không dùng emoji hoặc ký tự ghép thành hình minh họa.
 
-| Thành phần | Mặc định và hover | Focus | Disabled / trạng thái khác |
-| --- | --- | --- | --- |
-| Button | Chữ hành động cụ thể, hit target tối thiểu 44 px; hover đổi sắc độ nhẹ | Viền focus nhìn rõ, không animate viền | Disabled giảm độ nhấn và chặn thao tác; nút xóa lọc chỉ hiện khi có lọc |
-| Input | Nhãn hiển thị rõ; border 1 px cố định, hover tăng tương phản | Viền focus ngoài, không đổi độ dày border | Disabled có nền nhạt và chữ đọc được; tìm kiếm không cần trạng thái lỗi |
-| Card | Nền sáng, đường viền mảnh; hover chỉ nâng nhẹ bằng viền/bóng | `focus-within` làm rõ ranh giới Card | Card hết chỗ/kết thúc vẫn mở được chi tiết, không giả vờ có hành động đăng ký |
-| Badge | Chữ ngắn và màu nền nhẹ | Không nhận focus vì không tương tác | Bốn nhãn: “Còn chỗ”, “Hết chỗ”, “Đã kết thúc”, “Đã đóng đăng ký”; đóng đăng ký dùng cùng sắc trung tính với đã kết thúc |
+## Đồ họa và chuyển động
 
-Nút “Xem chi tiết” mở trang chi tiết riêng. Trang chi tiết dùng cùng header, nhịp chữ, bảng màu và đường kẻ; khối thông tin thời gian, địa điểm, đơn vị tổ chức và sức chứa được trình bày thành các cặp nhãn/giá trị. Trạng thái hết chỗ hoặc đã kết thúc có giải thích rõ và không có CTA đăng ký. Form dùng một Card cho trường nhập và một Card tóm tắt sự kiện, xếp dọc trên mobile; lỗi hiển thị cạnh trường hoặc ngay trước nút gửi. Trang kết quả dùng cùng ngôn ngữ thị giác, nhấn vào mã đăng ký và thông tin sự kiện. Chuyển động chỉ giới hạn ở hover/nhấn và tôn trọng `prefers-reduced-motion`.
+BlossomArtwork.tsx là SVG vector nguyên bản: đường path quạt giấy, nan quạt, cành và cánh hoa; không phải ASCII, text art hoặc emoji. SVG trang trí có aria-hidden, không nhận focus hay che thao tác.
+- Chuyển động theo yêu cầu người dùng: vật thể nổi nhẹ và cánh hoa dịch chuyển chậm, chỉ animate transform/opacity.
+- Vật thể 6.5 giây, cánh hoa 8.5 giây; 16 cánh quanh quạt và 5 quanh cành. Không parallax theo chuột, không chạy chữ hoặc animation layout.
+- prefers-reduced-motion: reduce dừng hoàn toàn animation trang trí và hover lift.
+- Không dùng thư viện animation, CDN hoặc asset bên thứ ba.
+- Minh họa quạt/cành lớn chỉ dùng ở hero và vùng giới thiệu tài khoản. Theo yêu cầu bổ sung, lớp cánh hoa nền nhẹ dùng chung toàn ứng dụng, kể cả trang quản trị; nằm dưới nội dung và không nhận tương tác.
 
-## Luồng vai trò và quản trị
+## Responsive và kiểm tra
 
-Form login nhận email hoặc username; server xác định quyền. Root điều hướng theo phiên, /admin/login chuyển về /login. Không có lựa chọn role ở UI. User có menu sự kiện/vé, admin có menu quản lý/tạo sự kiện; logout chung. Các thao tác vẫn có loading, lỗi và disabled.
-
-Admin xóa được cả sự kiện đã có người đăng ký. Hộp xác nhận phải nêu vé và ghi danh bị xóa, tài khoản/vé ở event khác được giữ, không hoàn tác. Event đang dọn có nhãn trạng thái và Tiếp tục xóa, ẩn sửa; chỉ bỏ khỏi danh sách khi backend báo deleted=true. Không cập nhật lạc quan cho xóa không thể hoàn tác.
+Desktop dùng thanh điều hướng ngang ở đầu và nội dung toàn chiều rộng container bên dưới, hero chữ trái–đồ họa phải, dải chủ đề, phần giới thiệu ngắn rồi danh sách Card ba cột. Form vẫn có nhãn phía trên. Dưới 768px, hero/form xếp một cột; minh họa thu gọn. Drawer mobile giữ breakpoint hiện có; menu desktop luôn có nhãn, không có nút thu gọn.
+Kiểm tra 320/375/414/768/1280px: không cuộn ngang, heading xuống dòng trong khung, nút/nav không bị cắt hay xuống hai dòng, input đọc được. Overflow-x: clip ở html/body. Grid có hình dùng minmax(0,1fr).
+Kiểm tra build/lint, các điều hướng/tương tác hiện có và reduced motion. Báo riêng kết quả giả lập giao diện với kiểm tra Backend thật.
 
 ## Exports
 
-**CSS nguồn:** [`tokens.css`](tokens.css) chứa bảng màu, font, spacing, radius và motion. `src/index.css` import file này sau các import Tailwind/shadcn/font và trước các rule sử dụng token.
+### CSS tokens
 
-**Tailwind v4 `@theme`** (ánh xạ để dùng khi tách hệ thống sang dự án khác):
+tokens.css chứa toàn bộ màu, font, spacing, radius và motion. src/index.css giữ nguyên import Tailwind/shadcn/font; các style mới được thêm ở cuối.
 
-```css
+### Tailwind v4
+
+Dùng mapping @theme inline hiện có:
+~~~css
 @theme inline {
-  --color-almanac-paper: var(--color-paper);
-  --color-almanac-card: var(--color-card-paper);
-  --color-almanac-ink: var(--color-ink);
-  --color-almanac-muted: var(--color-ink-muted);
-  --color-almanac-rule: var(--color-rule);
-  --color-almanac-accent: var(--color-accent);
-  --font-almanac-display: var(--font-display);
-  --font-almanac-body: var(--font-body);
-  --radius-almanac-card: var(--radius-card);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-card: var(--card);
+  --font-sans: var(--font-body);
 }
-```
+~~~
 
-**DTCG `tokens.json`** (các token gốc; trạng thái bổ sung theo cùng cấu trúc):
+### DTCG
 
-```json
+~~~json
 {
-  "$schema": "https://design-tokens.github.io/community-group/format/",
   "color": {
-    "paper": { "$type": "color", "$value": "oklch(0.975 0.009 95)" },
-    "card": { "$type": "color", "$value": "oklch(0.992 0.005 95)" },
-    "ink": { "$type": "color", "$value": "oklch(0.245 0.024 166)" },
-    "muted": { "$type": "color", "$value": "oklch(0.45 0.018 166)" },
-    "rule": { "$type": "color", "$value": "oklch(0.855 0.016 150)" },
-    "accent": { "$type": "color", "$value": "oklch(0.43 0.105 169)" },
-    "focus": { "$type": "color", "$value": "oklch(0.37 0.12 169)" }
-  },
-  "space": {
-    "md": { "$type": "dimension", "$value": "1rem" },
-    "lg": { "$type": "dimension", "$value": "1.5rem" },
-    "xl": { "$type": "dimension", "$value": "2.5rem" }
-  },
-  "radius": {
-    "control": { "$type": "dimension", "$value": "0.625rem" },
-    "card": { "$type": "dimension", "$value": "0.75rem" }
+    "paper": { "$type": "color", "$value": "oklch(0.195 0.032 263)" },
+    "accent": { "$type": "color", "$value": "oklch(0.75 0.17 350)" }
   },
   "font": {
     "display": { "$type": "fontFamily", "$value": "Be Vietnam Pro" },
     "body": { "$type": "fontFamily", "$value": "Geist Variable" }
   }
 }
-```
+~~~
 
-**shadcn/ui CSS variables** (đã áp dụng trong `tokens.css` bằng selector `html:root` để giữ nguyên stylesheet do CLI tạo):
+### shadcn/ui
 
-```css
+~~~css
 html:root {
   --background: var(--color-paper);
   --foreground: var(--color-ink);
   --card: var(--color-card-paper);
   --primary: var(--color-accent);
   --primary-foreground: var(--color-accent-ink);
-  --muted-foreground: var(--color-ink-muted);
   --border: var(--color-rule);
   --ring: var(--color-focus);
 }
-```
-
-## Mở rộng đã duyệt: tài khoản và sidebar
-
-Giữ bảng màu Almanac, font và các component hiện có. Admin có mục Quản lý tài khoản với tìm kiếm tên/email, danh sách hiện cả tên và email, hộp sửa và xác nhận xóa có giải thích hủy vé/trả chỗ. Không có mục này trong menu User.
-
-Sidebar desktop rộng 256px khi mở và 80px khi thu gọn. Nút điều khiển đặt trên navbar; menu dạng icon có aria-label và tooltip cả khi hover lẫn focus bàn phím. Lưu duy nhất tùy chọn boolean trong localStorage. Mobile luôn dùng drawer đầy đủ chữ, độc lập với tùy chọn desktop. Không thêm thư viện hoặc đổi token.
+~~~
