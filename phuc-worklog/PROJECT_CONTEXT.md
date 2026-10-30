@@ -1,6 +1,6 @@
 # Bối cảnh dự án
 
-Mốc cập nhật nội dung: **23/10/2026**. File này mô tả hệ thống hiện hành và phần còn lại; lịch sử đóng góp xem [WORKLOG.md](WORKLOG.md), quy tắc cộng tác xem [AI_RULE.md](AI_RULE.md).
+Mốc cập nhật nội dung: **30/10/2026 — Tuần 5 (26/10–01/11)**. File này mô tả hệ thống hiện hành và phần còn lại; lịch sử đóng góp xem [WORKLOG.md](WORKLOG.md), quy tắc cộng tác xem [AI_RULE.md](AI_RULE.md).
 
 ## 1. Mục tiêu và phạm vi
 
@@ -75,12 +75,22 @@ Khởi động và lệnh kiểm tra xem [Backend README](../backend/README.md),
 - Làm ở thư mục gốc `D:\aws-workshop\event-registration`, nhánh **phuc**; GitHub/local còn main/phuc. Các nhánh feature đã gộp, lịch sử commit được giữ. Xem [git-workflow.md](../docs/git-workflow.md); không quay lại sửa worktree detached như một nhánh đang phát triển.
 - Cập nhật Git ngày **24/10/2026**: theo yêu cầu bàn giao, main được đồng bộ tới cùng bản phuc trong đợt này, gồm ứng dụng, test lab và tài liệu. Những lần phát triển tiếp vẫn dùng phuc; trạng thái chức năng và các giới hạn kiểm thử bên dưới không thay đổi vì đồng bộ nhánh.
 - Ở lần kết thúc dùng thử gần nhất, web/API/Docker Desktop đã dừng; dữ liệu DynamoDB được giữ và kiểm hash trước–sau dọn tài nguyên. Phiên sau kiểm tra process/health rồi khởi động theo README, không suy trạng thái máy chỉ từ tài liệu.
-- Trong ngày đã đạt 75 bài backend với DB và HTTP/browser/SAM/frontend checks. Sau gộp Git chạy lại 63 bài backend không DB, 28 unit lab và build/lint cả hai web; 12 integration bỏ qua vì Docker tắt. Chi tiết và nguồn tại [WORKLOG.md](WORKLOG.md); không diễn giải thành vừa chạy lại toàn bộ ở mọi lượt sửa tài liệu.
-- **Điểm tiếp tục chính:** [adapter lab](../tests/load/contract-v3-draft.json) vẫn ghim health3.0/cookie `event_user_session`, app dùng4.1/`event_session`. Bài purchase bị guard chặn; cần mô tả/duyệt plan đồng bộ rồi thử 1–2 User trước 100/200,100/10,100/1. Không bỏ guard hoặc đổi version backend để làm test qua.
+- Lượt kiểm thử **23/10/2026** đã đạt 75 bài backend với DB và HTTP/browser/SAM/frontend checks. Sau gộp Git chạy lại 63 bài backend không DB, 28 unit lab và build/lint cả hai web; 12 integration bỏ qua vì Docker tắt. Đây là kết quả lịch sử; phiên lập kế hoạch 30/10 không chạy lại các bài chức năng. Chi tiết và nguồn tại [WORKLOG.md](WORKLOG.md).
+- **Điểm tiếp tục chính:** thực hiện nhiệm vụ 1 theo [kế hoạch AWS đã chốt](../docs/aws-deployment-plan.md), bắt đầu bằng xác minh account/quyền/region/ngân sách và công cụ, rồi chuẩn bị cấu hình local/AWS và Terraform. Backend hiện vẫn khóa DB Local/credentials giả; `infra/infra.md` trống, chưa có Terraform/workflow triển khai. Chưa truy cập account AWS hoặc xác minh credit/billing.
+- **Điều kiện trước test tải:** [adapter lab](../tests/load/contract-v3-draft.json) vẫn ghim health3.0/cookie `event_user_session`, app dùng4.1/`event_session`; runner chỉ nhận HTTP loopback, fixture/audit phụ thuộc DB Local. Cần đồng bộ contract và hỗ trợ môi trường AWS có guard trước khi thử 1–2 User rồi mới tăng tải. Không bỏ guard hoặc đổi version backend để làm test qua; việc gộp code không tự hoàn tất tích hợp lab.
 - Chưa có kết quả 100 người, ramp/spike/hold/overload/recovery trên bản hiện hành hoặc số đo scaling AWS. Scan dùng trong danh sách User/dọn dữ liệu còn là giới hạn; cần đánh giá chỉ mục/chi phí khi lên AWS.
 
-## 7. Hướng AWS dự kiến
+## 7. Kế hoạch AWS đã chốt — chưa triển khai
 
-S3 riêng tư + CloudFront/OAC phục vụ frontend; API Gateway + Lambda xử lý API; DynamoDB lưu dữ liệu; CloudWatch/SNS giám sát; Terraform và GitHub Actions/OIDC cho hạ tầng/triển khai. Đây là hướng trong [README](../README.md), **chưa triển khai**. Cấu hình hiện chỉ cho DB Local/credentials giả, chưa phải cấu hình AWS.
+Nguồn thực hiện: [aws-deployment-plan.md](../docs/aws-deployment-plan.md). Kế hoạch được chốt tại Checkpoint **30/10/2026**, chia thành hai nhiệm vụ:
 
-Màn demo phải lấy request/metric/audit thật: tải tăng–giữ–giảm cạnh throughput, p95/lỗi, concurrency và DB; số thực thi Lambda đồng thời không phải số môi trường giữ ấm. Local/đồ thị minh họa không thay số đo AWS. Ngưỡng tải, chi phí và tiêu chí đạt cần chốt trước khi chạy.
+- **Nhiệm vụ 1:** một frontend React User/Admin trên S3 riêng tư + CloudFront/OAC; cùng hostname HTTPS chuyển `/api` tới HTTP API payload v2 + một Lambda Python 3.13 + bảng DynamoDB PK/SK On-demand cho mỗi môi trường. Giữ auth/CSRF/idempotency/quyền hiện tại, chỉ dùng log Lambda tối thiểu để debug; hoàn thành bằng kiểm tra chức năng đầu-cuối và khả năng thu hồi lab.
+- **Nhiệm vụ 2:** cấu hình CloudWatch log/retention, dashboard, metric/alarm và SNS email; kiểm chứng bằng request/cảnh báo thật. Chưa dựng các phần này ở nhiệm vụ 1.
+
+Terraform quản lý tạo/cấu hình/thu hồi hạ tầng; SAM dùng build/local. Lần đầu build và deploy từ máy; GitHub Actions/OIDC là bước tự động hóa về sau, không host frontend và chưa bắt buộc cho lần test đầu. Trình duyệt lấy file qua CloudFront rồi chạy React.
+
+Mục tiêu dùng lab vài giờ rồi dọn: CloudFront pay-as-you-go, state local cho một người/một máy, dữ liệu AWS có thể tạo lại; giữ dữ liệu local và tài nguyên ngoài lab. Chuẩn bị teardown ngay từ đầu, quản lý cả log/tài nguyên phụ, tải bằng chứng về máy và kiểm kê sau destroy. Phí đã sử dụng vẫn được tính và billing có độ trễ; không suy xóa web thành hóa đơn 0 USD.
+
+Ngân sách **5–10 USD/tháng**; đã có tài khoản cá nhân nhưng gói/credit/Free Tier/phí hiện có chưa xác minh. Dự toán trong plan dùng giá tham chiếu `us-east-1`, lượng request/duration/DB units giả định, chưa phải bill hoặc số đo thật. Region và các ngưỡng quota/throttle/retention/tải cần đối chiếu trước giai đoạn tương ứng. Chưa có thay đổi code, Terraform, deploy, smoke test hoặc tải AWS trong phiên nghiên cứu.
+
+Phạm vi kế hoạch đã chốt không cần xin duyệt lại; không tự mở rộng sang tính năng, kiến trúc hoặc dữ liệu ngoài phạm vi đó. Màn demo phải lấy request/metric/audit thật; số thực thi Lambda đồng thời không phải số môi trường giữ ấm. Local/đồ thị minh họa không thay số đo AWS.

@@ -119,3 +119,54 @@ Nguồn transaction, idempotency, session, CSRF và worktree đã được ghi n
 - [Browser account](../tests/frontend/check-accounts-browser.mjs): kịch bản kiểm tra thao tác quản lý tài khoản và sidebar trên trình duyệt.
 
 Kết quả đạt ở trên dựa trên đầu ra kiểm tra trong phiên phát triển. Các file test mô tả ca kiểm tra, không tự chứng minh đã chạy đạt; lượt chỉnh tài liệu này không chạy lại các bài chức năng.
+
+## 30/10/2026 — Tuần 5 (26/10–01/11)
+
+### Công việc chính
+
+| Hạng mục | Trước nghiên cứu | Kết quả |
+| --- | --- | --- |
+| Đối chiếu bối cảnh và mã nguồn | Hướng AWS trong README ở mức dự kiến, chưa có quy trình triển khai cụ thể | Rà frontend/backend, contract/data model, cấu hình và lab; xác định các điểm đang khóa local, phần proxy Vite cần thay trên AWS và giới hạn tích hợp bộ test. Không sửa chức năng hoặc adapter. |
+| Kế hoạch triển khai | Chưa có tài liệu cho lần triển khai đầu dành cho người mới | Tạo kế hoạch với sơ đồ, phần mã nguồn cần chuẩn bị, bước build/deploy, đầu ra và điều kiện nghiệm thu. Làm rõ hosting frontend và vai trò build/deploy của GitHub Actions. |
+| Phân chia công việc | Ứng dụng và giám sát cùng nằm trong hướng tổng thể | Chốt hai nhiệm vụ: triển khai ứng dụng trước; CloudWatch/giám sát và SNS sau. Giữ log Lambda kỹ thuật tối thiểu ở nhiệm vụ 1 để tìm lỗi, chưa dựng dashboard/alarm/SNS. |
+| Dự toán và kiểm soát chi phí | Chưa có dự toán theo nhu cầu học/demo | Tra nguồn chính thức cho bảy dịch vụ, lập kịch bản có giả định và ngân sách 5–10 USD/tháng; phân biệt giá gốc, allowance/credit và phí còn lại khi ít truy cập. Chưa xác minh billing tài khoản thực tế. |
+| Vòng đời lab | Chưa có cách thu hồi gắn với lần test ngắn | Lập quy trình test vài giờ, lưu bằng chứng về máy, destroy và kiểm kê tài nguyên còn sót; nêu cách xử lý S3 versions, log, backup nếu có, state và độ trễ billing. Chưa tạo hoặc xóa tài nguyên AWS. |
+| Tài liệu tiếp tục | Chưa có handoff trong thư mục hiện tại | Tạo và theo dõi handoff theo yêu cầu đầu phiên; Checkpoint cập nhật nhật ký, bối cảnh và trạng thái kế hoạch đã chốt. |
+
+Kiến trúc/trạng thái hiện hành xem [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md); luồng triển khai, dự toán và cách thu hồi chi tiết nằm trong [kế hoạch AWS](../docs/aws-deployment-plan.md). Hoàn thành phần nghiên cứu và chốt kế hoạch; chưa thực hiện hai nhiệm vụ triển khai.
+
+### Kiểm tra và giới hạn bằng chứng
+
+- Kiểm tra Git: nhánh `phuc`, HEAD `e356eb6`; khi bắt đầu repo sạch trên `main`, main/phuc cùng commit, sau đó chuyển sang `phuc`. Các thay đổi trong phiên là tài liệu, chưa commit/push.
+- Đối chiếu code xác nhận backend vẫn dùng DB Local/credentials giả, SAM là template local, chưa có Terraform triển khai. App trả contract 4.1; lab còn health 3.0/cookie cũ, chỉ nhận HTTP loopback và giới hạn 5.000 request đo. Chưa dùng được lab hiện tại để kết luận tải AWS.
+- Checkpoint kiểm tra 71 liên kết nội bộ và whitespace/code fence trong bốn file WORKLOG/PROJECT_CONTEXT/kế hoạch/handoff, không thiếu đích; xác nhận lịch sử WORKLOG được giữ, chỉ có một mục ngày 30/10, AI_RULE và code không đổi. Tính lại ví dụ API/Lambda/DB request units ở 100.000 và 1 triệu lượt được subtotal 0,62 và 6,20 USD. Đây là kiểm tra tài liệu/phép tính với duration/RRU/WRU giả định, chưa phải kết quả đo ứng dụng hoặc bill; chưa render Mermaid.
+- Chưa chạy lại unit/integration, frontend build/lint, SAM, HTTP/browser hoặc test tải trong phiên; các kết quả 23/10 ở trên là lịch sử. Chưa truy cập tài khoản AWS, xác minh Free Tier/credit, tạo cảnh báo, deploy hoặc destroy. Không bật/tắt môi trường local và không ghi/xóa dữ liệu.
+- Điểm tiếp tục là xác minh tài khoản/quyền/region/ngân sách và công cụ trước khi chuẩn bị cấu hình/IaC theo nhiệm vụ 1; giữ phạm vi kế hoạch đã chốt. Thông số tài khoản/quota/ngưỡng tải và kết quả AWS vẫn cần bằng chứng ở giai đoạn tương ứng.
+
+### Tài liệu tham khảo
+
+Các nguồn sau được đọc trong phiên **30/10/2026** để nghiên cứu, giải thích và lập kế hoạch; các ứng dụng vào AWS dưới đây **chưa triển khai**.
+
+- [AWS — CloudFront với S3 origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/GettingStarted.SimpleDistribution.html) và [OAC cho S3](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html): cơ sở đề xuất lưu bản build frontend trên bucket riêng tư và phân phối qua HTTPS.
+- [AWS — Managed origin request policies](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html) và [managed cache policies](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html): cơ sở đề xuất chuyển cookie/header tới API Gateway và không cache API có phiên đăng nhập.
+- [AWS — HTTP API/Lambda integration](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html): đề xuất giữ payload v2/cookie và các route cụ thể tương thích handler hiện tại.
+- [AWS — Python deployment package](https://docs.aws.amazon.com/lambda/latest/dg/python-package.html): đề xuất đóng gói handler/dependency tương thích Lambda, không upload venv Windows.
+- [AWS — Lambda logs](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs.html): làm rõ log cơ bản cần quyền execution role và có phí CloudWatch, tách khỏi dashboard/alarm của nhiệm vụ 2.
+- [AWS — Giá S3](https://aws.amazon.com/s3/pricing/), [Calculator assumptions](https://aws.amazon.com/calculator/calculator-assumptions/) và [CloudFront pay-as-you-go](https://aws.amazon.com/cloudfront/pricing/pay-as-you-go/): tham chiếu dự toán dung lượng/request, allowance và giới hạn của phép ước tính, chưa xác minh ưu đãi account.
+- [AWS — Giá HTTP API](https://aws.amazon.com/api-gateway/pricing/) và [giá Lambda](https://aws.amazon.com/lambda/pricing/): tham chiếu phép tính theo lượt gọi, bộ nhớ và thời gian chạy; số lượt/duration trong plan là giả định.
+- [AWS — Giá DynamoDB](https://aws.amazon.com/dynamodb/pricing/) và [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html): tham chiếu dự toán theo đơn vị đọc/ghi và lưu trữ, không quy một booking thành một lần ghi.
+- [AWS — Giá CloudWatch](https://aws.amazon.com/cloudwatch/pricing/) và [SNS FAQ, mục Billing](https://aws.amazon.com/tr/sns/faqs/): tham chiếu dự toán log/alarm và SNS Standard/email; phần giám sát đầy đủ thuộc nhiệm vụ 2.
+- [AWS — Free Tier](https://aws.amazon.com/free/) và [AWS Budgets](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html): đề xuất kiểm tra gói/credit và cảnh báo ngân sách, không coi Budget là trần chi tiêu tự ngắt.
+- [AWS — IAM best practices](https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html): đề xuất quyền tạm thời, MFA và role có phạm vi phù hợp cho người làm việc/runtime.
+- [HashiCorp — Terraform plan](https://developer.hashicorp.com/terraform/cli/commands/plan), [local backend](https://developer.hashicorp.com/terraform/language/backend/local) và [destroy](https://developer.hashicorp.com/terraform/cli/commands/destroy): đề xuất xem trước tài nguyên, giữ state local cho lab một người/một máy và thu hồi theo state kèm kiểm kê.
+- [GitHub — Actions overview](https://docs.github.com/en/actions/get-started/understand-github-actions), [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages) và [OIDC in AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws): phân biệt CI/CD với hosting, đề xuất tự động hóa deploy bằng quyền tạm thời sau lần đầu từ máy.
+- [AWS — Delete CloudFront distribution](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowToDeleteDistribution.html): đề xuất pay-as-you-go cho lab thu hồi ngay; disable phải chờ cập nhật, flat-rate có ràng buộc hủy gói/chu kỳ trước xóa.
+- [AWS — Empty S3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/empty-bucket.html) và [DeleteLogGroup](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteLogGroup.html): đề xuất kiểm tra object versions/delete markers/upload dở và dọn log group trong teardown.
+- [AWS — DynamoDB TTL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html) và [PITR](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html): đề xuất dọn session/counter có kiểm soát, giữ kiểm tra hạn ở backend và phân biệt backup/PITR khi tính phí/thu hồi.
+- [AWS — Cost Explorer data](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-exploring-data.html): làm rõ dữ liệu phí có thể trễ hơn 24 giờ, cần kiểm tra lại sau thu hồi và vẫn tính phần sử dụng trước đó.
+
+### Minh chứng thực hiện
+
+- [Kế hoạch AWS đã chốt](../docs/aws-deployment-plan.md): sơ đồ, hai nhiệm vụ, bước triển khai, giả định chi phí, kiểm tra và thu hồi; là tài liệu chuẩn bị, không phải bằng chứng đã deploy.
+- [Handoff đang theo dõi](handoffs/2026-10-30-0956.md): mục tiêu, quyết định và điểm tiếp tục của phiên; được tạo theo yêu cầu riêng đầu phiên và cập nhật tại Checkpoint.
+- [Cấu hình DB](../backend/lambda/configuration.py), [handler](../backend/lambda/app.py), [SAM local](../backend/template.yaml), [profile lab](../tests/load/contract-v3-draft.json) và [guard lab](../tests/load/config.py): minh chứng cho hiện trạng local và phần cần chuẩn bị; chưa thay đổi các file này trong phiên.
