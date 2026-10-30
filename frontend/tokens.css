@@ -1,7 +1,7 @@
 /* Hallmark · macrostructure: Split Hero / Catalogue / Workbench · theme: studied-DNA (source: image) · Sakura Night · designed-as-app */
 /* Hallmark · pre-emit critique: P4 H5 E4 S5 R4 V5 */
 :root {
-  --brand-hue: 350;
+  --brand-hue: 24;
   --light-accent-lightness: .52;
   --color-hue-0: oklch(.72 .18 0);
   --color-hue-60: oklch(.72 .18 60);
@@ -51,10 +51,10 @@
   --color-liquid-primary-top: color-mix(in oklch, var(--color-accent) 84%, var(--color-petal-light));
   --color-liquid-primary-face: color-mix(in oklch, var(--color-accent) 92%, transparent);
   --color-liquid-primary-deep: color-mix(in oklch, var(--color-accent) 91%, var(--color-icon-edge));
-  --glass-opacity: .35;
-  --header-opacity: .25;
-  --neon-intensity: 1;
-  --elevation-strength: 1;
+  --glass-opacity: .1;
+  --header-opacity: .0714285714;
+  --neon-intensity: .6428571429;
+  --elevation-strength: .5833333333;
   --elevation-unit: calc(var(--elevation-strength) * 1px);
   --shadow-glass-panel:
     inset var(--elevation-unit) calc(2 * var(--elevation-unit)) calc(2 * var(--elevation-unit)) var(--color-liquid-shine),
@@ -89,7 +89,7 @@
   --space-2xl: 4rem;
   --space-3xl: 6rem;
 
-  --roundness-level: 50;
+  --roundness-level: 0;
   --radius-control: calc(var(--roundness-level) * .24px);
   --radius-card: calc(var(--roundness-level) * .4px);
   --radius-pill: calc(var(--roundness-level) * .44px);

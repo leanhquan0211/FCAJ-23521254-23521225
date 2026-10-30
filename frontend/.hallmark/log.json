@@ -11,7 +11,16 @@
     "critique": "P4 H5 E4 S5 R4 V4; desktop dark/blue and light/green screenshots inspected; SVG spectrum/icon, no dependency.",
     "categoryInteraction": "User-requested Event Listing action update: native smooth scroll for hero CTA and category shortcuts, synchronized existing filters, decorative separators. Browser fixtures verified intermediate scroll positions, four categories/repeat/combined filters/clear/keyboard Enter, reduced motion instant; 10 layouts (5 widths x 2 themes), no horizontal overflow. Ribbon height retained at 70px desktop/114px mobile; font/color unchanged. No DB writes.",
     "cornerPreference": "Roundness icon and 0-100% range, default 50, persisted with legacy fallback; shared control/card/action radius tokens; flat header/navigation preserved. Below 640px a single settings icon opens all five ranges.",
-    "cornerVerification": "Build/lint passed (two existing warnings). Browser fixtures: actual form/input/button radii at 0/50/100, keyboard, reload, legacy migration and color reset preserving roundness passed. 42 layouts (guest/User/Admin, dark/light, 320/375/414/640/768/1024/1280), popup bounds, Escape/focus, short-viewport Tab scrolling, resize cleanup passed. Separate check exercised all five mobile ranges, actual CSS/storage, color reset, outside dismissal and reload. No DB writes."
+    "cornerVerification": "Build/lint passed (two existing warnings). Browser fixtures: actual form/input/button radii at 0/50/100, keyboard, reload, legacy migration and color reset preserving roundness passed. 42 layouts (guest/User/Admin, dark/light, 320/375/414/640/768/1024/1280), popup bounds, Escape/focus, short-viewport Tab scrolling, resize cleanup passed. Separate check exercised all five mobile ranges, actual CSS/storage, color reset, outside dismissal and reload. No DB writes.",
+    "initialPreferencePreset": {
+      "transparency": 90,
+      "neon": 45,
+      "elevation": 35,
+      "hue": 24,
+      "roundness": 0,
+      "theme": "light"
+    },
+    "initialPreferenceVerification": "Shared preference reader/applicator, bootstrapped before React render. Build/lint passed with two existing warnings. Chromium fixtures: empty storage gets new preset; custom dark settings, previous-version values, all zeros preserved; partial/invalid/JSON error falls back per field/default. UI changes persist on revisit; reset hue to 24 preserves other choices; saved dark appearance observed before auth session response with header absent. Desktop/mobile screenshots inspected, no DB writes."
   },
   {
     "date": "2026-10-30",

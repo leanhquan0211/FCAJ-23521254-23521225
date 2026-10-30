@@ -2,10 +2,8 @@ import { useLayoutEffect, useState } from 'react'
 import { Popover } from 'radix-ui'
 import { Droplets, Layers3, Lightbulb, Palette, SlidersHorizontal, SquareRoundCorner } from '@/components/DimensionalIcons'
 import { Button } from '@/components/ui/button'
+import { APPEARANCE_STORAGE_KEY, DEFAULT_APPEARANCE as defaults, applyAppearance, readAppearance } from '@/lib/appearance-preferences'
 
-const STORAGE_KEY = 'event-workshop:appearance'
-const defaults = { transparency: 65, neon: 70, elevation: 60, hue: 350, roundness: 50 }
-type Appearance = typeof defaults
 const compactQuery = '(max-width: 639px)'
 const controls = [
   { key: 'transparency', title: 'Trong suốt', label: 'Độ trong suốt', icon: Droplets, max: 100, unit: '%' },
@@ -15,23 +13,6 @@ const controls = [
   { key: 'roundness', title: 'Bo góc', label: 'Độ bo góc', icon: SquareRoundCorner, max: 100, unit: '%' },
 ] as const
 type AppearanceControl = (typeof controls)[number]
-
-function bounded(value: unknown, fallback: number, maximum: number) {
-  return typeof value === 'number' && Number.isFinite(value) ? Math.min(maximum, Math.max(0, value)) : fallback
-}
-
-function readAppearance(): Appearance {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null')
-    return {
-      transparency: bounded(saved?.transparency, defaults.transparency, 100),
-      neon: bounded(saved?.neon, defaults.neon, 100),
-      elevation: bounded(saved?.elevation, defaults.elevation, 100),
-      hue: bounded(saved?.hue, defaults.hue, 360),
-      roundness: bounded(saved?.roundness, defaults.roundness, 100),
-    }
-  } catch { return defaults }
-}
 
 export function AppearanceControls() {
   const [appearance, setAppearance] = useState(readAppearance)
@@ -43,18 +24,8 @@ export function AppearanceControls() {
     return () => media.removeEventListener('change', update)
   }, [])
   useLayoutEffect(() => {
-    const style = document.documentElement.style
-    const opacity = 1 - appearance.transparency / 100
-    style.setProperty('--glass-opacity', String(opacity))
-    style.setProperty('--header-opacity', String(opacity * (25 / 35)))
-    style.setProperty('--neon-intensity', String(appearance.neon / 70))
-    style.setProperty('--elevation-strength', String(appearance.elevation / 60))
-    style.setProperty('--brand-hue', String(appearance.hue))
-    style.setProperty('--roundness-level', String(appearance.roundness))
-    // Cyan/green need a slightly deeper accent to keep light-theme text readable.
-    const lightAccent = .52 - .05 * Math.max(0, Math.cos((appearance.hue - 180) * Math.PI / 180))
-    style.setProperty('--light-accent-lightness', String(lightAccent))
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(appearance)) } catch { /* Controls work without storage. */ }
+    applyAppearance(appearance)
+    try { localStorage.setItem(APPEARANCE_STORAGE_KEY, JSON.stringify(appearance)) } catch { /* Controls work without storage. */ }
   }, [appearance])
 
   function setting({ key, title, label, max, unit }: AppearanceControl) {

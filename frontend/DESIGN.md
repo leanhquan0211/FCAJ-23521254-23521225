@@ -8,7 +8,9 @@ Redesign giao diện trên nhánh quan theo screenshot người dùng cung cấp
 
 Thanh trên cùng chuyển sang nền trong suốt nhạt dần, không bo tròn; nút và liên kết trên thanh dùng hình chữ nhật. Menu desktop luôn hiện nhãn; bỏ state/nút thu gọn desktop theo yêu cầu mới. Drawer mobile và các đường dẫn theo role giữ nguyên. Logo là SVG hoa có chiều sâu bằng geometry/gradient/highlight, không phải ký tự hoặc text art. Tăng nhịp vật thể lên khoảng 6.5 giây, cánh hoa khoảng 8.5 giây; tăng số cánh và sắc neon. Reduced motion vẫn dừng hoàn toàn.
 
-Thêm nút giao diện sáng/tối trên cả hai header. Chỉ lưu tùy chọn giao diện trong localStorage, mặc định tối; không dùng theme để thay đổi quyền hoặc dữ liệu. Biến màu của hai mode cùng nằm trong tokens.css, focus/label/trạng thái luôn đọc được.
+Thêm nút giao diện sáng/tối trên cả hai header. Chỉ lưu tùy chọn giao diện trong localStorage, mặc định sáng khi chưa có lựa chọn đã lưu; không dùng theme để thay đổi quyền hoặc dữ liệu. Biến màu của hai mode cùng nằm trong tokens.css, focus/label/trạng thái luôn đọc được.
+
+Preset lần truy cập đầu: Trong suốt 90%, Neon 45%, Bóng nổi 35%, Sắc màu 24°, Bo góc 0%, theme sáng. Nguồn mặc định/đọc cấu hình/apply CSS dùng chung tại src/lib/appearance-preferences.ts; main.tsx khôi phục trước khi render, cả khi phiên đăng nhập đang tải. Giá trị đã lưu luôn được ưu tiên (kể cả 0 và theme tối); chỉ trường thiếu/sai mới dùng mặc định. Giữ nguyên khóa localStorage cũ, không reset hay ghi đè lựa chọn của người dùng khi cập nhật preset.
 
 ## Hallmark và ảnh tham chiếu
 
@@ -17,21 +19,21 @@ Thêm nút giao diện sáng/tối trên cả hai header. Chỉ lưu tùy chọn
 Ảnh tham chiếu mới được dùng cho chất liệu: khung kính lớn, viền bắt sáng, lớp nền tán mờ và các phần thông tin phân cấp bên trong. Không sao chép hình nền, nội dung tuyển dụng, màu be hoặc font serif của ảnh. Giữ Sakura Night hồng–navy, hai theme và typography hỗ trợ tiếng Việt hiện có.
 
 - Đăng nhập/đăng ký: phần giới thiệu nằm riêng bên trái, không có khung; chỉ form bên phải dùng kính trong suốt. Mobile xếp dọc. Vùng đầu form có logo nổi, liên kết chuyển đăng nhập/đăng ký rõ ràng. Giữ nguyên field, validation, submit và điều hướng. Trên desktop rộng, bốn field đăng ký chia hai cột để bớt chiều cao.
-- Thanh trên cùng phẳng, cao khoảng 56px; nền hồng mặc định che phủ 25%, nhạt dần. Card, bộ lọc, Dialog và form mặc định che phủ khoảng 35–43%, blur 8px để thấy được cánh hoa phía sau. Chỉ giảm alpha nền, không giảm opacity chữ hoặc control. Có fallback nền đặc khi không hỗ trợ backdrop-filter.
+- Thanh trên cùng phẳng, cao khoảng 56px; nền theo sắc đã chọn và nhạt dần, che phủ khoảng 7% ở preset lần đầu. Card, bộ lọc, Dialog và form mặc định che phủ khoảng 10–12%, blur khoảng 2.3px. Chỉ giảm alpha nền, không giảm opacity chữ hoặc control. Có fallback nền đặc khi không hỗ trợ backdrop-filter.
 - Icon chức năng giữ hình nghĩa Lucide nhưng render bằng nhiều lớp SVG: cạnh đùn, mặt gradient và ánh sáng tạo khối; đây là vector có chiều sâu mô phỏng 3D, không phải mô hình WebGL. Không dùng emoji/ký tự ghép hình; logo hoa SVG hiện có được giữ và dùng cả trên form.
 - Cánh hoa SVG nằm ở một lớp nền fixed dùng chung toàn ứng dụng, dưới nội dung, không nhận click/focus và không đọc bởi screen reader. Chuyển động rơi có độ trễ so le, chỉ transform/opacity, giảm mật độ trên mobile. Reduced motion dừng cánh hoa; không tác động dữ liệu hay state nghiệp vụ.
 - Kiểm tra lại cả hai theme, 320/375/414/768/1280px, form đăng nhập/đăng ký, bộ lọc, drawer/Dialog và khả năng thao tác qua lớp nền. Không thêm dependency hoặc sửa Backend.
-- Hai icon nổi cạnh nút sáng/tối mở Popover chứa range mảnh: Trong suốt 0–100% (mặc định 65%), Neon 0–100% (mặc định 70%). Ba nút có khoảng cách giữa vùng bấm bằng 0, vẫn giữ target 44px; icon 24px để dễ nhận biết. Mặc định ẩn thanh kéo; Escape/bấm ngoài đóng và trả focus. Giá trị lưu riêng trong localStorage dưới khóa event-workshop:appearance; không liên quan phiên đăng nhập. Không còn thanh cố định ở cuối trang. Tại 100% trong suốt, alpha nền kính và blur đều về 0, giữ nguyên chữ, viền và nút chính. Bỏ nút Khám phá ở entry header vì API mode yêu cầu đăng nhập; các nút đăng nhập/đăng ký và điều hướng sau đăng nhập giữ nguyên.
+- Các icon cạnh nút sáng/tối mở Popover chứa range mảnh: Trong suốt 0–100% (mặc định 90%), Neon 0–100% (mặc định 45%). Khoảng cách giữa vùng bấm bằng 0, target 44px; icon 24px. Mặc định ẩn thanh kéo; Escape trả focus, bấm ngoài đóng. Giá trị lưu riêng trong localStorage dưới khóa event-workshop:appearance; không liên quan phiên đăng nhập. Không còn thanh cố định ở cuối trang. Tại 100% trong suốt, alpha nền kính và blur đều về 0, giữ nguyên chữ, viền và nút chính. Entry header không có nút Khám phá dẫn vòng lại login.
 - Ảnh Liquid Glass bổ sung được dùng cho chất liệu: mặt cong bắt sáng, viền sáng, cạnh nổi và bóng mềm trên Card/form/khung lọc; nút primary có khối hồng, nút phụ dùng kính xuyên nền. Input có phản xạ nhẹ và bóng phía trong, vẫn là native Input. Không sao chép chữ, màu tím/xanh hoặc layout demo trong ảnh. Header vẫn phẳng; chỉ các nút nội dung dùng dạng kính nổi. Reduced motion tắt hover lift; không làm biến dạng chữ hoặc thêm hiệu ứng khúc xạ nặng.
-- Bổ sung icon lớp xếp chồng mở thanh Bóng nổi 0–100% (mặc định 60%), cùng nhóm Trong suốt/Neon/Theme. Bóng nổi điều chỉnh độ đùn cạnh, highlight và bóng của Card/form/nút/ô nhập; 0% bỏ các lớp bóng này, 100% tăng chiều sâu. Bóng có quầng neon hồng: cường độ phụ thuộc cả Bóng nổi và Neon; Neon 0% tắt quầng nhưng giữ bóng tạo khối. Lưu thêm elevation trong tùy chọn appearance; giá trị cũ chưa có trường này tự dùng 60%. Ở 320px, brand của khung sau đăng nhập hiện logo đồ họa với aria-label, giữ các vùng bấm 44px và không tràn header.
+- Icon lớp xếp chồng mở Bóng nổi 0–100% (mặc định 35%). Bóng nổi điều chỉnh độ đùn cạnh, highlight và bóng của Card/form/nút/ô nhập; 0% bỏ bóng, 100% tăng chiều sâu. Quầng neon theo sắc đã chọn phụ thuộc cả Bóng nổi và Neon; Neon 0% tắt quầng nhưng giữ bóng tạo khối. Trường elevation thiếu/sai dùng 35%; giá trị cũ hợp lệ được giữ.
 - Danh sách xổ xuống của select dùng nền đặc theo theme và chữ tương phản, mục đang chọn có nền nhấn riêng. Không áp dụng alpha kính hoặc neon cho option/optgroup vì menu native có thể được vẽ ngoài khung trang. Ô select khi đóng vẫn dùng kính; giữ nguyên native select, giá trị và sự kiện thay đổi.
-- Icon bảng màu mở thanh Sắc màu chủ đạo 0–360° và nút Về màu mặc định. Giá trị hue mặc định 350° giữ chính xác tông tím/hồng đang có. Token thương hiệu đổi hue cùng nhau (header, nút, logo, đồ họa, kính, neon, nền và chữ có sắc nhẹ), giữ lightness/chroma; màu lỗi và hết chỗ giữ nghĩa nhận biết. Không lọc màu toàn trang bằng CSS filter. Nút khôi phục chỉ đưa hue về 350°, không đặt lại theme/trong suốt/neon/bóng nổi. Lưu hue trong tùy chọn appearance; thiết lập cũ tự dùng 350°.
+- Icon bảng màu mở Sắc màu chủ đạo 0–360° và nút Về màu mặc định. Hue mặc định 24°. Token thương hiệu đổi hue cùng nhau (header, nút, logo, đồ họa, kính, neon, nền và chữ có sắc nhẹ); màu lỗi và hết chỗ giữ nghĩa nhận biết. Nút khôi phục chỉ đưa hue về 24°, không đặt lại theme/trong suốt/neon/bóng nổi/bo góc. Trường hue thiếu/sai dùng 24°, giá trị cũ hợp lệ được giữ.
 - Chữ Badge Còn chỗ dùng token open-ink riêng: chế độ tối kế thừa accent, chế độ sáng dùng cùng hue với lightness/chroma thấp hơn để giữ tương phản khi chọn các sắc xanh lá/vàng.
 - Ở chế độ sáng, accent tự giảm lightness nhẹ quanh các sắc xanh lá/xanh lơ để chữ trên nút và liên kết đủ tương phản. Hàm điều chỉnh liên tục theo hue, bằng 0 tại sắc mặc định 350°; không thêm thanh chỉnh độ sáng và không thay đổi màu mặc định của accent.
 - Mỗi chức năng vẫn là icon riêng cạnh theme, target 44px. Ở màn hình dưới 375px, entry brand hiện logo có aria-label; khung đã đăng nhập dùng logo gọn trên mobile và giảm lề ở 320px để đủ chỗ cho menu và các tùy chỉnh.
 - Chuyển mục điều hướng dùng PageMotion với Web Animations API, tương thích BrowserRouter hiện có: nội dung vào mờ/lướt nhẹ 320ms. Không remount nội dung bằng pathname hoặc giữ trang cũ để tránh tác động state nghiệp vụ. Giảm chuyển động tắt animation. Logo cạnh dòng Những kết nối bắt đầu từ đây dùng BrandMark có cánh hoa tô khối thay glyph nét.
 - Event Listing: nút Khám phá sự kiện và bốn danh mục đầu trang cuộn mượt tới vùng lọc/danh sách, giữ scroll-margin để không bị header che. Chọn danh mục đồng bộ select, kết hợp từ khóa/trạng thái hiện có; aria-pressed phản ánh bộ lọc. Giữ font, màu, icon và chiều cao dải danh mục; thêm dấu | trang trí giữa các mục cùng hàng (desktop ba dấu, mobile hai dấu ở giữa hai cột). Mục danh mục là button có vùng bấm 44px, focus rõ; reduced motion dùng cuộn tức thì.
-- Icon góc bo mở thanh Bo góc 0–100%, mặc định 50% giữ hình dáng hiện có. Token control/card/action dùng mức bo chung: 0% vuông, 50% tương ứng 12px/20px/22px, 100% tương ứng 24px/40px/44px (nút được giới hạn tự nhiên theo chiều cao). Form, Card, khung thông tin, ô nhập, nút nội dung và Popover cùng thay đổi; header/điều hướng phẳng, drawer và đồ họa giữ nguyên. Lưu roundness trong appearance; thiết lập cũ thiếu trường này dùng 50%.
+- Icon góc bo mở Bo góc 0–100%, mặc định 0% (vuông). Token control/card/action dùng mức bo chung: 50% tương ứng 12px/20px/22px, 100% tương ứng 24px/40px/44px (nút được giới hạn tự nhiên theo chiều cao). Form, Card, khung thông tin, ô nhập, nút nội dung và Popover cùng thay đổi; header/điều hướng phẳng, drawer và đồ họa giữ nguyên. Trường roundness thiếu/sai dùng 0%, giá trị cũ hợp lệ được giữ.
 - Dưới 640px, nhóm tùy chỉnh gom vào icon thanh trượt mở bảng chứa tất cả thanh điều chỉnh; desktop giữ icon riêng cho từng chức năng. Bảng mobile có giới hạn chiều cao, cuộn bên trong khi cần; Escape/bấm ngoài đóng. Cách này giữ target 44px và tránh tràn header khi thêm điều chỉnh mới.
 
 - Genre: atmospheric; theme: studied-DNA, tên nội bộ Sakura Night.
@@ -98,11 +100,13 @@ Dùng mapping @theme inline hiện có:
 
 ### DTCG
 
+Ví dụ token theme tối với hue mặc định 24°; preset mở trang dùng theme sáng ở phần trên.
+
 ~~~json
 {
   "color": {
-    "paper": { "$type": "color", "$value": "oklch(0.195 0.032 263)" },
-    "accent": { "$type": "color", "$value": "oklch(0.75 0.17 350)" }
+    "paper": { "$type": "color", "$value": "oklch(0.195 0.032 297)" },
+    "accent": { "$type": "color", "$value": "oklch(0.75 0.17 24)" }
   },
   "font": {
     "display": { "$type": "fontFamily", "$value": "Be Vietnam Pro" },

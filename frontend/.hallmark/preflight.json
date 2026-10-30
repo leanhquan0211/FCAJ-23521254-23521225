@@ -2,7 +2,7 @@
   "scannedAt": "2026-10-30",
   "framework": "Existing Vite + React + TypeScript",
   "fontStack": "Be Vietnam Pro display and Geist Variable body, local packages",
-  "palette": "Sakura Night hues adjustable via brand tokens, default 350 degrees; dark/light retained; semantic errors/full unchanged",
+  "palette": "User preset: hue24, light; stored hue/theme always win",
   "spacing": "4px scale with named tokens",
   "motion": "6.5s object / 8.5s petals; reduced motion disables it",
   "preserve": [
@@ -14,7 +14,7 @@
     "existing password modifications"
   ],
   "designSystem": "DESIGN.md",
-  "uiScope": "Shared roundness preference 0-100/default50; compact mobile appearance panel; retain theme, hue, transparency, neon, elevation and business flows",
+  "uiScope": "Update initial appearance preset 90/45/35/24/0/light; shared config and pre-render restoration; preserve saved preferences including zeros and existing dark selection",
   "material": "Liquid Glass within existing pink/navy theme: raised reflective content buttons, glass cards/forms/inputs; separate unboxed introduction; 56px pink header, close 24px icons on 44px targets. Removed entry Explore link that returned unauthenticated visitors to login.",
   "enrichment": "Original shaded blossom logo and raised Lucide geometry (extrusion, gradient face, highlight); neon fan; global 28-petal SVG backdrop, 16 on mobile, pointer-free and reduced-motion aware."
 }
