@@ -59,6 +59,22 @@ flowchart LR
 
 GitHub Actions vẫn là lựa chọn tự động hóa build/deploy sau bản đầu, không phải nơi host frontend và không phải điều kiện bắt buộc để hoàn thành nhiệm vụ 1. Đồng bộ adapter lab 3.0 → 4.1/HTTPS/bảng AWS là công việc cần làm trước bài tải; smoke chức năng nhỏ không thay bằng chứng scaling. Các phần tham khảo đầy đủ dưới đây ghi rõ cả nhiệm vụ 2, không được coi mọi dịch vụ trong sơ đồ tổng thể đều triển khai ngay ở nhiệm vụ 1.
 
+### Cách thực hiện cho người mới: chuẩn bị trên máy, chạy trên AWS, rồi thu hồi
+
+Học theo ba chặng, mỗi chặng có đầu ra rõ ràng. Hai người cùng một phiên/màn hình: một người thao tác, người còn lại cùng đọc kết quả rồi đổi vai; chỉ chạy một luồng deploy/destroy.
+
+| Chặng | Việc thực hiện | Dấu hiệu đã hoàn thành |
+| --- | --- | --- |
+| **A — Chuẩn bị trên máy, bước 1–3** | Kiểm tra account/quyền/region/hạn credit/công cụ; sửa cấu hình local/AWS và công cụ Admin/test; viết Terraform; build frontend và gói Lambda | Có `frontend/dist`, gói backend/dependency đúng runtime, cấu hình hạ tầng và quy trình thu hồi; local checks phù hợp đạt, chưa tạo app AWS |
+| **B — Đưa lên AWS và kiểm tra, bước 4–6** | Xem Terraform plan rồi apply trong phạm vi đã chốt; lấy hostname CloudFront để chốt Origin/cookie/routing; upload frontend, tạo Admin/dữ liệu test và kiểm tra chức năng | Mở URL HTTPS từ trình duyệt, đăng nhập/đặt/xem vé và quản trị bằng dữ liệu thật; API lỗi giữ đúng status/JSON, dữ liệu không nằm trong mock/localStorage |
+| **C — Kết thúc buổi thử, bước 7** | Tải report về máy, xem destroy plan, thu hồi lab rồi kiểm kê dịch vụ và billing khi cập nhật | Không còn tài nguyên lab tính phí; giữ code/state/bằng chứng trên máy và dữ liệu local |
+
+Bốn từ cần phân biệt: **build** tạo bản chạy được từ mã nguồn; **plan** cho xem thay đổi hạ tầng dự kiến; **apply** thực hiện thay đổi đã xem; **destroy** thu hồi tài nguyên được Terraform quản lý trong phạm vi lab. `plan` không tự tạo AWS; `destroy` không xóa toàn bộ account hoặc hoàn tiền lượt dùng trước đó. Nguồn Terraform plan/destroy đã dẫn trong các giai đoạn chi tiết bên dưới.
+
+Ví dụ nghiệm thu **dự kiến, chưa chạy**: Admin tạo sự kiện mới 3 chỗ → tài khoản test A đặt vé thành công còn 2 chỗ → reload vẫn thấy vé → bài kiểm tra gửi lại cùng mã yêu cầu không tạo vé/trừ thêm chỗ → tài khoản test B không xem được vé của A. A/B dùng browser profile/cookie jar riêng dù thao tác trên cùng máy. Kiểm tra thêm quản lý sự kiện/User theo contract 4.1, nhất là sửa/xóa không làm sai số chỗ hoặc dữ liệu người khác. Bài ghi/phá hủy và tranh chỗ dùng bảng/stack AWS test riêng; không suy kịch bản nhỏ thành bằng chứng autoscaling.
+
+Đầu ra nhiệm vụ 1 là **URL HTTPS chạy đúng chức năng + bằng chứng kiểm tra + cách tái tạo/thu hồi lab**. Không chỉ nghiệm thu bằng việc trang chủ tải được. Chưa có Terraform/công cụ AWS trong repo, nên cần hoàn tất chặng A trước khi đưa ra nhóm lệnh deploy đầy đủ để chạy thật; không chạy nguyên template SAM local lên AWS.
+
 ## 1. Mục tiêu của lần triển khai đầu
 
 Đưa ứng dụng API 4.1 hiện hành lên một địa chỉ HTTPS, dùng được đăng ký/đăng nhập User, quản trị, đặt vé và xem vé. Giữ transaction chống vượt số chỗ, chống trùng và gửi lại cùng key. Nhiệm vụ 1 tập trung ứng dụng và kiểm tra chức năng; nhiệm vụ 2 bổ sung giám sát CloudWatch/SNS. Cách kiểm soát ngân sách và thu hồi lab áp dụng xuyên suốt.
