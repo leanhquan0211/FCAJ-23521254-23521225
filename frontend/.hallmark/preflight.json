@@ -14,7 +14,7 @@
     "existing password modifications"
   ],
   "designSystem": "DESIGN.md",
-  "uiScope": "Hue preference and reset only, preserve existing transparency/neon/elevation/theme and all business logic",
+  "uiScope": "Shared roundness preference 0-100/default50; compact mobile appearance panel; retain theme, hue, transparency, neon, elevation and business flows",
   "material": "Liquid Glass within existing pink/navy theme: raised reflective content buttons, glass cards/forms/inputs; separate unboxed introduction; 56px pink header, close 24px icons on 44px targets. Removed entry Explore link that returned unauthenticated visitors to login.",
   "enrichment": "Original shaded blossom logo and raised Lucide geometry (extrusion, gradient face, highlight); neon fan; global 28-petal SVG backdrop, 16 on mobile, pointer-free and reduced-motion aware."
 }

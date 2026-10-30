@@ -89,9 +89,10 @@
   --space-2xl: 4rem;
   --space-3xl: 6rem;
 
-  --radius-control: 0.75rem;
-  --radius-card: 1.25rem;
-  --radius-pill: 999px;
+  --roundness-level: 50;
+  --radius-control: calc(var(--roundness-level) * .24px);
+  --radius-card: calc(var(--roundness-level) * .4px);
+  --radius-pill: calc(var(--roundness-level) * .44px);
   --text-display: clamp(2.25rem, 3.8vw, 3.75rem);
   --text-display-small: clamp(2rem, 3.2vw, 3.25rem);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

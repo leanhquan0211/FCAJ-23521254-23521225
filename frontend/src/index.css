@@ -583,6 +583,8 @@ body { background: var(--color-paper); color: var(--color-ink); }
 .topbar-actions { gap: 0; }
 .appearance-actions > button > .dimensional-icon, .theme-toggle > .dimensional-icon { width: 24px; height: 24px; }
 .appearance-popover { z-index: 50; width: min(240px,calc(100vw - 24px)); padding: var(--space-md); border: 1px solid var(--color-glass-rim); border-radius: var(--radius-control); color: var(--color-ink); }
+.appearance-panel { width: min(300px,calc(100vw - 24px)); max-height: calc(100dvh - 80px); overflow-y: auto; overscroll-behavior: contain; }
+.appearance-panel-row + .appearance-panel-row { border-top: 1px solid var(--color-glass-rim); margin-top: var(--space-sm); padding-top: var(--space-sm); }
 .appearance-setting { display: flex; flex-direction: column; justify-content: center; min-width: 0; cursor: pointer; }
 .appearance-setting > span { display: flex; justify-content: space-between; align-items: center; gap: var(--space-xs); font-size: .8125rem; font-weight: 500; line-height: 1.2; }
 .appearance-setting output { color: var(--color-accent); font-variant-numeric: tabular-nums; }

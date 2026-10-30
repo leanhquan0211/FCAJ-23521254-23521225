@@ -7,7 +7,8 @@ import {
   Menu as BaseMenu, Moon as BaseMoon, Pencil as BasePencil, PenTool as BasePenTool, Plus as BasePlus,
   Search as BaseSearch, SearchX as BaseSearchX, ShieldCheck as BaseShieldCheck, Sun as BaseSun,
   Ticket as BaseTicket, Trash2 as BaseTrash2, UserRound as BaseUserRound, Users as BaseUsers,
-  UsersRound as BaseUsersRound, X as BaseX, Droplets as BaseDroplets, Layers3 as BaseLayers3, Palette as BasePalette, type LucideIcon, type LucideProps,
+  UsersRound as BaseUsersRound, X as BaseX, Droplets as BaseDroplets, Layers3 as BaseLayers3, Palette as BasePalette,
+  SlidersHorizontal as BaseSlidersHorizontal, SquareRoundCorner as BaseSquareRoundCorner, type LucideIcon, type LucideProps,
 } from 'lucide-react'
 
 // Keep Lucide's recognizable geometry; build a raised, shaded vector object from it.
@@ -71,3 +72,5 @@ export function XIcon(props: LucideProps) { return <X {...props} /> }
 export function Droplets(props: LucideProps) { return <RaisedIcon icon={BaseDroplets} name="Droplets" {...props} /> }
 export function Layers3(props: LucideProps) { return <RaisedIcon icon={BaseLayers3} name="Layers3" {...props} /> }
 export function Palette(props: LucideProps) { return <RaisedIcon icon={BasePalette} name="Palette" {...props} /> }
+export function SlidersHorizontal(props: LucideProps) { return <RaisedIcon icon={BaseSlidersHorizontal} name="SlidersHorizontal" {...props} /> }
+export function SquareRoundCorner(props: LucideProps) { return <RaisedIcon icon={BaseSquareRoundCorner} name="SquareRoundCorner" {...props} /> }
