@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight } from 'lucide-react'
+import { ArrowLeft, ArrowRight } from '@/components/DimensionalIcons'
 import { Link, useParams } from 'react-router'
 import { EventFacts } from '@/components/EventFacts'
 import { PageState } from '@/components/PageState'

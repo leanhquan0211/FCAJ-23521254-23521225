@@ -1,4 +1,4 @@
-import { CalendarDays, MapPin, UsersRound, Building2 } from 'lucide-react'
+import { CalendarDays, MapPin, UsersRound, Building2 } from '@/components/DimensionalIcons'
 import { formatEventDateTime } from '@/lib/event-listing'
 import type { EventItem } from '@/types/event'
 

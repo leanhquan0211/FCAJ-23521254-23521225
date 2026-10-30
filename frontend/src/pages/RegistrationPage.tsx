@@ -1,6 +1,6 @@
 // Hallmark · Almanac system · booking form · critique: P4 H4 E4 S4 R5 V4
 import { useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from '@/components/DimensionalIcons'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { EventFacts } from '@/components/EventFacts'
 import { PageState } from '@/components/PageState'

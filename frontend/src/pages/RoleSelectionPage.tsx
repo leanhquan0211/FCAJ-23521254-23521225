@@ -1,4 +1,4 @@
-import { ArrowRight, ShieldCheck, UserRound } from 'lucide-react'
+import { ArrowRight, ShieldCheck, UserRound } from '@/components/DimensionalIcons'
 import { Link } from 'react-router'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

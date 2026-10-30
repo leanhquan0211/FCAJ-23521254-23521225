@@ -1,6 +1,6 @@
 // Hallmark · pre-emit critique: P4 H5 E4 S4 R5 V4 · locked Almanac design
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Pencil, Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from '@/components/DimensionalIcons'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
