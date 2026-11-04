@@ -72,20 +72,19 @@ Khởi động và lệnh kiểm tra xem [Backend README](../backend/README.md),
 
 ## 6. Trạng thái và phần còn lại
 
-- Làm ở thư mục gốc `D:\aws-workshop\event-registration`, nhánh **phuc**; GitHub/local còn main/phuc. Các nhánh feature đã gộp, lịch sử commit được giữ. Xem [git-workflow.md](../docs/git-workflow.md); không quay lại sửa worktree detached như một nhánh đang phát triển.
-- Cập nhật Git ngày **24/10/2026**: theo yêu cầu bàn giao, main được đồng bộ tới cùng bản phuc trong đợt này, gồm ứng dụng, test lab và tài liệu. Những lần phát triển tiếp vẫn dùng phuc; trạng thái chức năng và các giới hạn kiểm thử bên dưới không thay đổi vì đồng bộ nhánh.
-- Ở lần kết thúc dùng thử gần nhất, web/API/Docker Desktop đã dừng; dữ liệu DynamoDB được giữ và kiểm hash trước–sau dọn tài nguyên. Phiên sau kiểm tra process/health rồi khởi động theo README, không suy trạng thái máy chỉ từ tài liệu.
-- Lượt kiểm thử **23/10/2026** đã đạt 75 bài backend với DB và HTTP/browser/SAM/frontend checks. Sau gộp Git chạy lại 63 bài backend không DB, 28 unit lab và build/lint cả hai web; 12 integration bỏ qua vì Docker tắt. Đây là kết quả lịch sử; phiên lập kế hoạch 30/10 không chạy lại các bài chức năng. Chi tiết và nguồn tại [WORKLOG.md](WORKLOG.md).
-- **Điểm tiếp tục chính:** thực hiện nhiệm vụ 1 theo [kế hoạch AWS đã chốt](../docs/aws-deployment-plan.md), bắt đầu bằng xác minh account/quyền/region/ngân sách và công cụ, rồi chuẩn bị cấu hình local/AWS và Terraform. Backend hiện vẫn khóa DB Local/credentials giả; `infra/infra.md` trống, chưa có Terraform/workflow triển khai. Chưa truy cập account AWS hoặc xác minh credit/billing.
-- **Điều kiện trước test tải:** [adapter lab](../tests/load/contract-v3-draft.json) vẫn ghim health3.0/cookie `event_user_session`, app dùng4.1/`event_session`; runner chỉ nhận HTTP loopback, fixture/audit phụ thuộc DB Local. Cần đồng bộ contract và hỗ trợ môi trường AWS có guard trước khi thử 1–2 User rồi mới tăng tải. Không bỏ guard hoặc đổi version backend để làm test qua; việc gộp code không tự hoàn tất tích hợp lab.
-- Chưa có kết quả 100 người, ramp/spike/hold/overload/recovery trên bản hiện hành hoặc số đo scaling AWS. Scan dùng trong danh sách User/dọn dữ liệu còn là giới hạn; cần đánh giá chỉ mục/chi phí khi lên AWS.
+- Làm ở thư mục gốc, hiện đã đồng bộ lên nhánh **main** (commit `d4611f1`), đồng thời nhánh **quan** đã cập nhật đầy đủ.
+- **Hoàn thành Nhiệm vụ 1 (04/11/2026):** Đã triển khai ứng dụng lên AWS thành công bằng Terraform (CloudFront, S3 OAC, API Gateway v2, Lambda Python 3.13, DynamoDB On-Demand `fcaj-project-events`). Kiểm thử người dùng đăng ký, đăng nhập và đặt vé thành công qua HTTPS.
+- **Thu hồi lab an toàn:** Đã destroy toàn bộ hạ tầng bằng Terraform và chạy script `infra/verify_cleanup.ps1` xác nhận 7/7 dịch vụ sạch sẽ 100% `[CLEAN]`, không tốn phí duy trì.
+- Chi tiết báo cáo triển khai và xử lý sự cố Permissions Boundary xem tại [Báo cáo triển khai AWS 04/11/2026](../docs/aws-deployment-report-2026-11-04.md).
+- **Điểm tiếp tục chính:** Nhiệm vụ 2 theo [kế hoạch AWS](../docs/aws-deployment-plan.md) — Bổ sung giám sát hệ thống bằng CloudWatch Metrics/Alarms, Dashboard và cảnh báo qua SNS email.
 
-## 7. Kế hoạch AWS đã chốt — chưa triển khai
+## 7. Kế hoạch AWS — Tiến độ thực hiện
 
-Nguồn thực hiện: [aws-deployment-plan.md](../docs/aws-deployment-plan.md). Kế hoạch được chốt tại Checkpoint **30/10/2026**, chia thành hai nhiệm vụ:
+Nguồn thực hiện: [aws-deployment-plan.md](../docs/aws-deployment-plan.md). Kế hoạch gồm hai nhiệm vụ:
 
-- **Nhiệm vụ 1:** một frontend React User/Admin trên S3 riêng tư + CloudFront/OAC; cùng hostname HTTPS chuyển `/api` tới HTTP API payload v2 + một Lambda Python 3.13 + bảng DynamoDB PK/SK On-demand cho mỗi môi trường. Giữ auth/CSRF/idempotency/quyền hiện tại, chỉ dùng log Lambda tối thiểu để debug; hoàn thành bằng kiểm tra chức năng đầu-cuối và khả năng thu hồi lab.
-- **Nhiệm vụ 2:** cấu hình CloudWatch log/retention, dashboard, metric/alarm và SNS email; kiểm chứng bằng request/cảnh báo thật. Chưa dựng các phần này ở nhiệm vụ 1.
+- **Nhiệm vụ 1 (ĐÃ HOÀN THÀNH - 04/11/2026):** Triển khai ứng dụng lên AWS với CloudFront, S3 private, API Gateway, Lambda và DynamoDB; kiểm thử chức năng đầu-cuối qua HTTPS và thu hồi sạch sẽ lab bằng Terraform và script kiểm tra tự động.
+- **Nhiệm vụ 2 (CHƯA TRIỂN KHAI):** Cấu hình CloudWatch log/retention có hệ thống, dashboard, metric/alarm và SNS email; kiểm chứng bằng request và cảnh báo thật.
+
 
 Terraform quản lý tạo/cấu hình/thu hồi hạ tầng; SAM dùng build/local. Lần đầu build và deploy từ máy; GitHub Actions/OIDC là bước tự động hóa về sau, không host frontend và chưa bắt buộc cho lần test đầu. Trình duyệt lấy file qua CloudFront rồi chạy React.
 

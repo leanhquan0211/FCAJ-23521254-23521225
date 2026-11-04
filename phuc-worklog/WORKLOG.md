@@ -170,3 +170,32 @@ Các nguồn sau được đọc trong phiên **30/10/2026** để nghiên cứu
 - [Kế hoạch AWS đã chốt](../docs/aws-deployment-plan.md): sơ đồ, hai nhiệm vụ, bước triển khai, giả định chi phí, kiểm tra và thu hồi; là tài liệu chuẩn bị, không phải bằng chứng đã deploy.
 - [Handoff đang theo dõi](handoffs/2026-10-30-0956.md): mục tiêu, quyết định và điểm tiếp tục của phiên; được tạo theo yêu cầu riêng đầu phiên và cập nhật tại Checkpoint.
 - [Cấu hình DB](../backend/lambda/configuration.py), [handler](../backend/lambda/app.py), [SAM local](../backend/template.yaml), [profile lab](../tests/load/contract-v3-draft.json) và [guard lab](../tests/load/config.py): minh chứng cho hiện trạng local và phần cần chuẩn bị; chưa thay đổi các file này trong phiên.
+
+## 04/11/2026 — Tuần 6 (02/11–08/11)
+
+### Công việc chính
+
+| Hạng mục | Trước triển khai | Kết quả |
+| --- | --- | --- |
+| Cấu hình AWS & Bảo mật | Chưa cấu hình danh tính AWS, credentials dễ rủi ro | Cấu hình IAM user `terraform-deployer` (Region `us-east-1`, Account `059898286806`). Cập nhật `.gitignore` loại trừ `Bangiao.md`, `*.csv`, `*.tfstate`, `build/`, `dist/`. |
+| Bộ điều hợp Backend & CORS | Backend chỉ nhận DynamoDB Local (`127.0.0.1:8000`), credentials giả | Cập nhật `configuration.py`, `app.py`, `auth.py`: hỗ trợ cờ `APP_ENV=aws`, tự nhận diện Lambda IAM Role, kết nối bảng AWS thật `fcaj-project-events`; mở rộng CORS cho phép CloudFront domain. Giữ an toàn guard local. |
+| Build Frontend tương thích CloudFront | Frontend ghim localhost `127.0.0.1:3001` | Cập nhật `.env.local` sang `VITE_API_BASE_URL=/api`. Biên dịch bản build mới `frontend/dist`. |
+| Xây dựng hạ tầng Terraform (IaC) | Thư mục `infra/` chưa có mã triển khai | Viết hoàn chỉnh 8 file Terraform: S3 (OAC private), CloudFront (2 origins, functions strip prefix và SPA rewrite), API Gateway HTTP API v2 (20 routes), Lambda Python 3.13, DynamoDB On-Demand (TTL `expiresAt`). |
+| Xử lý sự cố Permissions Boundary | Bị lỗi 503 "Cơ sở dữ liệu chưa sẵn sàng" do IAM chặn quyền | Điều tra và phát hiện Permissions Boundary (`fcaj-project-lambda-boundary`) bắt buộc tên DynamoDB và Lambda phải có tiền tố `fcaj-project-*`. Cập nhật tên bảng thành `fcaj-project-events` và hàm Lambda thành `fcaj-project-backend`. |
+| Nghiệm thu & Kiểm thử thực tế | Chưa có URL chạy thật | Trang web hoạt động ổn định qua HTTPS tại CloudFront: `https://d3ivrbu39ywhul.cloudfront.net`. Đăng ký tài khoản User, đăng nhập, đọc/ghi dữ liệu DynamoDB thành công 100%. |
+| Dọn dẹp tài nguyên (Teardown) | Chưa có quy trình tự động kiểm tra dọn lab | Chạy `terraform destroy`. Xử lý ngoại lệ `iam:ListInstanceProfilesForRole` bằng cách xóa role qua AWS CLI và gỡ khỏi state. Viết kịch bản `verify_cleanup.ps1` kiểm tra 7 dịch vụ AWS: xác nhận 100% `[CLEAN]`. |
+| Đóng gói Git | Đang nằm rời rạc trên nhánh làm việc `quan` | Xóa sạch thư mục build/dist tạm thời. Commit trên `quan` và merge Fast-Forward an toàn vào nhánh `main`. |
+
+### Kiểm tra và bằng chứng
+
+- Chạy kiểm thử tự động backend: 63 bài passed, 12 bài skipped (do Docker local tắt).
+- Kiểm thử thực tế trên CloudFront: kiểm tra trang web, API `/health` qua CDN và API Gateway.
+- Bằng chứng dọn dẹp sạch sẽ: script `infra/verify_cleanup.ps1` quét 7 dịch vụ AWS (DynamoDB, Lambda, API Gateway, S3, CloudFront, CloudWatch Logs, IAM Roles) đều trả về `[CLEAN]`.
+- Báo cáo tổng kết đầy đủ được lưu tại [Báo cáo tổng kết triển khai AWS](../docs/aws-deployment-report-2026-11-04.md).
+
+### Tài liệu tham khảo
+
+- [AWS — IAM Permissions Boundaries](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html): tham khảo cơ chế giới hạn quyền tối đa cho IAM Role; áp dụng xử lý lỗi 503 và quy tắc đặt tên tiền tố `fcaj-project-*`.
+- [HashiCorp — Terraform AWS Provider CloudFront Distribution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution): cấu hình OAC, cache behavior và custom origin cho API Gateway.
+- [AWS — CloudFront Functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-functions.html): hàm JavaScript runtime 2.0 rewrite URL loại bỏ prefix `/api` tại Edge.
+
