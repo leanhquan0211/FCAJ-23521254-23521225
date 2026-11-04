@@ -11,6 +11,7 @@ __pycache__/
 .aws/
 *.pem
 *.key
+*.csv
 
 # SAM build output
 .aws-sam/
@@ -32,3 +33,13 @@ backend/env.*.local.json
 
 # Logs
 *.log
+
+# Build artifacts
+dist/
+frontend/dist/
+infra/build/
+*.zip
+
+# Handoff/session notes
+Bangiao.md
+

@@ -36,8 +36,8 @@ def response(status, body, event, extra_headers=None, cookies=None):
                "X-Content-Type-Options": "nosniff", "Referrer-Policy": "no-referrer"}
     headers.update(extra_headers or {})
     origin = next((v for k, v in (event.get("headers") or {}).items() if k.lower() == "origin"), None)
-    allowed = os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")
-    if origin in allowed:
+    allowed = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")]
+    if ("*" in allowed and origin) or (origin in allowed):
         headers["Access-Control-Allow-Origin"] = origin
         headers["Access-Control-Allow-Credentials"] = "true"
         headers["Access-Control-Expose-Headers"] = "Location, Idempotent-Replayed"

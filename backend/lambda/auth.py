@@ -39,7 +39,10 @@ def request_headers(event):
 
 def verify_origin(event):
     allowed = {origin.strip() for origin in os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173").split(",")}
-    if request_headers(event).get("origin") not in allowed:
+    req_origin = request_headers(event).get("origin")
+    if "*" in allowed:
+        return
+    if req_origin not in allowed:
         raise ApiError(403, "FORBIDDEN_ORIGIN", "Nguồn gửi yêu cầu không được phép.")
 
 
