@@ -1,8 +1,12 @@
-# Kế hoạch triển khai AWS tiết kiệm cho bản demo
+# Kế hoạch triển khai AWS tiết kiệm cho dự án fcaj-project
 
-Ngày lập: **30/10/2026 — Tuần 5 (26/10–01/11)**. Trạng thái: **kế hoạch đã chốt tại Checkpoint 30/10/2026; chưa triển khai**.
+Ngày lập: **30/10/2026 — Tuần 5 (26/10–01/11)**. Trạng thái: **công cụ/build local, CLI tài khoản cá nhân và budget đã đạt; còn quyền triển khai/cấu hình local-AWS/IaC, chưa triển khai ứng dụng AWS**.
 
-Người dùng mới tiếp cận AWS, đã có tài khoản cá nhân và chọn ngân sách **5–10 USD/tháng**. Sau Checkpoint 30/10, người dùng xác nhận **Free plan, còn 100 USD credit**; đây là thông tin được cung cấp, chưa phải kết quả AI đọc Console/API. Chưa biết ngày hết hạn credit, quota/quyền và chi phí hiện có. Kế hoạch hiện tại đã được chốt; phạm vi frontend/API/backend/DB, kiểm tra và thu hồi nêu dưới đây là cơ sở để tiếp tục, không cần xin duyệt lại các điểm đã thống nhất. Chưa sửa code/IaC hoặc tạo tài nguyên. Trước bước phụ thuộc phải xác minh account/region/quyền, công cụ và bằng chứng theo từng giai đoạn; thay đổi đáng kể giải pháp/phạm vi cần được trình bày lại theo [AI_RULE.md](../phuc-worklog/AI_RULE.md).
+**Quy ước tên cập nhật:** người dùng xác định đây là dự án **`fcaj-project`**. Dùng tiền tố `fcaj-project` cho tên tài nguyên mới; profile đăng nhập `fcaj-project-login`, profile Terraform/SDK `fcaj-project`. Môi trường triển khai thử vài giờ là một giai đoạn kiểm chứng của dự án; yêu cầu tiết kiệm chi phí và thu hồi sau thử nghiệm vẫn giữ nguyên.
+
+**Tài khoản triển khai hiện tại:** tài khoản cá nhân **Paid**; theo người dùng còn **40 USD credit**, hạn **05/2027**. Người dùng xác nhận đã lưu budget **10 USD/tháng** và email; ảnh xác minh actual **30/50/80%** (= 3/5/8 USD), forecast **100%**, loại **Credit/Refund** khỏi phép tính. Chưa kiểm thử email thực tế. Dự kiến dùng AWS đến hết **12/2026** rồi thu hồi/kiểm kê dự án; không tự đóng tài khoản. IAM/STS qua cầu nối **`fcaj-project`** đã đúng tài khoản/user. Ảnh 60 USD earned không phải số dư; kết quả Paid/0 của tài khoản người bạn là lịch sử. Chi tiết trong [hướng dẫn setup](aws-environment-setup.md).
+
+Người dùng mới tiếp cận AWS, chọn ngân sách **5–10 USD/tháng**. Dự toán dùng giá chưa trừ credit; không suy ra số dư bằng khoản ban đầu cộng phần thưởng. Công cụ và hai build đã đạt; IAM/CLI qua cầu nối đã đúng tài khoản cá nhân. SDK từng chạy được trước chuyển tài khoản, chưa kiểm tra lại SDK/provider trên tài khoản cuối. Chưa có IaC/tài nguyên ứng dụng AWS. Kế hoạch kỹ thuật/kiểm tra/thu hồi đã chốt là cơ sở tiếp tục. Trước bước phụ thuộc kiểm tra region/quota/quyền và dependency theo [AI_RULE.md](../phuc-worklog/AI_RULE.md).
 
 ## Hai nhiệm vụ chính đã thống nhất
 
@@ -12,7 +16,7 @@ Kế hoạch đã chốt tách phần triển khai CloudWatch sang nhiệm vụ 
 
 | Nhiệm vụ | Phạm vi | Điều kiện hoàn thành |
 | --- | --- | --- |
-| **1 — Triển khai ứng dụng lên AWS** | CloudFront/S3, HTTP API/Lambda/DynamoDB, quyền IAM, cấu hình bảo mật và dữ liệu test; build/deploy từ máy cho lần đầu, smoke test và quy trình thu hồi lab | Có URL HTTPS hoạt động, User/Admin dùng được chức năng hiện hành, dữ liệu/ownership/idempotency đúng; có hướng dẫn dọn tài nguyên |
+| **1 — Triển khai ứng dụng lên AWS** | CloudFront/S3, HTTP API/Lambda/DynamoDB, quyền IAM, cấu hình bảo mật và dữ liệu test; build/deploy từ máy cho lần đầu, smoke test và quy trình thu hồi môi trường thử nghiệm | Có URL HTTPS hoạt động, User/Admin dùng được chức năng hiện hành, dữ liệu/ownership/idempotency đúng; có hướng dẫn dọn tài nguyên |
 | **2 — Bổ sung giám sát bằng CloudWatch** | Cấu hình log/retention có hệ thống, dashboard, metric/alarm, SNS email và kiểm chứng cảnh báo; quan sát bài test có kiểm soát nếu cần | Số liệu/log phản ánh request thật, cảnh báo được xác minh, biết chi phí và dọn được tài nguyên giám sát |
 
 **Ranh giới log cơ bản trong kế hoạch đã chốt:** nhiệm vụ 1 giữ log kỹ thuật tối thiểu của Lambda để xử lý lỗi deploy, có retention ngắn và được Terraform quản lý để dọn cuối buổi. Chưa dựng dashboard/alarm/SNS. AWS mặc định gửi log Lambda tới CloudWatch khi execution role có quyền; vì vậy không mô tả nhiệm vụ 1 là không dùng CloudWatch hoặc không có phí log. Các phần này chưa được cấu hình. [AWS Lambda logs](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-cloudwatchlogs.html).
@@ -29,7 +33,7 @@ flowchart TD
     BE --> D
     D --> E["5. Lấy URL CloudFront, chốt Origin và đưa bản build lên AWS"]
     E --> F["6. Kiểm tra HTTPS, đăng nhập và đặt vé thật"]
-    F --> G["7. Lưu bằng chứng và thu hồi lab khi hết buổi"]
+    F --> G["7. Lưu bằng chứng và thu hồi môi trường thử nghiệm khi hết buổi"]
 ```
 
 | Bước | Thực hiện ở đâu / công việc | Đầu ra và điều kiện đi tiếp |
@@ -40,7 +44,7 @@ flowchart TD
 | 4 | Terminal Terraform: init/validate/plan rồi apply trong phạm vi đã duyệt; tạo DynamoDB PK/SK On-demand, execution role, Lambda, route HTTP API, bucket S3 riêng tư, CloudFront/OAC/functions | Tài nguyên có ID/ARN và state/manifest; HTTP API payload v2 giữ route cụ thể để khớp handler; chưa có dashboard/alarm/SNS |
 | 5 | Sau khi có hostname CloudFront: cập nhật allowlist Origin HTTPS, Secure cookie, proxy `/api` bỏ prefix, API không cache; upload file frontend và hoàn tất cấu hình Lambda | `https://<distribution>.cloudfront.net/` phục vụ web; `/api/health` đi đúng API/bảng; reload route sâu và header/cookie hoạt động |
 | 6 | CLI tương tác và browser: tạo Admin AWS an toàn, tạo sự kiện, User signup/login/đặt/xem vé, thử lại cùng key, kiểm tra quyền | Ghi nhận request/dữ liệu thật; không tắt auth/CSRF hoặc coi mock/health đơn lẻ là tích hợp đạt |
-| 7 | Máy phát triển + AWS Console: tải report về máy, dừng runner/job, xem destroy plan, gỡ lab và kiểm kê tài nguyên | Không còn tài nguyên lab tính phí; kiểm tra billing sau khi cập nhật, vẫn ghi nhận phí đã sử dụng |
+| 7 | Máy phát triển + AWS Console: tải report về máy, dừng runner/job, xem destroy plan, gỡ môi trường thử nghiệm và kiểm kê tài nguyên | Không còn tài nguyên môi trường thử nghiệm tính phí; kiểm tra billing sau khi cập nhật, vẫn ghi nhận phí đã sử dụng |
 
 Để lần triển khai đầu dễ theo dõi, có thể dùng hai lượt apply có kiểm soát: lượt đầu tạo hạ tầng để lấy hostname CloudFront, lượt sau cập nhật biến Origin HTTPS và hoàn tất cấu hình. Lượt đầu chưa cho phép thao tác ghi từ website; không mở wildcard Origin để đi tắt. Khi viết IaC cần tránh vòng phụ thuộc CloudFront → API → Lambda → hostname CloudFront; có thể cấp hostname đã lấy qua biến đầu vào ở lượt cấu hình thứ hai. Đây là lựa chọn triển khai đề xuất cần thể hiện rõ trong plan thực tế, không phải lệnh đã chạy.
 
@@ -57,7 +61,7 @@ flowchart LR
     Lambda --> DB[("DynamoDB AWS")]
 ```
 
-GitHub Actions vẫn là lựa chọn tự động hóa build/deploy sau bản đầu, không phải nơi host frontend và không phải điều kiện bắt buộc để hoàn thành nhiệm vụ 1. Đồng bộ adapter lab 3.0 → 4.1/HTTPS/bảng AWS là công việc cần làm trước bài tải; smoke chức năng nhỏ không thay bằng chứng scaling. Các phần tham khảo đầy đủ dưới đây ghi rõ cả nhiệm vụ 2, không được coi mọi dịch vụ trong sơ đồ tổng thể đều triển khai ngay ở nhiệm vụ 1.
+GitHub Actions vẫn là lựa chọn tự động hóa build/deploy sau bản đầu, không phải nơi host frontend và không phải điều kiện bắt buộc để hoàn thành nhiệm vụ 1. Đồng bộ adapter môi trường thử nghiệm 3.0 → 4.1/HTTPS/bảng AWS là công việc cần làm trước bài tải; smoke chức năng nhỏ không thay bằng chứng scaling. Các phần tham khảo đầy đủ dưới đây ghi rõ cả nhiệm vụ 2, không được coi mọi dịch vụ trong sơ đồ tổng thể đều triển khai ngay ở nhiệm vụ 1.
 
 ### Cách thực hiện cho người mới: chuẩn bị trên máy, chạy trên AWS, rồi thu hồi
 
@@ -67,19 +71,19 @@ Học theo ba chặng, mỗi chặng có đầu ra rõ ràng. Hai người cùng
 | --- | --- | --- |
 | **A — Chuẩn bị trên máy, bước 1–3** | Kiểm tra account/quyền/region/hạn credit/công cụ; sửa cấu hình local/AWS và công cụ Admin/test; viết Terraform; build frontend và gói Lambda | Có `frontend/dist`, gói backend/dependency đúng runtime, cấu hình hạ tầng và quy trình thu hồi; local checks phù hợp đạt, chưa tạo app AWS |
 | **B — Đưa lên AWS và kiểm tra, bước 4–6** | Xem Terraform plan rồi apply trong phạm vi đã chốt; lấy hostname CloudFront để chốt Origin/cookie/routing; upload frontend, tạo Admin/dữ liệu test và kiểm tra chức năng | Mở URL HTTPS từ trình duyệt, đăng nhập/đặt/xem vé và quản trị bằng dữ liệu thật; API lỗi giữ đúng status/JSON, dữ liệu không nằm trong mock/localStorage |
-| **C — Kết thúc buổi thử, bước 7** | Tải report về máy, xem destroy plan, thu hồi lab rồi kiểm kê dịch vụ và billing khi cập nhật | Không còn tài nguyên lab tính phí; giữ code/state/bằng chứng trên máy và dữ liệu local |
+| **C — Kết thúc buổi thử, bước 7** | Tải report về máy, xem destroy plan, thu hồi môi trường thử nghiệm rồi kiểm kê dịch vụ và billing khi cập nhật | Không còn tài nguyên môi trường thử nghiệm tính phí; giữ code/state/bằng chứng trên máy và dữ liệu local |
 
-Bốn từ cần phân biệt: **build** tạo bản chạy được từ mã nguồn; **plan** cho xem thay đổi hạ tầng dự kiến; **apply** thực hiện thay đổi đã xem; **destroy** thu hồi tài nguyên được Terraform quản lý trong phạm vi lab. `plan` không tự tạo AWS; `destroy` không xóa toàn bộ account hoặc hoàn tiền lượt dùng trước đó. Nguồn Terraform plan/destroy đã dẫn trong các giai đoạn chi tiết bên dưới.
+Bốn từ cần phân biệt: **build** tạo bản chạy được từ mã nguồn; **plan** cho xem thay đổi hạ tầng dự kiến; **apply** thực hiện thay đổi đã xem; **destroy** thu hồi tài nguyên được Terraform quản lý trong phạm vi môi trường thử nghiệm. `plan` không tự tạo AWS; `destroy` không xóa toàn bộ account hoặc hoàn tiền lượt dùng trước đó. Nguồn Terraform plan/destroy đã dẫn trong các giai đoạn chi tiết bên dưới.
 
 Ví dụ nghiệm thu **dự kiến, chưa chạy**: Admin tạo sự kiện mới 3 chỗ → tài khoản test A đặt vé thành công còn 2 chỗ → reload vẫn thấy vé → bài kiểm tra gửi lại cùng mã yêu cầu không tạo vé/trừ thêm chỗ → tài khoản test B không xem được vé của A. A/B dùng browser profile/cookie jar riêng dù thao tác trên cùng máy. Kiểm tra thêm quản lý sự kiện/User theo contract 4.1, nhất là sửa/xóa không làm sai số chỗ hoặc dữ liệu người khác. Bài ghi/phá hủy và tranh chỗ dùng bảng/stack AWS test riêng; không suy kịch bản nhỏ thành bằng chứng autoscaling.
 
-Đầu ra nhiệm vụ 1 là **URL HTTPS chạy đúng chức năng + bằng chứng kiểm tra + cách tái tạo/thu hồi lab**. Không chỉ nghiệm thu bằng việc trang chủ tải được. Chưa có Terraform/công cụ AWS trong repo, nên cần hoàn tất chặng A trước khi đưa ra nhóm lệnh deploy đầy đủ để chạy thật; không chạy nguyên template SAM local lên AWS.
+Đầu ra nhiệm vụ 1 là **URL HTTPS chạy đúng chức năng + bằng chứng kiểm tra + cách tái tạo/thu hồi môi trường thử nghiệm**. Không chỉ nghiệm thu bằng việc trang chủ tải được. Chưa có Terraform/công cụ AWS trong repo, nên cần hoàn tất chặng A trước khi đưa ra nhóm lệnh deploy đầy đủ để chạy thật; không chạy nguyên template SAM local lên AWS.
 
 ## 1. Mục tiêu của lần triển khai đầu
 
-Đưa ứng dụng API 4.1 hiện hành lên một địa chỉ HTTPS, dùng được đăng ký/đăng nhập User, quản trị, đặt vé và xem vé. Giữ transaction chống vượt số chỗ, chống trùng và gửi lại cùng key. Nhiệm vụ 1 tập trung ứng dụng và kiểm tra chức năng; nhiệm vụ 2 bổ sung giám sát CloudWatch/SNS. Cách kiểm soát ngân sách và thu hồi lab áp dụng xuyên suốt.
+Đưa ứng dụng API 4.1 hiện hành lên một địa chỉ HTTPS, dùng được đăng ký/đăng nhập User, quản trị, đặt vé và xem vé. Giữ transaction chống vượt số chỗ, chống trùng và gửi lại cùng key. Nhiệm vụ 1 tập trung ứng dụng và kiểm tra chức năng; nhiệm vụ 2 bổ sung giám sát CloudWatch/SNS. Cách kiểm soát ngân sách và thu hồi môi trường thử nghiệm áp dụng xuyên suốt.
 
-Định hướng bổ sung trong phiên: tìm hiểu cách **đưa lên test vài giờ rồi thu hồi toàn bộ tài nguyên lab để tránh phí duy trì**. Vòng đời lab ở giai đoạn 5 bên dưới được ưu tiên cho lần thử ngắn đầu tiên; chưa phải lệnh tạo hoặc xóa tài nguyên AWS thực tế.
+Định hướng bổ sung trong phiên: tìm hiểu cách **đưa lên test vài giờ rồi thu hồi toàn bộ tài nguyên môi trường thử nghiệm để tránh phí duy trì**. Vòng đời môi trường thử nghiệm ở giai đoạn 5 bên dưới được ưu tiên cho lần thử ngắn đầu tiên; chưa phải lệnh tạo hoặc xóa tài nguyên AWS thực tế.
 
 Tuần 5 tập trung tìm hiểu, kiểm tra tài khoản và chốt kế hoạch. Dự kiến tuần 6 (**02–08/11**) mới triển khai, phù hợp lộ trình trong README; đây là thứ tự đề xuất, chưa phải cam kết hoàn thành. Email, thanh toán, đổi hệ thống xác thực và mở rộng production nằm ngoài bản đầu.
 
@@ -95,7 +99,7 @@ Tuần 5 tập trung tìm hiểu, kiểm tra tài khoản và chốt kế hoạc
 | [vite.config.ts](../frontend/vite.config.ts) proxy `/api` và bỏ prefix | S3 chỉ chứa file, không chạy proxy Vite; cần định tuyến tương ứng trên AWS. |
 | [create_admin.py](../backend/tools/create_admin.py) và script ghi test khóa ở local | Cần công cụ bootstrap/test AWS có kiểm tra tài khoản, region, bảng đích riêng; không bỏ guard toàn cục. |
 | `infra/infra.md` trống; chưa thấy file Terraform hoặc thư mục `.github` | IaC và CI/CD chưa được hiện thực hóa. |
-| [profile lab](../tests/load/contract-v3-draft.json) còn health 3.0/cookie cũ, ứng dụng dùng 4.1 | Đồng bộ lab là việc riêng trước test tải. Kết quả cũ không chứng minh autoscaling AWS. |
+| [cấu hình kiểm thử](../tests/load/contract-v3-draft.json) còn health 3.0/cookie cũ, ứng dụng dùng 4.1 | Đồng bộ môi trường thử nghiệm là việc riêng trước test tải. Kết quả cũ không chứng minh autoscaling AWS. |
 | Danh sách User và dọn dữ liệu có `Scan`; danh sách event đọc toàn bộ partition `EVENTS` | Bản nhỏ có thể giữ, cần đo lượng đọc/chi phí và giới hạn dữ liệu; chưa kết luận thiết kế chịu tải lớn. |
 
 ## 3. Kiến trúc đã chốt và cách hiểu
@@ -128,7 +132,7 @@ flowchart TB
 
 Frontend được host bằng **S3 + CloudFront**: S3 lưu bản build, CloudFront lấy file từ S3 khi cần hoặc phục vụ từ cache; trình duyệt nhận HTML/CSS/JavaScript rồi chạy React để hiển thị giao diện. Các response đi ngược theo đường request. [AWS CloudFront với S3 origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/GettingStarted.SimpleDistribution.html).
 
-**GitHub Actions là công cụ CI/CD:** lấy code, kiểm tra, build rồi triển khai artifact lên S3/Lambda khi workflow được kích hoạt. Nó nằm ở luồng đưa bản cập nhật lên AWS; lượt truy cập website không đi qua runner Actions. Workflow chạy xong thì web tiếp tục được AWS phục vụ. Dùng Actions để giảm thao tác lặp lại và chuẩn hóa bước kiểm tra/build/deploy; lab ngắn đầu tiên vẫn có thể làm các bước này trên máy cá nhân. [GitHub Actions overview](https://docs.github.com/en/actions/get-started/understand-github-actions).
+**GitHub Actions là công cụ CI/CD:** lấy code, kiểm tra, build rồi triển khai artifact lên S3/Lambda khi workflow được kích hoạt. Nó nằm ở luồng đưa bản cập nhật lên AWS; lượt truy cập website không đi qua runner Actions. Workflow chạy xong thì web tiếp tục được AWS phục vụ. Dùng Actions để giảm thao tác lặp lại và chuẩn hóa bước kiểm tra/build/deploy; đợt triển khai thử đầu tiên vẫn có thể làm các bước này trên máy cá nhân. [GitHub Actions overview](https://docs.github.com/en/actions/get-started/understand-github-actions).
 
 GitHub Pages là một dịch vụ static hosting riêng của GitHub, khác với Actions. Phương án hiện tại chọn S3 làm nơi lưu bản frontend để CloudFront phục vụ chung origin với `/api`; chưa chọn GitHub Pages. [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages).
 
@@ -231,7 +235,7 @@ CloudFront hiện có cả flat-rate (có gói Free 0 USD) và pay-as-you-go. K�
 
 ## 5. Kiểm soát chi phí trước khi mở demo
 
-- Đặt budget tháng **10 USD**, cảnh báo thực chi ở **3, 5, 8 USD** và dự báo vượt 10 USD. Theo dõi thêm chi phí sử dụng chưa trừ credit để thấy tốc độ tiêu thụ; kiểm tra scope toàn account và khoản chi cũ. Đây là cấu hình đề xuất, chưa tạo cảnh báo.
+- Budget hiện có đã chỉnh từ 100 về **10 USD/tháng**, actual **30%/50%/80%** (= **3/5/8 USD**), forecast **100%** (= **10 USD**), email trực tiếp. Ảnh xác minh ngưỡng và filter **Charge types excluded: Credit, Refund**, không thấy filter Service riêng; người dùng xác nhận đã lưu Monthly/10 USD và recipients. Chưa thử giao email hoặc xác minh cost aggregation trong Advanced options. Không tạo budget trùng/đổi tên; `fcaj-project-monthly-budget` chỉ là tên dự kiến nếu cần budget riêng. Monitoring/notification miễn phí, không Budget Reports/Actions/SNS. [AWS Budgets pricing](https://aws.amazon.com/aws-cost-management/aws-budgets/pricing/), [edit budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-edit.html), [cost types/alerts](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-best-practices.html).
 - Budget cập nhật có độ trễ; **không tự ngắt mọi dịch vụ ở 10 USD**. API throttle là best effort và concurrency chỉ hạn chế chạy đồng thời, cũng không phải trần tiền tháng. [AWS Budgets](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-managing-costs.html), [HTTP API throttling](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-throttling.html).
 - Bản đầu đề xuất throttle khoảng **5 request/giây, burst 10**; reserved concurrency khoảng **5–10 nếu quota account cho phép**, không bật provisioned concurrency. Phải kiểm tra quota thật; tài khoản quota nhỏ có thể không cấp được reservation. Đây là giá trị khởi đầu cần đo, không phải năng lực tối đa của kiến trúc.
 - Log retention đề xuất **7 ngày**; log requestId/status/duration cần thiết, không log body đăng nhập, cookie hoặc token. Nhiệm vụ 1 đề xuất log Lambda tối thiểu; chọn metric/alarm và dashboard ở nhiệm vụ 2, không bật tính năng chi tiết hàng loạt khi chưa tính giá. [CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/).
@@ -273,9 +277,9 @@ Dùng dữ liệu demo mới trên AWS; giữ dữ liệu/volume local. Chưa đ
 
 - Nhiệm vụ 1 khai báo S3/OAC/CloudFront/functions, HTTP API/routes, Lambda, execution role, bảng DynamoDB và log group Lambda tối thiểu để tìm lỗi. Chưa tạo dashboard/alarm/SNS; các phần đó sang nhiệm vụ 2. Role runtime chỉ có quyền DB/log cần dùng; quyền deploy tách riêng.
 - Build Lambda với dependency trước khi đóng gói; build frontend ra file tĩnh. Terraform là bên sở hữu tài nguyên AWS; không dùng cả `sam deploy` và Terraform quản lý cùng tài nguyên.
-- Với lab vài giờ do **một người thao tác trên một máy**, dùng Terraform state local, gitignored và sao lưu an toàn trên máy; giữ cả state/config đến khi xác minh dọn xong. Không cần tạo bucket state AWS cho lần thử này. Đây là lựa chọn trong kế hoạch đã chốt, chưa cấu hình. [HashiCorp local backend](https://developer.hashicorp.com/terraform/language/backend/local).
-- Khi làm nhóm hoặc CI/CD lâu dài mới chuyển sang bucket state riêng tư, mã hóa, versioning, `use_lockfile=true` với phiên bản Terraform hỗ trợ. Nếu đã dùng backend S3 và muốn thu hồi toàn bộ lab, phải có bước riêng chuyển/giữ state an toàn rồi dọn bucket state cuối cùng; không coi nó tự biến mất khi destroy app. [HashiCorp S3 backend](https://developer.hashicorp.com/terraform/language/backend/s3).
-- Gắn tên/tag project/environment/owner và mã lượt lab; lưu danh sách ID/ARN/region trước test. Tách `aws-dev` và `aws-test` bằng tên/state phù hợp. Bảng có dữ liệu cần giữ dùng bảo vệ xóa; bảng lab được thiết kế chỉ chứa fixture dùng lại được, cho phép destroy sau khi đã duyệt đúng phạm vi. Không tắt bảo vệ trên bảng ứng dụng/local hoặc bảng có dữ liệu thật. Xem plan để phát hiện phí và thay thế tài nguyên.
+- Với môi trường thử nghiệm vài giờ do **một người thao tác trên một máy**, dùng Terraform state local, gitignored và sao lưu an toàn trên máy; giữ cả state/config đến khi xác minh dọn xong. Không cần tạo bucket state AWS cho lần thử này. Đây là lựa chọn trong kế hoạch đã chốt, chưa cấu hình. [HashiCorp local backend](https://developer.hashicorp.com/terraform/language/backend/local).
+- Khi làm nhóm hoặc CI/CD lâu dài mới chuyển sang bucket state riêng tư, mã hóa, versioning, `use_lockfile=true` với phiên bản Terraform hỗ trợ. Nếu đã dùng backend S3 và muốn thu hồi toàn bộ môi trường thử nghiệm, phải có bước riêng chuyển/giữ state an toàn rồi dọn bucket state cuối cùng; không coi nó tự biến mất khi destroy app. [HashiCorp S3 backend](https://developer.hashicorp.com/terraform/language/backend/s3).
+- Gắn tên/tag project/environment/owner và mã lượt triển khai; lưu danh sách ID/ARN/region trước test. Tách `aws-dev` và `aws-test` bằng tên/state phù hợp. Bảng có dữ liệu cần giữ dùng bảo vệ xóa; bảng môi trường thử nghiệm được thiết kế chỉ chứa fixture dùng lại được, cho phép destroy sau khi đã duyệt đúng phạm vi. Không tắt bảo vệ trên bảng ứng dụng/local hoặc bảng có dữ liệu thật. Xem plan để phát hiện phí và thay thế tài nguyên.
 - Nhóm lệnh dự kiến khi đã có file: `terraform fmt -check`, `terraform init`, `terraform validate`, `terraform plan`. Chưa có file IaC nên **chưa chạy các lệnh này trong phiên**.
 
 **Đạt khi:** plan cụ thể được xem lại, biết tài nguyên/quyền/chi phí và cách quay lui. Chỉ apply sau khi có phạm vi triển khai được duyệt; kế hoạch này chưa phải bằng chứng hạ tầng đã tạo.
@@ -301,10 +305,10 @@ Dùng dữ liệu demo mới trên AWS; giữ dữ liệu/volume local. Chưa đ
 3. Tạo SNS/email subscription theo phạm vi đã duyệt; xác nhận người nhận và thử một cảnh báo có bằng chứng.
 4. Đối chiếu request thật với log/metric/alarm; ghi phần đạt/chưa đạt, tính phí giám sát và đưa toàn bộ tài nguyên mới vào quy trình teardown.
 
-Với lần test ngắn đầu tiên có thể deploy thủ công bằng Terraform và hoãn phần Actions/OIDC. Các yêu cầu đồng bộ lab, giữ auth và giới hạn tải bên dưới vẫn áp dụng.
+Với lần test ngắn đầu tiên có thể deploy thủ công bằng Terraform và hoãn phần Actions/OIDC. Các yêu cầu đồng bộ môi trường thử nghiệm, giữ auth và giới hạn tải bên dưới vẫn áp dụng.
 
 - Actions dùng OIDC, trust policy giới hạn đúng repo/branch hoặc environment; tách bước kiểm tra/plan và apply. Không mặc định cứ push `phuc` là tự deploy, không lưu AWS access key dài hạn trong GitHub. [GitHub OIDC in AWS](https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws).
-- Đồng bộ lab 3.0 → 4.1, cookie và fixture tài khoản theo contract. Giữ guard; hỗ trợ bảng test AWS và host public đúng môi trường. Không chạy script local ghi dữ liệu thẳng vào DB demo.
+- Đồng bộ môi trường thử nghiệm 3.0 → 4.1, cookie và fixture tài khoản theo contract. Giữ guard; hỗ trợ bảng test AWS và host public đúng môi trường. Không chạy script local ghi dữ liệu thẳng vào DB demo.
 - Chạy 1–2 User trước. Chỉ sau khi đạt mới chốt các bài 100/200, 100/10, 100/1; ghi rõ số User, số chỗ, request, thời lượng và hành vi mong đợi.
 - Ví dụ giới hạn cho lượt đầu sau smoke: tối đa **5 phút hoặc 5.000 request đo**, dừng khi đạt một trong hai; dừng sớm nếu 5xx/throttle/lỗi DB bất thường. Trần 5.000 khớp giới hạn hiện tại trong `tests/load/config.py`; request chuẩn bị/kiểm tra bổ trợ và DB audit cần theo dõi riêng vì không nằm trong số request đo này. Đây là mức đề xuất cần chốt trước chạy, không phải kết quả đã đạt.
 - Đo Lambda duration/concurrency/errors/throttles, API latency/5xx, DynamoDB consumed capacity/throttling và tính đúng số vé/chỗ. Chuẩn bị phiên trước khoảng đo; không bỏ rate limit, auth hoặc CSRF.
@@ -314,20 +318,20 @@ Với lần test ngắn đầu tiên có thể deploy thủ công bằng Terrafo
 
 ### Giai đoạn 5 — quay lui, giữ dữ liệu và kết thúc demo
 
-**Mục tiêu của lab ngắn:** tạo → kiểm tra chức năng/tải có giới hạn → tải bằng chứng về máy → thu hồi tài nguyên lab → kiểm tra lại. Đóng Console, tắt Vite hoặc dừng runner không tự xóa tài nguyên AWS.
+**Mục tiêu của đợt triển khai thử:** tạo → kiểm tra chức năng/tải có giới hạn → tải bằng chứng về máy → thu hồi tài nguyên môi trường thử nghiệm → kiểm tra lại. Đóng Console, tắt Vite hoặc dừng runner không tự xóa tài nguyên AWS.
 
 **Chuẩn bị trước apply:**
 
-- Tất cả tài nguyên lab được tạo có chủ đích và quản lý bằng Terraform. Nhiệm vụ 1 gồm log Lambda tối thiểu/bucket artifact nếu có; nhiệm vụ 2 thêm log API, dashboard/alarm/SNS khi được chọn. Không để tài nguyên phát sinh ngoài danh sách quản lý rồi quên dọn.
-- Dùng **CloudFront pay-as-you-go**, không đăng ký flat-rate cho lab cần xóa ngay cuối buổi. AWS yêu cầu disable distribution và chờ cập nhật trước khi delete; distribution thuộc flat-rate phải hủy gói rồi chờ hết chu kỳ thanh toán mới xóa được. [AWS delete distribution](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowToDeleteDistribution.html).
+- Tất cả tài nguyên môi trường thử nghiệm được tạo có chủ đích và quản lý bằng Terraform. Nhiệm vụ 1 gồm log Lambda tối thiểu/bucket artifact nếu có; nhiệm vụ 2 thêm log API, dashboard/alarm/SNS khi được chọn. Không để tài nguyên phát sinh ngoài danh sách quản lý rồi quên dọn.
+- Dùng **CloudFront pay-as-you-go**, không đăng ký flat-rate cho môi trường thử nghiệm cần xóa ngay cuối buổi. AWS yêu cầu disable distribution và chờ cập nhật trước khi delete; distribution thuộc flat-rate phải hủy gói rồi chờ hết chu kỳ thanh toán mới xóa được. [AWS delete distribution](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowToDeleteDistribution.html).
 - Chỉ đưa dữ liệu test có thể tạo lại lên bảng AWS. Không migrate tài khoản/phiên hoặc DB local. Giữ artifact/fixture và report cần thiết trên máy để lần sau tái tạo, không giữ tài nguyên cloud chỉ để lưu bằng chứng.
-- Bản lab không mua tên miền, đăng ký gói trả phí theo tháng/cam kết dài hạn, bật PITR/on-demand backup/AWS Backup hay tạo replica. PITR có phí riêng; nếu đã bật backup thì phải kiểm tra loại backup, việc giữ lại và phí thực tế khi thu hồi, không tự coi xóa bảng là đã xóa mọi backup. [AWS DynamoDB PITR](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html).
-- Nếu lab bật S3 versioning, chuẩn bị dọn cả object version/delete marker và multipart upload dở. Không dùng cách xóa object hiện tại rồi coi bucket đã rỗng; không áp cấu hình cho phép xóa hết vào bucket có dữ liệu ngoài lab. [AWS empty bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/empty-bucket.html).
+- Bản môi trường thử nghiệm không mua tên miền, đăng ký gói trả phí theo tháng/cam kết dài hạn, bật PITR/on-demand backup/AWS Backup hay tạo replica. PITR có phí riêng; nếu đã bật backup thì phải kiểm tra loại backup, việc giữ lại và phí thực tế khi thu hồi, không tự coi xóa bảng là đã xóa mọi backup. [AWS DynamoDB PITR](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html).
+- Nếu môi trường thử nghiệm bật S3 versioning, chuẩn bị dọn cả object version/delete marker và multipart upload dở. Không dùng cách xóa object hiện tại rồi coi bucket đã rỗng; không áp cấu hình cho phép xóa hết vào bucket có dữ liệu ngoài môi trường thử nghiệm. [AWS empty bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/empty-bucket.html).
 
 **Cuối buổi — thứ tự thực hiện:**
 
 1. Ngừng k6/runner và job deploy đang chạy; không để pipeline tạo lại tài nguyên trong lúc dọn. Chờ các request đang xử lý được đối chiếu phù hợp rồi tải report/metric/log cần giữ về máy, không xuất secret.
-2. Xác minh account, region, state và mã lab; chạy `terraform plan -destroy` để xem đúng danh sách sẽ gỡ. Xác nhận dữ liệu test trên AWS thuộc phạm vi được phép xóa; giữ nguyên bảng/volume local và tài nguyên cũ ngoài lab.
+2. Xác minh account, region, state và mã lượt triển khai; chạy `terraform plan -destroy` để xem đúng danh sách sẽ gỡ. Xác nhận dữ liệu test trên AWS thuộc phạm vi được phép xóa; giữ nguyên bảng/volume local và tài nguyên cũ ngoài môi trường thử nghiệm.
 3. Thực hiện `terraform destroy` trong đúng thư mục cấu hình sau khi có phạm vi thu hồi được duyệt. Lệnh xóa các tài nguyên Terraform quản lý, không phải mọi tài nguyên trong account. Chưa có IaC nên đây là lệnh dự kiến, **không phải runbook chạy được ngay trong repository hiện tại**. [HashiCorp terraform destroy](https://developer.hashicorp.com/terraform/cli/commands/destroy).
 4. Chờ hoàn tất, kể cả bước disable/delete CloudFront. Nếu lỗi giữa chừng, giữ state để xử lý và chạy tiếp; không xóa state hoặc `state rm` để che lỗi, không coi đã dọn xong chỉ vì website không truy cập được.
 5. Đối chiếu Console/API theo manifest tài nguyên và region, gồm CloudFront/IAM ở phạm vi global. State rỗng là một bằng chứng nhưng cần kiểm tra tài nguyên ngoài state nếu từng tạo thủ công.
@@ -335,25 +339,25 @@ Với lần test ngắn đầu tiên có thể deploy thủ công bằng Terrafo
 
 | Nhóm cần kiểm tra sau destroy | Điều kiện kết thúc |
 | --- | --- |
-| CloudFront, edge function/OAC riêng của lab | Distribution đã xóa, không chỉ Disabled; tài nguyên phụ riêng của lab cũng được dọn |
-| S3 frontend/artifact và bucket state nếu từng tạo | Không còn bucket/dữ liệu lab, gồm versions/delete markers/multipart upload; state cần thiết đã lưu an toàn trước khi dọn backend |
-| HTTP API, Lambda/version/alias riêng của lab | Không còn API/function hoặc job liên quan chạy lại |
-| DynamoDB demo/test | Không còn bảng lab; đã kiểm tra backup/export/replica nếu từng phát sinh |
-| CloudWatch | Xóa log group và alarm/dashboard riêng của lab. Không cần chờ retention hết hạn; xóa log group xóa các log bên trong. [AWS DeleteLogGroup](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteLogGroup.html) |
-| SNS, IAM/OIDC chỉ tạo cho lab | Xóa topic/subscription và role/policy/provider riêng không dùng chung; không xóa quyền đăng nhập làm việc hoặc tài nguyên của việc khác |
+| CloudFront, edge function/OAC riêng của môi trường thử nghiệm | Distribution đã xóa, không chỉ Disabled; tài nguyên phụ riêng của môi trường thử nghiệm cũng được dọn |
+| S3 frontend/artifact và bucket state nếu từng tạo | Không còn bucket/dữ liệu môi trường thử nghiệm, gồm versions/delete markers/multipart upload; state cần thiết đã lưu an toàn trước khi dọn backend |
+| HTTP API, Lambda/version/alias riêng của môi trường thử nghiệm | Không còn API/function hoặc job liên quan chạy lại |
+| DynamoDB demo/test | Không còn bảng môi trường thử nghiệm; đã kiểm tra backup/export/replica nếu từng phát sinh |
+| CloudWatch | Xóa log group và alarm/dashboard riêng của môi trường thử nghiệm. Không cần chờ retention hết hạn; xóa log group xóa các log bên trong. [AWS DeleteLogGroup](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteLogGroup.html) |
+| SNS, IAM/OIDC chỉ tạo cho môi trường thử nghiệm | Xóa topic/subscription và role/policy/provider riêng không dùng chung; không xóa quyền đăng nhập làm việc hoặc tài nguyên của việc khác |
 | Billing | Ghi nhận chi phí sử dụng trước lúc xóa, kiểm tra phí phát sinh sau đó theo service/region khi dữ liệu đầy đủ; không chỉ nhìn số tiền tức thời |
 
-**Đạt khi:** có đầu ra destroy và kiểm kê xác nhận không còn tài nguyên lab có thể tiếp tục tính phí; việc đối chiếu billing vẫn theo dõi đến khi dữ liệu cập nhật. Bản thân phí request/test đã dùng không được hoàn tác khi xóa. Giữ code, Terraform state cuối và bằng chứng trên máy, chưa cần triển khai lại cho tới buổi test sau.
+**Đạt khi:** có đầu ra destroy và kiểm kê xác nhận không còn tài nguyên môi trường thử nghiệm có thể tiếp tục tính phí; việc đối chiếu billing vẫn theo dõi đến khi dữ liệu cập nhật. Bản thân phí request/test đã dùng không được hoàn tác khi xóa. Giữ code, Terraform state cuối và bằng chứng trên máy, chưa cần triển khai lại cho tới buổi test sau.
 
-Với môi trường lâu dài có dữ liệu thật, vẫn giữ artifact frontend/Lambda đã đạt để rollback và backup/restore được xác minh trước thay đổi dữ liệu; không áp chính sách thu hồi toàn bộ lab vào môi trường đó.
+Với môi trường lâu dài có dữ liệu thật, vẫn giữ artifact frontend/Lambda đã đạt để rollback và backup/restore được xác minh trước thay đổi dữ liệu; không áp chính sách thu hồi toàn bộ môi trường thử nghiệm vào môi trường đó.
 
 ## 7. Điểm tiếp tục của phiên
 
-**Việc tiếp theo nên làm:** giai đoạn 0, tiếp tục từ thông tin đã được cung cấp **Free plan, 100 USD credit**; kiểm tra ngày hết hạn, chi phí sẵn có, region/quota và quyền tạo các tài nguyên trong kế hoạch. Chỉ cần thông tin tổng hợp, không gửi account ID, email, password hoặc access key vào chat. Không hỏi lại loại gói/số dư đã được xác nhận nếu chưa có dấu hiệu thay đổi.
+**Việc tiếp theo:** công cụ/build, IAM/STS và lưu budget 10 USD đã đạt; không yêu cầu làm lại các bước này khi chưa có lỗi mới. Tiếp tục quyền triển khai/quota, kiểm kê tài nguyên task, xử lý dependency audit và tách cấu hình local/AWS; sau đó Terraform/build/deploy/smoke/thu hồi theo nhiệm vụ 1. Quyền đăng nhập chưa đủ để apply; chưa xác minh quyền tạo tài nguyên. Giữ state local trên máy người dùng, không đụng tài nguyên ngoài dự án. Kết thúc sử dụng AWS sau 12/2026 theo người dùng; không tự đóng tài khoản. Không lưu account ID/email/password/access key.
 
-Kế hoạch hiện tại đã được chốt tại Checkpoint **30/10/2026**: triển khai ứng dụng trước, giám sát CloudWatch/SNS sau; giữ log Lambda cơ bản ở nhiệm vụ 1, deploy từ máy trước, CloudFront pay-as-you-go, state local cho lab một người/một máy, chỉ dùng dữ liệu AWS có thể tạo lại và thu hồi lab sau vài giờ. GitHub Actions/OIDC là hướng tự động hóa sau bản đầu. Không cần xin duyệt lại phạm vi đã chốt.
+Kế hoạch hiện tại đã được chốt tại Checkpoint **30/10/2026**: triển khai ứng dụng trước, giám sát CloudWatch/SNS sau; giữ log Lambda cơ bản ở nhiệm vụ 1, deploy từ máy trước, CloudFront pay-as-you-go, state local cho môi trường thử nghiệm một người/một máy, chỉ dùng dữ liệu AWS có thể tạo lại và thu hồi môi trường thử nghiệm sau vài giờ. GitHub Actions/OIDC là hướng tự động hóa sau bản đầu. Không cần xin duyệt lại phạm vi đã chốt.
 
-Các thông số ban đầu trong plan như region `us-east-1`, throttle/concurrency, TTL/retention và ngưỡng tải vẫn phải đối chiếu account/quota/cách dùng thực tế trước thao tác tương ứng; credit và dự toán chưa phải thông tin billing đã xác minh. Chưa sửa ứng dụng, chưa viết Terraform/workflow, chưa deploy/destroy hoặc chạy kiểm thử AWS. Điểm bắt đầu thực hiện vẫn là kiểm tra tài khoản/quyền/region/ngân sách, rồi chuẩn bị cấu hình và IaC theo nhiệm vụ 1.
+Các thông số như region `us-east-1`, throttle/concurrency, TTL/retention và ngưỡng tải vẫn cần đối chiếu quota/cách dùng thực tế trên tài khoản mới. Các số tiền workload là dự toán, chưa đo chi phí triển khai. API/STS trước đây chỉ xác minh tài khoản người bạn; chưa chứng minh danh tính/quyền tài khoản mới. Chưa sửa ứng dụng, chưa viết Terraform/workflow, chưa deploy/destroy hoặc smoke test AWS.
 
 Bàn giao đang theo dõi: [2026-10-30-0956.md](../phuc-worklog/handoffs/2026-10-30-0956.md). Khi nhận **Checkpoint**, tổng hợp công việc thực hiện và nguồn thực sự đã dùng vào mục ngày/tuần tương ứng trong WORKLOG, cập nhật PROJECT_CONTEXT nếu bối cảnh thay đổi. Kế hoạch này không thay nhật ký và không phải xác nhận đã deploy.
 
@@ -365,4 +369,4 @@ Người dùng làm rõ hai người ngồi cùng bàn, trao đổi và cùng th
 - Cả hai cùng sửa/kiểm tra code rồi thực hiện tuần tự: build → Terraform plan/apply → test → lưu kết quả → destroy/kiểm kê. Ai thao tác bàn phím không làm thay đổi môi trường/state đang quản lý.
 - Không cần thêm S3 remote state, điều phối concurrency, OIDC hoặc GitHub Actions chỉ để xử lý việc có hai người cùng ngồi làm. GitHub Actions vẫn là lựa chọn tự động hóa về sau, không phải điều kiện của nhiệm vụ 1.
 - Xóa phần đề xuất điều phối hai máy vì không đúng cách làm thực tế vừa được làm rõ; chưa có bucket backend/workflow/quyền nào được tạo theo đề xuất đó.
-- Giữ hai nhiệm vụ: triển khai ứng dụng trước, CloudWatch/giám sát đầy đủ sau; tài khoản Free plan/100 USD credit theo xác nhận đã có, chưa biết hạn credit/quota.
+- Giữ hai nhiệm vụ: triển khai ứng dụng trước, CloudWatch/giám sát đầy đủ sau. Tài khoản đã đổi sang **tài khoản cá nhân Paid, có budget, ảnh ghi 60 USD kiếm thêm**; cần chuyển/xác minh login. Giữ một đầu mối deploy/state local trên máy người dùng.
