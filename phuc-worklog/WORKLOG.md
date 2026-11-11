@@ -190,36 +190,38 @@ Các nguồn sau được đọc trong phiên **30/10/2026** để nghiên cứu
 
 ## 04/11/2026 — Tuần 6 (02–08/11)
 
+Dự án được bổ sung hạ tầng AWS quản lý bằng Terraform và hoàn thành một vòng triển khai thử, sau đó thu hồi toàn bộ tài nguyên đã triển khai trong lần thử.
+
 ### Công việc chính
 
 | Hạng mục | Trước thực hiện | Kết quả |
 | --- | --- | --- |
-| Đối chiếu tiến độ AWS | Cần xác định setup đã hoàn tất đến đâu trước khi làm tiếp | Xác nhận công cụ/build, IAM/CLI và budget đã đạt theo bằng chứng 30/10; quyền deploy/quota, local-AWS, dependency và Terraform vẫn còn. Không coi phiên tạm thời hoặc số dư credit cũ là đã đọc lại hôm nay. |
-| Bảo toàn tài liệu local | Có 4 file sửa và 1 file setup mới chưa commit | Commit đúng 5 tài liệu tại ed897ea, giữ toàn bộ nội dung trước tích hợp. Không đưa artifact/credential vào Git. |
-| Tích hợp cập nhật từ main | main trên GitHub có cập nhật frontend từ bên đồng hành | Fetch và merge origin/main 7d7f627 vào phuc tại 091f41c, không conflict; giữ phần frontend mới và tài liệu local. Không thay code backend hoặc dependency. |
-| Công bố kết quả | Thay đổi local chưa có trên GitHub | Cập nhật handoff kiểm tra tại 4896dfc, push phuc thành công, đối chiếu remote khớp HEAD; working tree sạch ngay sau push. |
-| Kết phiên và bàn giao | Cần chuyển ngữ cảnh sang cửa sổ chat mới | Cập nhật bối cảnh Tuần 6, giữ lịch sử ngày trước, tạo handoff mới với tài khoản/máy triển khai, kiểm tra, giới hạn và bước tiếp tục nhiệm vụ 1. Các tài liệu Kết phiên viết sau push còn local, chưa commit/push. |
+| Danh tính triển khai AWS | Cần tài khoản làm việc riêng cho hoạt động triển khai | Tạo tài khoản IAM chuyên dụng phục vụ triển khai hạ tầng AWS. |
+| Hạ tầng bằng Terraform | Dự án mới có kế hoạch AWS và môi trường chạy local | Bổ sung cấu hình Terraform cho S3 lưu frontend, CloudFront/OAC phân phối website, HTTP API Gateway kết nối Lambda, DynamoDB lưu dữ liệu, IAM role/policy và log Lambda. |
+| Ứng dụng chạy trên AWS | Backend và công cụ tạo Admin phục vụ môi trường local | Bổ sung lựa chọn môi trường local/AWS, sử dụng cơ chế credential của SDK khi chạy AWS; điều chỉnh Origin/CORS và công cụ tạo Admin cho môi trường triển khai. |
+| Tích hợp giao diện | Các cập nhật giao diện chưa được đồng bộ vào nhánh làm việc | Tích hợp tùy chỉnh màu sắc, bo góc, điều hướng danh mục và lưu tùy chọn giao diện; kiểm tra frontend build/lint sau tích hợp. |
+| Triển khai thử và thu hồi | Chưa thực hiện vòng triển khai ứng dụng lên AWS | Triển khai thử ngày 04/11, sau đó dùng Terraform thu hồi toàn bộ tài nguyên đã triển khai trong lần thử cùng ngày. Bổ sung script kiểm kê tài nguyên sau thu hồi. |
 
-### Kiểm tra và giới hạn bằng chứng
+### Kiểm tra và kết quả
 
-- Frontend sau merge trùng origin/main đã fetch; commit tài liệu local và main đều là ancestor của phuc. Không force-push hoặc bỏ nội dung hai bên.
-- `npm.cmd run build` đạt; `npm.cmd run lint` exit 0, còn hai cảnh báo Fast Refresh tại badge/button. Không kiểm thử tương tác UI mới bằng trình duyệt trong lượt này.
-- Đã kiểm tra 79 liên kết nội bộ trong 5 tài liệu và whitespace trước push; GitHub phuc khớp commit 4896dfc, main vẫn 7d7f627 tại lần đối chiếu trực tiếp. Tình trạng sau khi viết handoff mới là thay đổi local có chủ đích, không còn là working tree sạch.
-- Kiểm tra Kết phiên đạt **96 liên kết nội bộ/6 file**, code fence/whitespace hợp lệ, không có Account ID hoặc URL authorize trong tài liệu. Hash xác nhận toàn bộ nội dung WORKLOG trước mục 04/11 và AI_RULE giữ nguyên; số handoff tăng đúng từ 1 lên 2, HEAD vẫn 4896dfc.
-- Không chạy lại backend/SAM, HTTP/browser/unit/integration/load vì lần tích hợp này chỉ đổi frontend/tài liệu; các kết quả chức năng 23/10 và setup 30/10 giữ đúng mốc lịch sử.
-- Chưa đọc lại AWS credential/billing/credit, quota hoặc tài nguyên đang chạy. Chưa deploy/smoke/destroy AWS, chưa viết Terraform hoặc xử lý 4 mục audit. Không bật/tắt process hoặc ghi/xóa dữ liệu local trong lượt tích hợp/Kết phiên.
+- Frontend build thành công; lint exit 0, còn hai cảnh báo Fast Refresh tại badge/button.
+- Đã triển khai thử và thu hồi toàn bộ tài nguyên của lượt thử ngày **04/11/2026**. Kết quả thu hồi được xác nhận bổ sung ngày **11/11/2026**.
+- Chưa có kết quả kiểm thử tải lớn hoặc số đo scaling AWS trong báo cáo tuần này. Giám sát đầy đủ bằng dashboard/alarm/SNS vẫn thuộc giai đoạn tiếp theo.
 
 ### Tài liệu tham khảo
 
-Các nguồn Git sau được đọc đối chiếu tại **Kết phiên 04/11** để kiểm tra và mô tả quy trình đã dùng; không coi chúng là bằng chứng chạy lệnh hoặc nguồn đã đọc ở ngày trước.
+Các nguồn dưới đây là tài liệu chính thức do **AWS** và **HashiCorp** phát hành, được đọc và đối chiếu ngày **11/11/2026** để bổ sung cơ sở kỹ thuật cho công việc ngày 04/11.
 
-- [Git — fetch](https://git-scm.com/docs/git-fetch): đối chiếu việc tải commit/ref và cập nhật remote-tracking refs trước tích hợp.
-- [Git — merge](https://git-scm.com/docs/git-merge): đối chiếu hợp nhất lịch sử, merge commit và kiểm tra bảo toàn thay đổi local trước merge.
-- [Git — push](https://git-scm.com/docs/git-push): đối chiếu công bố nhánh phuc, kiểm tra remote và không thay lịch sử bằng force-push.
+- [AWS — Create an IAM user in your AWS account](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html): hướng dẫn tạo IAM user, lựa chọn phương thức truy cập và gán quyền; đối chiếu việc tạo danh tính chuyên dụng cho triển khai.
+- [HashiCorp — Create infrastructure](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-create): hướng dẫn khai báo provider/resource, khởi tạo, kiểm tra cấu hình và áp dụng thay đổi; đối chiếu cách tổ chức Terraform và quy trình tạo hạ tầng AWS của dự án.
+- [AWS — Restrict access to an Amazon S3 origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html): hướng dẫn CloudFront OAC và bucket policy; đối chiếu cấu hình phân phối frontend từ S3 riêng tư.
+- [AWS — Create AWS Lambda proxy integrations for HTTP APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html): hướng dẫn kết nối HTTP API với Lambda và payload v2; đối chiếu cấu hình API Gateway của dự án.
+- [AWS — Lambda execution role](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html): hướng dẫn IAM role để Lambda truy cập dịch vụ AWS và ghi log; đối chiếu quyền DynamoDB/CloudWatch Logs trong cấu hình hạ tầng.
+- [HashiCorp — terraform destroy](https://developer.hashicorp.com/terraform/cli/commands/destroy): hướng dẫn thu hồi các tài nguyên do cấu hình Terraform quản lý; đối chiếu bước dọn môi trường sau triển khai thử.
 
 ### Minh chứng thực hiện
 
-- [Commit tài liệu local ed897ea](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/ed897ea): kế hoạch, setup, nhật ký/bối cảnh và handoff.
-- [Merge 091f41c](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/091f41c) và [bản đã push 4896dfc](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/4896dfc): tích hợp main và ghi kiểm tra; không phải triển khai AWS.
-- [Thiết kế frontend hiện hành](../frontend/DESIGN.md) và [appearance preferences](../frontend/src/lib/appearance-preferences.ts): mã cập nhật từ main làm cơ sở xác định phạm vi frontend, không tính thành phần tự triển khai trong đợt AWS.
-- [Handoff Kết phiên mới](handoffs/2026-11-04-0933.md), [PROJECT_CONTEXT](PROJECT_CONTEXT.md), [kế hoạch AWS](../docs/aws-deployment-plan.md) và [setup](../docs/aws-environment-setup.md): ngữ cảnh và bước tiếp tục; các thay đổi ghi chép Kết phiên hiện chỉ có local.
+- [Commit hạ tầng d4611f1](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/d4611f127e64757ae7a5160136a09c0790139e86), ngày **04/11/2026**: mã Terraform, thay đổi backend hỗ trợ AWS và công cụ kiểm kê sau thu hồi.
+- [Cấu hình hạ tầng](../infra/providers.tf), [cấu hình local/AWS](../backend/lambda/configuration.py), [công cụ tạo Admin](../backend/tools/create_admin.py) và [script kiểm kê](../infra/verify_cleanup.ps1): các phần mã nguồn được bổ sung trong đợt triển khai.
+- [Thiết kế giao diện](../frontend/DESIGN.md) và [lưu tùy chọn giao diện](../frontend/src/lib/appearance-preferences.ts): phần frontend được tích hợp và kiểm tra build/lint.
+- Xác nhận ngày **11/11/2026** về kết quả ngày **04/11/2026**: đã tạo IAM chuyên dụng, triển khai thử lên AWS và dùng Terraform thu hồi toàn bộ tài nguyên đã triển khai trong lần thử.
