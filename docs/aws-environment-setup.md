@@ -2,6 +2,8 @@
 
 Ngày kiểm tra: **30/10/2026 — Tuần 5**. **Đã hoàn tất cài công cụ, kiểm tra build local, chuyển CLI sang tài khoản cá nhân và cấu hình budget theo xác nhận người dùng.** Chưa cấp/xác minh quyền triển khai, chưa viết Terraform hoặc triển khai ứng dụng AWS. Xem các bước tiếp theo của [nhiệm vụ 1](aws-deployment-plan.md).
 
+Kết phiên **04/11/2026 — Tuần 6**: code main mới đã được tích hợp/push trong phuc **4896dfc**; frontend build/lint đạt trên workspace sau merge, dependency/backend không đổi. Không cài/build lại toàn bộ môi trường hoặc gọi AWS để ghi chép; trạng thái credit/phiên CLI vẫn là bằng chứng setup ngày 30/10. Các đoạn dưới có lịch sử tài khoản đã bỏ; lấy tài khoản cá nhân và kết quả cuối trong PROJECT_CONTEXT/handoff mới làm chuẩn tiếp tục.
+
 **Máy triển khai:** máy Windows của người dùng; công cụ/build đã được kiểm tra qua đầu ra người dùng gửi. Workspace Codex hiện tại thuộc máy người bạn, có lượt cài/kiểm tra riêng được ghi rõ ở dưới. Codex chưa trực tiếp điều khiển máy triển khai; không tự chạy AWS login/apply từ workspace máy người bạn.
 
 ## 1. Công cụ trên máy

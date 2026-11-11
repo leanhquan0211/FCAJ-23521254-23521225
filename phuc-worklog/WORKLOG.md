@@ -187,3 +187,39 @@ Các nguồn sau được đọc trong phiên **30/10/2026** để nghiên cứu
 - [Handoff đang theo dõi](handoffs/2026-10-30-0956.md): mục tiêu, quyết định và điểm tiếp tục của phiên; được tạo theo yêu cầu riêng đầu phiên và cập nhật tại Checkpoint.
 - [Hướng dẫn setup và kết quả xác minh](../docs/aws-environment-setup.md): phân biệt máy/tài khoản, phiên bản, nhóm lệnh build/CLI, budget và điểm còn lại; không chứa credential hoặc Account ID.
 - [Cấu hình DB](../backend/lambda/configuration.py), [handler](../backend/lambda/app.py), [SAM local](../backend/template.yaml), [profile lab](../tests/load/contract-v3-draft.json) và [guard lab](../tests/load/config.py): minh chứng cho hiện trạng local và phần cần chuẩn bị; chưa thay đổi các file này trong phiên.
+
+## 04/11/2026 — Tuần 6 (02–08/11)
+
+### Công việc chính
+
+| Hạng mục | Trước thực hiện | Kết quả |
+| --- | --- | --- |
+| Đối chiếu tiến độ AWS | Cần xác định setup đã hoàn tất đến đâu trước khi làm tiếp | Xác nhận công cụ/build, IAM/CLI và budget đã đạt theo bằng chứng 30/10; quyền deploy/quota, local-AWS, dependency và Terraform vẫn còn. Không coi phiên tạm thời hoặc số dư credit cũ là đã đọc lại hôm nay. |
+| Bảo toàn tài liệu local | Có 4 file sửa và 1 file setup mới chưa commit | Commit đúng 5 tài liệu tại ed897ea, giữ toàn bộ nội dung trước tích hợp. Không đưa artifact/credential vào Git. |
+| Tích hợp cập nhật từ main | main trên GitHub có cập nhật frontend từ bên đồng hành | Fetch và merge origin/main 7d7f627 vào phuc tại 091f41c, không conflict; giữ phần frontend mới và tài liệu local. Không thay code backend hoặc dependency. |
+| Công bố kết quả | Thay đổi local chưa có trên GitHub | Cập nhật handoff kiểm tra tại 4896dfc, push phuc thành công, đối chiếu remote khớp HEAD; working tree sạch ngay sau push. |
+| Kết phiên và bàn giao | Cần chuyển ngữ cảnh sang cửa sổ chat mới | Cập nhật bối cảnh Tuần 6, giữ lịch sử ngày trước, tạo handoff mới với tài khoản/máy triển khai, kiểm tra, giới hạn và bước tiếp tục nhiệm vụ 1. Các tài liệu Kết phiên viết sau push còn local, chưa commit/push. |
+
+### Kiểm tra và giới hạn bằng chứng
+
+- Frontend sau merge trùng origin/main đã fetch; commit tài liệu local và main đều là ancestor của phuc. Không force-push hoặc bỏ nội dung hai bên.
+- `npm.cmd run build` đạt; `npm.cmd run lint` exit 0, còn hai cảnh báo Fast Refresh tại badge/button. Không kiểm thử tương tác UI mới bằng trình duyệt trong lượt này.
+- Đã kiểm tra 79 liên kết nội bộ trong 5 tài liệu và whitespace trước push; GitHub phuc khớp commit 4896dfc, main vẫn 7d7f627 tại lần đối chiếu trực tiếp. Tình trạng sau khi viết handoff mới là thay đổi local có chủ đích, không còn là working tree sạch.
+- Kiểm tra Kết phiên đạt **96 liên kết nội bộ/6 file**, code fence/whitespace hợp lệ, không có Account ID hoặc URL authorize trong tài liệu. Hash xác nhận toàn bộ nội dung WORKLOG trước mục 04/11 và AI_RULE giữ nguyên; số handoff tăng đúng từ 1 lên 2, HEAD vẫn 4896dfc.
+- Không chạy lại backend/SAM, HTTP/browser/unit/integration/load vì lần tích hợp này chỉ đổi frontend/tài liệu; các kết quả chức năng 23/10 và setup 30/10 giữ đúng mốc lịch sử.
+- Chưa đọc lại AWS credential/billing/credit, quota hoặc tài nguyên đang chạy. Chưa deploy/smoke/destroy AWS, chưa viết Terraform hoặc xử lý 4 mục audit. Không bật/tắt process hoặc ghi/xóa dữ liệu local trong lượt tích hợp/Kết phiên.
+
+### Tài liệu tham khảo
+
+Các nguồn Git sau được đọc đối chiếu tại **Kết phiên 04/11** để kiểm tra và mô tả quy trình đã dùng; không coi chúng là bằng chứng chạy lệnh hoặc nguồn đã đọc ở ngày trước.
+
+- [Git — fetch](https://git-scm.com/docs/git-fetch): đối chiếu việc tải commit/ref và cập nhật remote-tracking refs trước tích hợp.
+- [Git — merge](https://git-scm.com/docs/git-merge): đối chiếu hợp nhất lịch sử, merge commit và kiểm tra bảo toàn thay đổi local trước merge.
+- [Git — push](https://git-scm.com/docs/git-push): đối chiếu công bố nhánh phuc, kiểm tra remote và không thay lịch sử bằng force-push.
+
+### Minh chứng thực hiện
+
+- [Commit tài liệu local ed897ea](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/ed897ea): kế hoạch, setup, nhật ký/bối cảnh và handoff.
+- [Merge 091f41c](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/091f41c) và [bản đã push 4896dfc](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/4896dfc): tích hợp main và ghi kiểm tra; không phải triển khai AWS.
+- [Thiết kế frontend hiện hành](../frontend/DESIGN.md) và [appearance preferences](../frontend/src/lib/appearance-preferences.ts): mã cập nhật từ main làm cơ sở xác định phạm vi frontend, không tính thành phần tự triển khai trong đợt AWS.
+- [Handoff Kết phiên mới](handoffs/2026-11-04-0933.md), [PROJECT_CONTEXT](PROJECT_CONTEXT.md), [kế hoạch AWS](../docs/aws-deployment-plan.md) và [setup](../docs/aws-environment-setup.md): ngữ cảnh và bước tiếp tục; các thay đổi ghi chép Kết phiên hiện chỉ có local.

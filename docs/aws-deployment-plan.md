@@ -2,6 +2,8 @@
 
 Ngày lập: **30/10/2026 — Tuần 5 (26/10–01/11)**. Trạng thái: **công cụ/build local, CLI tài khoản cá nhân và budget đã đạt; còn quyền triển khai/cấu hình local-AWS/IaC, chưa triển khai ứng dụng AWS**.
 
+Cập nhật Kết phiên **04/11/2026 — Tuần 6 (02–08/11)**: đã tích hợp frontend mới từ main và push phuc tại **4896dfc**, build/lint frontend đạt. Thông tin credit/budget dưới đây được cung cấp khi setup ngày 30/10, chưa đọc lại số dư hoặc phiên đăng nhập ngày 04/11. Quyền deploy/quota, cấu hình runtime AWS và Terraform vẫn chưa thực hiện; tiếp tục từ PROJECT_CONTEXT và handoff mới.
+
 **Quy ước tên cập nhật:** người dùng xác định đây là dự án **`fcaj-project`**. Dùng tiền tố `fcaj-project` cho tên tài nguyên mới; profile đăng nhập `fcaj-project-login`, profile Terraform/SDK `fcaj-project`. Môi trường triển khai thử vài giờ là một giai đoạn kiểm chứng của dự án; yêu cầu tiết kiệm chi phí và thu hồi sau thử nghiệm vẫn giữ nguyên.
 
 **Tài khoản triển khai hiện tại:** tài khoản cá nhân **Paid**; theo người dùng còn **40 USD credit**, hạn **05/2027**. Người dùng xác nhận đã lưu budget **10 USD/tháng** và email; ảnh xác minh actual **30/50/80%** (= 3/5/8 USD), forecast **100%**, loại **Credit/Refund** khỏi phép tính. Chưa kiểm thử email thực tế. Dự kiến dùng AWS đến hết **12/2026** rồi thu hồi/kiểm kê dự án; không tự đóng tài khoản. IAM/STS qua cầu nối **`fcaj-project`** đã đúng tài khoản/user. Ảnh 60 USD earned không phải số dư; kết quả Paid/0 của tài khoản người bạn là lịch sử. Chi tiết trong [hướng dẫn setup](aws-environment-setup.md).
