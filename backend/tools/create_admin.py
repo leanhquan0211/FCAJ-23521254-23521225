@@ -16,8 +16,8 @@ from service import ApiError
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--endpoint-url", required=True)
-    parser.add_argument("--table-name", default="fcaj-event-workshop-local")
+    parser.add_argument("--endpoint-url", default=None, help="DynamoDB endpoint URL (omit for AWS)")
+    parser.add_argument("--table-name", default=None, help="DynamoDB table name")
     parser.add_argument("--username", required=True)
     args = parser.parse_args()
     try:

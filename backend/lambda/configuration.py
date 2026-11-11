@@ -10,7 +10,15 @@ class ConfigurationError(ValueError):
     pass
 
 
+def _is_aws_environment():
+    return os.getenv("APP_ENV", "local").lower() == "aws" or bool(os.getenv("AWS_LAMBDA_FUNCTION_NAME"))
+
+
 def _settings(endpoint, table_name):
+    if _is_aws_environment() and not endpoint:
+        table_name = table_name or os.getenv("DYNAMODB_TABLE", "fcaj-project-events")
+        return None, table_name
+
     endpoint = endpoint if endpoint is not None else os.getenv("DYNAMODB_ENDPOINT", "")
     table_name = table_name or os.getenv("DYNAMODB_TABLE", "fcaj-event-workshop-local")
     parsed = urlparse(endpoint)
@@ -34,6 +42,13 @@ def _settings(endpoint, table_name):
 
 
 def _client_options(endpoint):
+    if _is_aws_environment() and not endpoint:
+        region = os.getenv("AWS_REGION", os.getenv("DYNAMODB_REGION", "us-east-1"))
+        return dict(
+            region_name=region,
+            config=Config(connect_timeout=5, read_timeout=5, retries={"max_attempts": 2}),
+        )
+
     # Explicit fake credentials: never fall back to AWS profiles or metadata.
     return dict(
         endpoint_url=endpoint, region_name=os.getenv("DYNAMODB_REGION", "us-east-1"),
@@ -51,5 +66,7 @@ def local_table(endpoint=None, table_name=None):
 
 @lru_cache(maxsize=4)
 def local_client(endpoint=None, table_name=None):
+    if _is_aws_environment() and endpoint and endpoint.startswith("https://dynamodb"):
+        endpoint = None
     endpoint, _ = _settings(endpoint, table_name)
     return boto3.client("dynamodb", **_client_options(endpoint))
