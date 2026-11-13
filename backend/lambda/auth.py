@@ -21,8 +21,8 @@ def password_digest(password, salt):
 
 
 def password_record(password):
-    if not isinstance(password, str) or not 15 <= len(password) <= 128:
-        raise ValueError("Mật khẩu cần từ 15 đến 128 ký tự.")
+    if not isinstance(password, str) or len(password) < 1:
+        raise ValueError("Mật khẩu không được để trống.")
     salt = secrets.token_hex(16)
     return {"passwordSalt": salt, "passwordHash": password_digest(password, salt)}
 

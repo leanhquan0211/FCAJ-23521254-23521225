@@ -25,7 +25,7 @@ def main():
         # Refuse terminals which would echo the password.
         with warnings.catch_warnings():
             warnings.simplefilter("error", getpass.GetPassWarning)
-            password = getpass.getpass("Mật khẩu admin (15–128 ký tự): ")
+            password = getpass.getpass("Mật khẩu admin: ")
             confirmation = getpass.getpass("Nhập lại mật khẩu: ")
         if password != confirmation:
             raise ValueError("Hai mật khẩu không giống nhau.")
