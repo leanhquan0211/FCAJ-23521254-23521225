@@ -76,7 +76,8 @@ Nhật ký gốc ghi nhận các nguồn này được dùng và kiểm tra ngà
 | Xóa sự kiện | Chặn xóa khi có chỗ đã dùng | Cho Admin xóa cả sự kiện có người; dọn vé, ghi danh và idempotency của sự kiện, giữ tài khoản và dữ liệu sự kiện khác. |
 | Quản lý User | Chưa có trang quản lý | Thêm danh sách hiện tên/email, tìm theo tên/email, sửa thông tin và xóa User. Sửa email có kiểm tra trùng và version để tránh ghi đè; vé cũ giữ thông tin lúc đăng ký. |
 | Xóa User | Chưa hỗ trợ | Khóa truy cập trước, hủy vé và trả chỗ cho sự kiện còn hoạt động; gửi lại thao tác không trả chỗ hai lần, không ảnh hưởng người khác. |
-| Tổ chức mã nguồn và bàn giao | Ứng dụng và bộ kiểm thử ở nhiều nhánh riêng | Chuẩn hóa API contract/data model, hợp nhất các nhánh vào phuc, giữ main và xóa nhánh feature đã gộp. Bộ test lab của bên kiểm thử được giữ nguyên, chưa tự đổi adapter. |
+| Bộ kiểm thử tải local | Chưa có công cụ điều khiển và tổng hợp lượt tải riêng | Xây fixture tài khoản/sự kiện, kịch bản k6 hot/ramp/scarce, runner HTTP/CLI, metric và audit DB chỉ đọc. Thêm dashboard riêng để cấu hình, start/stop, theo dõi số đo và xem lại lịch sử. |
+| Tổ chức mã nguồn và bàn giao | Ứng dụng và bộ kiểm thử ở nhiều nhánh riêng | Chuẩn hóa API contract/data model, hợp nhất các nhánh vào phuc, giữ main và xóa nhánh feature đã gộp. Bộ kiểm thử giữ cấu hình API 3.0; còn cần đồng bộ adapter với API 4.1. |
 
 Đã sửa các lỗi tìm thấy khi kiểm tra: vé còn sót sau khi xóa sự kiện bị gián đoạn; vùng bấm icon sai khi ghép tooltip với menu; thông báo lỗi xóa bị mất sau tải lại; form sửa tài khoản giữ version cũ. Các trường hợp này đã được kiểm tra lại.
 
@@ -87,9 +88,10 @@ Nhật ký gốc ghi nhận các nguồn này được dùng và kiểm tra ngà
 | Backend với DynamoDB Local | 75/75 bài đạt, gồm 63 bài không cần DB và 12 integration. Có tranh chỗ cuối, chống trùng, replay, quyền xem vé, xóa đồng thời và tiếp tục sau gián đoạn. |
 | HTTP và trình duyệt | Luồng tài khoản, đặt/xem vé, quản lý sự kiện/User và sidebar đạt. Đã thử mất phản hồi sau khi lưu để xác nhận không tạo thêm vé; kiểm tra giao diện ở 320/375/414/768/1280px. |
 | Build và cấu hình | SAM build/validate, frontend build/lint đạt; còn hai cảnh báo Fast Refresh có sẵn. |
+| Tích hợp lab trên API 3.0 | Lượt 2 User/4 chỗ tạo 2 vé, còn 2 chỗ; lượt 2 User/1 chỗ tạo 1 vé, 1 EVENT_FULL, còn 0 chỗ. Audit Ticket/reference/idempotency và kiểm tra bổ trợ đạt. Dashboard build/lint và browser smoke đạt; harness từ 26 bài ban đầu lên 28 bài sau bổ sung. Chi tiết runId trong minh chứng kiểm thử local. |
 | Sau hợp nhất Git | 63 bài backend và 28 bài unit test lab đạt; build/lint cả web sản phẩm và dashboard đạt. 12 bài DB được bỏ qua ở lượt này vì Docker đã tắt, không phải chạy lại toàn bộ 75 bài. |
 
-Các bài ghi/xóa dùng bảng test riêng. Bài tranh chỗ đã kiểm tra ở quy mô 8 người/1 chỗ; **chưa phải kết quả 100 người hoặc bằng chứng scaling AWS**. Unit/build của test lab chỉ xác nhận phần công cụ được kiểm tra, không thay bài tích hợp với ứng dụng hiện hành.
+Các bài ghi/xóa dùng bảng test riêng. Ứng dụng đã kiểm tra tranh chỗ ở quy mô 8 người/1 chỗ; lab có hai lượt nhỏ trên API 3.0 nêu trên. **Chưa phải kết quả 100 người hoặc bằng chứng scaling AWS.** Kết quả lab được chọn lọc bổ sung ngày **13/11/2026** khi thống nhất nhật ký; adapter vẫn ghim API 3.0, chưa được xác nhận tương thích API 4.1. Unit/build không thay bài tích hợp với ứng dụng hiện hành.
 
 ### Tài liệu tham khảo
 
@@ -100,14 +102,21 @@ Các bài ghi/xóa dùng bảng test riêng. Bài tranh chỗ đã kiểm tra �
 - [OWASP — Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html): áp dụng cookie HttpOnly, kiểm tra và thu hồi phiên phía server khi thống nhất đăng nhập User/Admin. Quyết định dùng một cookie chung trong browser/profile đến từ yêu cầu dự án.
 - [OWASP — CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html): tiếp tục kiểm tra Origin và CSRF token khi đặt vé, sửa/xóa sự kiện và quản lý User.
 - [Git — git-worktree](https://git-scm.com/docs/git-worktree): tham khảo cách tạo thư mục làm việc riêng để phát triển ứng dụng song song với bộ kiểm thử. Sau đó các nhánh được hợp nhất vào phuc theo yêu cầu; giữ thư mục detached có dữ liệu local cần bảo toàn.
+- [Grafana k6 — Cookies](https://grafana.com/docs/k6/latest/using-k6/cookies/): đối chiếu cơ chế cookie jar riêng theo User ảo trong kịch bản có phiên đăng nhập.
+- [Grafana k6 — Metrics](https://grafana.com/docs/k6/latest/using-k6/metrics/): đối chiếu cách ghi nhận số request, lỗi và thời gian phản hồi; không dùng mẫu nhỏ để kết luận năng lực tối đa.
+- [Grafana k6 — Per VU iterations](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/per-vu-iterations/): đối chiếu kịch bản hữu hạn theo số User và số vòng chạy, phù hợp với tập tài khoản/sự kiện chuẩn bị trước.
 
 Nguồn transaction, idempotency, session, CSRF và worktree đã được ghi nhận trong tài liệu phối hợp của phiên 23/10; nguồn phân quyền và mật khẩu được kế thừa từ đợt 16/10. Đây là cơ sở giải pháp, không phải xác nhận từ AWS/OWASP rằng hệ thống đã vượt qua kiểm thử.
+
+Ba tài liệu chính thức Grafana k6 được đọc và đối chiếu bổ sung ngày **13/11/2026** cho phần kiểm thử ngày 23/10; không gán mốc đối chiếu này thành ngày xây dựng hoặc chạy lại công cụ.
 
 ### Minh chứng thực hiện
 
 - [Commit tài khoản và đặt vé](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/1688c9809ec27eed1a03a01cde262b6afce0f8c3): thay đổi User, lịch mở bán, quyền sở hữu vé và idempotency.
 - [Commit phiên chung và xóa ghi danh](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/a10907f0287acd7c664b3902b55968565e66042b): đăng nhập chung, điều hướng theo vai trò và xóa sự kiện kèm ghi danh.
 - [Commit quản lý User và sidebar](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/9d47cff71a8f75e9c42845700d497cf029a56b16): quản lý tài khoản, hủy vé/trả chỗ và thu gọn sidebar.
+- [Minh chứng kiểm thử local](references/test-lab-local.md): giữ runId, số đo và phiên bản API của các lượt public, blocked/stopped và hai lượt đặt vé nhỏ trên API 3.0 ngày 23/10.
+- [Commit bộ kiểm thử 9e00d5a](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/9e00d5a8757f60c6516e1bdbb2b4406bb3d05cad): fixture/k6/runner/dashboard và báo cáo kiểm thử gốc.
 - [booking.py](../backend/lambda/booking.py): quy tắc đặt vé, chống trùng, gửi lại và quyền xem vé.
 - [session.py](../backend/lambda/session.py): cookie chung, kiểm tra phiên và phân quyền.
 - [event_deletion.py](../backend/lambda/event_deletion.py): khóa và dọn dữ liệu theo sự kiện.

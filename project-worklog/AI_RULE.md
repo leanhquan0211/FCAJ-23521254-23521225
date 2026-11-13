@@ -27,6 +27,8 @@
 
 ## 4. Phân chia ba tài liệu
 
+Thư mục nhật ký chung duy nhất là **project-worklog/**, áp dụng cho toàn bộ ứng dụng, hạ tầng và kiểm thử. Ghi công việc theo ngày thực hiện trong WORKLOG.md, không tách nhật ký theo người hoặc tạo thêm luồng ghi chép song song. [README](README.md) chỉ dẫn nơi đọc/cập nhật; references/ chỉ giữ minh chứng lịch sử được dẫn từ nhật ký.
+
 | Tài liệu | Nội dung và cách cập nhật |
 | --- | --- |
 | WORKLOG.md | Công việc chính đã thực hiện, thay đổi trước–sau, kết quả kiểm tra và nguồn. Chia mục theo ngày; sửa cùng ngày thì cập nhật mục đó. Không tạo thêm file ngày/tuần hoặc kể lại hội thoại. |

@@ -150,7 +150,7 @@ python -B -m unittest discover -s tests/runner -p test_lab.py -v
 .\tests\runner\.tools\k6.exe inspect tests/load/scenarios.js
 ```
 
-Unit test dùng HTTP/DB giả lập chỉ kiểm tra harness, không là bằng chứng ứng dụng chịu tải. Các lượt k6 qua SAM và browser thật được ghi bằng runId trong `quan-worklog/week-4/23-10-test-lab.md`.
+Unit test dùng HTTP/DB giả lập chỉ kiểm tra harness, không là bằng chứng ứng dụng chịu tải. Các lượt k6 qua SAM và browser thật được ghi bằng runId trong `project-worklog/references/test-lab-local.md`.
 
 Browser check: mở Chrome/Edge headless với profile riêng dưới `tests/results/`, remote-debugging-port 9242 (hoặc env `LAB_CHROME_PORT`), rồi chạy `node tests/dashboard/check-browser.mjs`. Script bắt đầu/dừng run public qua UI, kiểm tra lựa chọn preset 100 người nhưng KHÔNG bấm chạy purchase, đọc lịch sử/reload và responsive 320/375/414/768/1280. Lỗi mạng được cố ý chặn trong browser rồi gỡ, ghi nhãn injected, không coi là Backend downtime. Script cũ kiểm tra blocked trên v2 đã được thay vì nay API v3 có thể thực sự tạo 100 tài khoản. Không dùng profile trình duyệt sản phẩm.
 

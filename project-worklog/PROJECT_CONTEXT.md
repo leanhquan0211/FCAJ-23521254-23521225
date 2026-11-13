@@ -1,6 +1,6 @@
 # Bối cảnh dự án
 
-Mốc cập nhật nội dung: **11/11/2026**, bổ sung và đối chiếu công việc thực hiện ngày **04/11/2026 — Tuần 6 (02–08/11)**. File này mô tả hệ thống hiện hành và phần còn lại; lịch sử đóng góp xem [WORKLOG.md](WORKLOG.md), quy tắc cộng tác xem [AI_RULE.md](AI_RULE.md).
+Mốc cập nhật nội dung: **13/11/2026**, thống nhất nhật ký ứng dụng, hạ tầng và kiểm thử tại **project-worklog/**; giữ các công việc ngày **04/11/2026 — Tuần 6 (02–08/11)** theo đúng ngày thực hiện. File này mô tả hệ thống hiện hành và phần còn lại; công việc theo ngày xem [WORKLOG.md](WORKLOG.md), quy tắc cộng tác xem [AI_RULE.md](AI_RULE.md), nơi đọc/cập nhật xem [README](README.md).
 
 ## 1. Mục tiêu và phạm vi
 
@@ -73,12 +73,13 @@ Khởi động và lệnh kiểm tra xem [Backend README](../backend/README.md),
 
 ## 6. Trạng thái và phần còn lại
 
-- Làm việc trên nhánh **phuc** tại `D:\aws-workshop\event-registration`. Mã ứng dụng, Terraform và tài liệu đã được tích hợp vào main/phuc tại **d703658** trước lượt sửa nhật ký ngày **11/11/2026**; quy trình Git xem [git-workflow.md](../docs/git-workflow.md).
+- Làm việc trên nhánh **phuc** tại `D:\aws-workshop\event-registration`. Mã ứng dụng, Terraform và tài liệu đã được tích hợp trên main/phuc; mốc đối chiếu khi thống nhất nhật ký ngày **13/11/2026** là **a01d9b8**. Quy trình Git xem [git-workflow.md](../docs/git-workflow.md).
 - **Ngày 04/11/2026:** đã tạo IAM chuyên dụng, bổ sung Terraform và cấu hình ứng dụng cho AWS, triển khai thử rồi dùng Terraform thu hồi toàn bộ tài nguyên đã triển khai trong lượt thử cùng ngày. Kết quả triển khai/thu hồi được xác nhận bổ sung ngày **11/11**; phạm vi kết quả là môi trường của lượt thử đó.
 - Frontend sau tích hợp ngày **04/11** build thành công, lint exit 0 với hai cảnh báo Fast Refresh tại badge/button. Chưa kiểm thử lại tương tác giao diện mới bằng trình duyệt trong lượt tích hợp này.
 - Kiểm tra local ngày **11/11**: 63 bài backend không DB đạt, 12 bài integration bỏ qua theo chế độ opt-in; Terraform fmt/validate đạt. Các kết quả này tách biệt với lượt triển khai AWS ngày 04/11.
 - Kết quả đầy đủ với DynamoDB Local, HTTP/browser/SAM ngày **23/10** giữ đúng mốc lịch sử trong [WORKLOG](WORKLOG.md). Dữ liệu/bảng/volume local được giữ; không suy tình trạng process hiện tại từ kết quả cũ.
 - Bộ kiểm thử tải còn ghim health 3.0/cookie event_user_session, trong khi ứng dụng dùng contract 4.1/event_session; runner chỉ nhận HTTP loopback, fixture/audit phụ thuộc DB Local. Cần đồng bộ adapter và hỗ trợ AWS trước bài tải; giữ guard và bảng test riêng.
+- Bộ kiểm thử đã có hai lượt đặt vé nhỏ trên API 3.0 ngày **23/10** với audit khớp; [minh chứng](references/test-lab-local.md) giữ runId và số đo. Đây là dữ liệu lịch sử, chưa phải kết quả chạy lại API 4.1. Điều kiện tích hợp hiện hành ở mục 8.
 - **Điểm tiếp tục:** hoàn thiện kiểm thử chức năng AWS và bằng chứng kết quả, rà cấu hình triển khai, sau đó triển khai giám sát và kiểm thử tải theo kế hoạch. Chưa có kết quả 100 người hoặc số đo scaling AWS; Scan trong danh sách User/dọn dữ liệu còn là giới hạn cần đánh giá.
 
 ## 7. Kế hoạch AWS và trạng thái triển khai thử
@@ -101,3 +102,23 @@ Kế hoạch được chốt ngày **30/10/2026** tại [aws-deployment-plan.md]
 **Các điểm kỹ thuật còn lại:** rà Origin/CORS đang cho phép wildcard theo mục tiêu giới hạn Origin trong kế hoạch, đóng gói dependency Lambda và cấu hình IAM cho lần triển khai tiếp theo. Npm audit ở mốc kiểm tra trước có 4 mục (1 low, 3 high) qua shadcn/registry/zod/deepmerge, chưa có bằng chứng xử lý; không tự dùng audit fix --force. Đồng bộ bộ kiểm thử tải trước khi chạy AWS và ghi số đo thực tế cho chi phí/scaling.
 
 Phạm vi kế hoạch đã chốt không cần xin duyệt lại; chỉ triển khai trong phạm vi được yêu cầu. Dự kiến kết thúc sử dụng AWS cho dự án sau **12/2026**; quản lý cả log/tài nguyên phụ và giữ dữ liệu cần thiết khi thu hồi, không tự đóng tài khoản hoặc xóa tài nguyên ngoài dự án. Chi phí đã sử dụng vẫn được tính, billing có độ trễ.
+
+## 8. Kiểm thử và điều kiện tích hợp
+
+Tổng hợp ngày **13/11/2026** từ bối cảnh kiểm thử trước đây và đối chiếu mã hiện tại. API/schema chuẩn vẫn là [contract 4.1](../docs/api-contract.md), [data model](../docs/data-model.md) và [security](../docs/security.md); cách chạy giữ ở [Runner README](../tests/runner/README.md), không dùng bản nháp API hoặc lệnh checkout nhánh đã xóa làm hướng dẫn hiện hành.
+
+| Nội dung | Trạng thái và yêu cầu hiện hành |
+| --- | --- |
+| Thành phần | Dashboard 5174 gọi runner loopback 3100; runner điều phối fixture/k6/audit tới SAM test 3002 và bảng test riêng. Không trộn dashboard vào UI User/Admin hoặc để trình duyệt chạy shell. |
+| Contract còn lệch | Adapter ghim app a6ba0f2/API 3.0, cookie event_user_session và login email/password. Ứng dụng hiện là API 4.1, cookie event_session, login identifier/password và session có role. Fixtures/audit cần đối chiếu cả profile User hoạt động, Ticket/reference/idempotency; không chỉ đổi số version để vượt preflight. |
+| Phiên và danh tính | Chuẩn bị User/login ngoài khoảng đo; mỗi User có cookie jar, CSRF và key riêng. Tạo tài khoản qua API/factory được hỗ trợ, giữ Origin/CSRF/rate limit; không tạo session giả, lấy role từ client hoặc giả source IP để qua guard. |
+| Dữ liệu | Chỉ ghi bảng prefix fcaj-event-workshop-local-test- và kiểm tra health đúng bảng trước fixture. Audit chỉ đọc, gắn Ticket/reference/idempotency với đúng run/event/User; không gán owner legacy theo email hoặc dùng ghế mẫu không có vé làm số người thật. |
+| Giới hạn công cụ | Cấu hình hiện giới hạn 1–100 User, tối đa 5.000 request đo; runner chỉ nhận HTTP loopback. Pool purchase có một ý định mua/User/event, dùng hết pool không còn là tải ghi mới; muốn đo tải ghi kéo dài phải thiết kế thêm dữ liệu. AWS cần cấu hình và adapter phù hợp trước khi dùng. |
+| Phân loại kết quả | Tách vé mới 201, replay 200, hết vé và lỗi kỹ thuật/timeout; blocked là chưa đo, stopped/incomplete không phải passed. Dừng runner không bảo đảm hủy request phía server; chỉ kết luận toàn vẹn khi audit đủ điều kiện. |
+| Dữ liệu kết quả | Report/raw metric trong tests/results được Git bỏ qua; dashboard đọc qua runner. Không lưu password/cookie/CSRF trong report. Cleanup chỉ xóa dữ liệu do đúng manifest sở hữu, không áp dụng vào bảng test chuẩn bị thủ công hoặc bảng ứng dụng. |
+
+Các lượt tiếp theo thực hiện theo giai đoạn:
+
+1. Đồng bộ adapter với contract hiện hành, kiểm tra cấu hình và fixture trên môi trường test riêng; ghi app commit, contract, bảng, runId và giới hạn của lượt chạy.
+2. Thử 1–2 User trước: tạo/login, kiểm phiên, đặt vé, replay/duplicate, owner/cross-account và audit số chỗ/vé. Xử lý lỗi trước khi tăng tải.
+3. Sau đó mới chạy 100/200, 100/10, 100/1 hoặc ramp/spike/hold/overload/recovery theo phạm vi đã chốt. Kỳ vọng số vé không vượt chỗ là tiêu chí kiểm thử, không phải kết quả đã đạt; kết quả local không chứng minh scaling AWS.

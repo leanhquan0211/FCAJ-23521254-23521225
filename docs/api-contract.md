@@ -1,6 +1,6 @@
 # API contract local — phiên bản 4.1
 
-Áp dụng cho nhánh `phuc`, ngày 23/10/2026, theo các cập nhật đăng nhập chung/sidebar/xóa ghi danh được ghi tại [WORKLOG.md](../phuc-worklog/WORKLOG.md), kế thừa [yêu cầu nền](../quan-worklog/yeu-cau.md). Nhật ký giữ bằng chứng các mốc trước; kiểm tra bổ sung 4.1 nằm ở [test backend](../tests/backend/test_unified_integration.py), [HTTP smoke](../backend/tools/check_accounts_api.py) và [browser smoke](../tests/frontend/check-accounts-browser.mjs). Đây là hợp đồng của ứng dụng; k6/runner/dashboard do bên kiểm thử phát triển riêng.
+Áp dụng cho nhánh `phuc`, ngày 23/10/2026, theo các cập nhật đăng nhập chung/sidebar/xóa ghi danh được ghi tại [WORKLOG.md](../project-worklog/WORKLOG.md), kế thừa [yêu cầu nền](../project-worklog/PROJECT_CONTEXT.md). Nhật ký giữ bằng chứng các mốc trước; kiểm tra bổ sung 4.1 nằm ở [test backend](../tests/backend/test_unified_integration.py), [HTTP smoke](../backend/tools/check_accounts_api.py) và [browser smoke](../tests/frontend/check-accounts-browser.mjs). Đây là hợp đồng của ứng dụng; k6/runner/dashboard do bên kiểm thử phát triển riêng.
 
 ## 1. Địa chỉ và quy tắc chung
 
@@ -136,7 +136,7 @@ Envelope: `{"error":{"code":"EVENT_FULL","message":"Sự kiện đã hết chỗ
 
 Chuẩn bị100 tài khoản qua register/login ngoài khoảng đo; mỗi người ảo có cookie jar/CSRF riêng, không tắt auth. Mỗi run dùng bảng/sự kiện mới, kiểm tra health trỏ đúng prefix test và khớp manifest. Dùng helper password_record/AuthRepository hiện có khi cần admin fixture; không copy schema/hash sang harness. Không reset bảng ứng dụng.
 
-Kỳ vọng trên sự kiện mới:100 người/200 chỗ →100 vé; tranh10 →10 vé; tranh1 →1 vé. Đây là mục tiêu cho phía tải, chưa là kết quả đã đo100 người. Đối chiếu ghế, Ticket, reference, idempotency theo đúng event/run; local không chứng minh AWS autoscaling. Xem [phối hợp](../quan-worklog/phoi-hop.md).
+Kỳ vọng trên sự kiện mới:100 người/200 chỗ →100 vé; tranh10 →10 vé; tranh1 →1 vé. Đây là mục tiêu cho phía tải, chưa là kết quả đã đo100 người. Đối chiếu ghế, Ticket, reference, idempotency theo đúng event/run; local không chứng minh AWS autoscaling. Xem [điều kiện kiểm thử và tích hợp](../project-worklog/PROJECT_CONTEXT.md).
 
 - Triển khai: [buyer_auth.py](../backend/lambda/buyer_auth.py), [booking.py](../backend/lambda/booking.py), [repository.py](../backend/lambda/repository.py), [template](../backend/template.yaml), [data model](data-model.md), [security](security.md).
 - [DynamoDB transactions](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/transaction-apis.html), [AWS idempotent APIs](https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/): nguyên tắc atomic/retry; tên header/status ở đây do dự án chọn.

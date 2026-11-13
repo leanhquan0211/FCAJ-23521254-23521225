@@ -8,7 +8,7 @@ Cập nhật Kết phiên **04/11/2026 — Tuần 6 (02–08/11)**: đã tích h
 
 **Tài khoản triển khai hiện tại:** tài khoản cá nhân **Paid**; theo người dùng còn **40 USD credit**, hạn **05/2027**. Người dùng xác nhận đã lưu budget **10 USD/tháng** và email; ảnh xác minh actual **30/50/80%** (= 3/5/8 USD), forecast **100%**, loại **Credit/Refund** khỏi phép tính. Chưa kiểm thử email thực tế. Dự kiến dùng AWS đến hết **12/2026** rồi thu hồi/kiểm kê dự án; không tự đóng tài khoản. IAM/STS qua cầu nối **`fcaj-project`** đã đúng tài khoản/user. Ảnh 60 USD earned không phải số dư; kết quả Paid/0 của tài khoản người bạn là lịch sử. Chi tiết trong [hướng dẫn setup](aws-environment-setup.md).
 
-Người dùng mới tiếp cận AWS, chọn ngân sách **5–10 USD/tháng**. Dự toán dùng giá chưa trừ credit; không suy ra số dư bằng khoản ban đầu cộng phần thưởng. Công cụ và hai build đã đạt; IAM/CLI qua cầu nối đã đúng tài khoản cá nhân. SDK từng chạy được trước chuyển tài khoản, chưa kiểm tra lại SDK/provider trên tài khoản cuối. Chưa có IaC/tài nguyên ứng dụng AWS. Kế hoạch kỹ thuật/kiểm tra/thu hồi đã chốt là cơ sở tiếp tục. Trước bước phụ thuộc kiểm tra region/quota/quyền và dependency theo [AI_RULE.md](../phuc-worklog/AI_RULE.md).
+Người dùng mới tiếp cận AWS, chọn ngân sách **5–10 USD/tháng**. Dự toán dùng giá chưa trừ credit; không suy ra số dư bằng khoản ban đầu cộng phần thưởng. Công cụ và hai build đã đạt; IAM/CLI qua cầu nối đã đúng tài khoản cá nhân. SDK từng chạy được trước chuyển tài khoản, chưa kiểm tra lại SDK/provider trên tài khoản cuối. Chưa có IaC/tài nguyên ứng dụng AWS. Kế hoạch kỹ thuật/kiểm tra/thu hồi đã chốt là cơ sở tiếp tục. Trước bước phụ thuộc kiểm tra region/quota/quyền và dependency theo [AI_RULE.md](../project-worklog/AI_RULE.md).
 
 ## Hai nhiệm vụ chính đã thống nhất
 
@@ -91,7 +91,7 @@ Tuần 5 tập trung tìm hiểu, kiểm tra tài khoản và chốt kế hoạc
 
 ## 2. Những gì đã kiểm tra trong repository
 
-Đối chiếu trên nhánh `phuc`, HEAD `e356eb6` khi bắt đầu; Git ban đầu sạch, main/phuc cùng commit. Đã đọc [bối cảnh](../phuc-worklog/PROJECT_CONTEXT.md), [nhật ký](../phuc-worklog/WORKLOG.md), contract/security và code liên quan. Chưa chạy lại ứng dụng hoặc suite kiểm thử trong phiên lập kế hoạch.
+Đối chiếu trên nhánh `phuc`, HEAD `e356eb6` khi bắt đầu; Git ban đầu sạch, main/phuc cùng commit. Đã đọc [bối cảnh](../project-worklog/PROJECT_CONTEXT.md), [nhật ký](../project-worklog/WORKLOG.md), contract/security và code liên quan. Chưa chạy lại ứng dụng hoặc suite kiểm thử trong phiên lập kế hoạch.
 
 | Hiện trạng có bằng chứng | Hệ quả cho việc lên AWS |
 | --- | --- |
@@ -361,7 +361,7 @@ Kế hoạch hiện tại đã được chốt tại Checkpoint **30/10/2026**: 
 
 Các thông số như region `us-east-1`, throttle/concurrency, TTL/retention và ngưỡng tải vẫn cần đối chiếu quota/cách dùng thực tế trên tài khoản mới. Các số tiền workload là dự toán, chưa đo chi phí triển khai. API/STS trước đây chỉ xác minh tài khoản người bạn; chưa chứng minh danh tính/quyền tài khoản mới. Chưa sửa ứng dụng, chưa viết Terraform/workflow, chưa deploy/destroy hoặc smoke test AWS.
 
-Bàn giao đang theo dõi: [2026-10-30-0956.md](../phuc-worklog/handoffs/2026-10-30-0956.md). Khi nhận **Checkpoint**, tổng hợp công việc thực hiện và nguồn thực sự đã dùng vào mục ngày/tuần tương ứng trong WORKLOG, cập nhật PROJECT_CONTEXT nếu bối cảnh thay đổi. Kế hoạch này không thay nhật ký và không phải xác nhận đã deploy.
+Bàn giao đang theo dõi: [2026-10-30-0956.md](../project-worklog/handoffs/2026-10-30-0956.md). Khi nhận **Checkpoint**, tổng hợp công việc thực hiện và nguồn thực sự đã dùng vào mục ngày/tuần tương ứng trong WORKLOG, cập nhật PROJECT_CONTEXT nếu bối cảnh thay đổi. Kế hoạch này không thay nhật ký và không phải xác nhận đã deploy.
 
 ## 8. Cách làm việc thực tế: hai người cùng một phiên trên một màn hình
 
