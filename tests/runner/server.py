@@ -49,6 +49,8 @@ def handler_for(engine):
                 if not mutation:
                     if path == "/meta": return self.send(200, engine.metadata())
                     if path == "/runs": return self.send(200, {"runs": engine.list_runs()})
+                    cloud = re.fullmatch(r"/runs/([a-f0-9]{24})/cloud", path)
+                    if cloud: return self.send(200, engine.cloud(cloud[1]))
                     match = re.fullmatch(r"/runs/([a-f0-9]{24})", path)
                     if match: return self.send(200, engine.get(match[1]))
                 else:

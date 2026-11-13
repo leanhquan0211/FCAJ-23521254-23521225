@@ -25,7 +25,7 @@ let attempted = false;
 
 function classify(response, purchase) {
   if (!response.status) return response.error_code === 1050 || /timeout|timed out|deadline/i.test(response.error || '') ? 'timeout' : 'other';
-  if (!purchase) return response.status === 200 ? 'readOk' : response.status >= 500 ? 'server' : 'other';
+  if (!purchase) return response.status === 200 ? 'readOk' : response.status === 429 ? 'rateLimited' : [401, 403].includes(response.status) ? 'auth' : response.status >= 500 ? 'server' : 'other';
   let body;
   try { body = response.json(); } catch (_) { return 'other'; }
   const replay = response.headers[P.replayHeader] || response.headers['Idempotent-Replayed'];

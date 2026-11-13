@@ -32,8 +32,8 @@ class ConfigTests(unittest.TestCase):
             with self.subTest(field=field), self.assertRaises(LabError): validate_config({field: "ignored"})
 
     def test_type_range_duration_and_request_limits(self):
-        for config in [{"users": True}, {"users": 101}, {"users": 0}, {"hold": -1}, {"maxRetries": 3},
-                       {"scenario": "arbitrary"}, {"scenario": []}, {"mode": {}}, {"mode": "mock"}, {"timeout": 76}, {"maxRequests": 5001},
+        for config in [{"users": True}, {"users": 501}, {"users": 0}, {"hold": -1}, {"maxRetries": 3},
+                       {"scenario": "arbitrary"}, {"scenario": []}, {"mode": {}}, {"mode": "mock"}, {"timeout": 76}, {"maxRequests": 50001},
                        {"mode": "purchase", "users": 100, "maxRequests": 199}]:
             with self.subTest(config=config), self.assertRaises(LabError): validate_config(config)
 
@@ -96,11 +96,18 @@ class AuditTests(unittest.TestCase):
         self.items[1].update(fullName="Buyer", email="buyer@example.test", phone="", createdAt="2026-10-23T00:00:00+00:00")
         self.items[3]["registration"] = {field: self.items[1][field] for field in
             ("id", "eventId", "userId", "fullName", "email", "phone", "createdAt")}
+        self.items.extend([{"PK": "USER#" + user, "SK": "PROFILE", "userId": user, "role": "user"} for user in ["u1", "u2"]])
 
     def audit(self, items=None, receipts=None):
         return inspect_items(self.items if items is None else items, "e1", 2, self.sessions, {"t1"} if receipts is None else receipts)
 
     def test_complete_transaction_matches(self): self.assertEqual(self.audit()["status"], "passed")
+
+    def test_deleted_or_missing_user_profile_fails(self):
+        self.items[-1]["deleting"] = True
+        self.assertEqual(self.audit()["status"], "failed")
+        self.items.pop()
+        self.assertEqual(self.audit()["status"], "failed")
 
     def test_missing_reference_or_idempotency_fails(self):
         for index in [2, 3]:
@@ -120,6 +127,10 @@ class AuditTests(unittest.TestCase):
     def test_unrelated_run_is_not_counted(self):
         self.items.append({"PK": "REGISTRATION#other", "id": "other", "eventId": "other-event", "userId": "other", "entityType": "REGISTRATION"})
         self.assertEqual(self.audit()["tickets"], 1)
+
+    def test_reused_users_old_valid_idempotency_does_not_pollute_run(self):
+        self.items.append({"PK": "USER#u1", "SK": "IDEMPOTENCY#older-key", "registrationId": "older-ticket", "registration": {"eventId": "older-event"}})
+        self.assertEqual(self.audit()["status"], "passed")
 
     def test_orphan_or_unexpected_idempotency_is_detected(self):
         self.items.append({"PK": "USER#u2", "SK": "IDEMPOTENCY#unexpected", "registrationId": "missing"})
@@ -151,14 +162,14 @@ class ReadinessTests(unittest.TestCase):
             client.expect.return_value = ({"status": "ok", "database": {"status": "ready", "table": "fcaj-event-workshop-local-test-unit"}}, {})
             with patch("fixtures.Client", return_value=client), self.assertRaises(LabError) as raised:
                 health(settings, purchase=True)
-            self.assertEqual(raised.exception.code, "WAITING_FOR_V3")
+            self.assertEqual(raised.exception.code, "WAITING_FOR_CONTRACT")
             client.call.assert_not_called()
 
     def test_blocked_engine_persists_no_fake_metrics_or_secrets(self):
         with tempfile.TemporaryDirectory() as folder:
             settings = Settings(results=folder)
             engine = Engine(settings)
-            with patch("engine.subprocess.run", return_value=subprocess.CompletedProcess([], 0, stdout="k6 test")), patch("engine.health", return_value={"database": {"table": "fcaj-event-workshop-local-test-unit"}}), patch("engine.prepare", side_effect=LabError("WAITING_FOR_V3", "Chờ tích hợp")):
+            with patch("engine.subprocess.run", return_value=subprocess.CompletedProcess([], 0, stdout="k6 test")), patch("engine.health", return_value={"database": {"table": "fcaj-event-workshop-local-test-unit"}}), patch("engine.prepare", side_effect=LabError("WAITING_FOR_CONTRACT", "Chờ tích hợp")):
                 run = engine.start({"scenario": "hot"})
                 engine.workers[run["runId"]].join(timeout=5)
             report = engine.get(run["runId"])
@@ -220,7 +231,7 @@ class RunnerHttpTests(unittest.TestCase):
     def post(self, body, host="127.0.0.1:3100", origin="http://127.0.0.1:5174", content_type="application/json"):
         req = urllib.request.Request(f"http://127.0.0.1:{self.server.server_port}/runs", data=json.dumps(body).encode(),
             headers={"Host": host, "Origin": origin, "Content-Type": content_type}, method="POST")
-        try: response = urllib.request.urlopen(req, timeout=3)
+        try: response = urllib.request.build_opener(urllib.request.ProxyHandler({})).open(req, timeout=3)
         except urllib.error.HTTPError as exc: response = exc
         with response: return response.status, json.load(response)
 

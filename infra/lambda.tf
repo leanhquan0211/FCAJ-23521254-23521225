@@ -94,9 +94,9 @@ resource "aws_lambda_function" "backend" {
       COOKIE_SECURE            = "true"
       ALLOWED_ORIGINS          = var.allowed_origins
       USER_AUTH_WINDOW_SECONDS = "900"
-      USER_LOGIN_IP_LIMIT      = "120"
+      USER_LOGIN_IP_LIMIT      = "2000"
       USER_LOGIN_ACCOUNT_LIMIT = "10"
-      USER_SIGNUP_IP_LIMIT     = "120"
+      USER_SIGNUP_IP_LIMIT     = "2000"
     }
   }
 

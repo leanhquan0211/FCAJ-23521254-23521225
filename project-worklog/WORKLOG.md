@@ -235,7 +235,7 @@ Các nguồn dưới đây là tài liệu chính thức do **AWS** và **HashiC
 - [Thiết kế giao diện](../frontend/DESIGN.md) và [lưu tùy chọn giao diện](../frontend/src/lib/appearance-preferences.ts): phần frontend được tích hợp và kiểm tra build/lint.
 - Xác nhận ngày **11/11/2026** về kết quả ngày **04/11/2026**: đã tạo IAM chuyên dụng, triển khai thử lên AWS và dùng Terraform thu hồi toàn bộ tài nguyên đã triển khai trong lần thử.
 
-## 13/11/2026 — Tuần 7 (Nhiệm vụ 2: Tích hợp giám sát CloudWatch)
+## 13/11/2026 — Tuần 7 (Giám sát CloudWatch và kiểm thử AWS)
 
 ### Công việc chính
 
@@ -256,7 +256,7 @@ Các nguồn dưới đây là tài liệu chính thức do **AWS** và **HashiC
   - Lambda Latency Alarm: `arn:aws:cloudwatch:us-east-1:059898286806:alarm:fcaj-event-workshop-lambda-high-latency` (Trạng thái: `OK`)
 - Bằng chứng ghi nhận dữ liệu: Gọi API đăng ký/đăng nhập sinh ra các data points Invocations và Duration hiển thị trực tiếp trên Dashboard.
 - Rà soát bổ sung trong phiên ngày 13/11: người dùng xác nhận IAM user đã đăng nhập Console; chưa xác nhận mở dashboard hay quyền CloudWatch. Nhật ký triển khai và metric ở trên là báo cáo đã có, chưa được phiên này kiểm chứng trực tiếp trên AWS; trạng thái `OK` chưa chứng minh alarm đã kích hoạt. Hai alarm trong code chưa khai báo hành động SNS.
-- Tổng hợp danh mục test chức năng, dữ liệu, bảo mật, CloudWatch và tải; các bài 100/200, 100/10, 100/1 chưa có bằng chứng đạt. Test lab cần đồng bộ API 4.1 và hỗ trợ AWS trước khi chạy tải AWS. Đã chuẩn bị prompt tự chứa thông tin kiến trúc để tạo sơ đồ draw.io chỉnh sửa được, không có tiêu đề; chưa tạo sơ đồ.
+- Tổng hợp danh mục test chức năng, dữ liệu, bảo mật, CloudWatch và tải theo thông tin trước khi nhận bản cập nhật mới: các bài 100/200, 100/10, 100/1 chưa có bằng chứng đạt. Sau đó main bổ sung Test Lab API 4.1/AWS và kết quả thử mới, chi tiết ở mục mở rộng bên dưới; đánh giá adapter cũ không còn là trạng thái hiện hành. Đã chuẩn bị prompt tự chứa thông tin kiến trúc để tạo sơ đồ draw.io chỉnh sửa được, không có tiêu đề; chưa tạo sơ đồ.
 - Không chạy test, gọi AWS hay thay đổi hạ tầng trong lượt rà soát này. Chi tiết trạng thái và điều kiện test xem [PROJECT_CONTEXT](PROJECT_CONTEXT.md).
 
 ### Tài liệu tham khảo
@@ -267,3 +267,62 @@ Các nguồn dưới đây là tài liệu chính thức do **AWS** và **HashiC
 - [AWS — IAM users and credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html), [quản lý mật khẩu IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_admin-change-user.html) và [đăng nhập IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_sign-in.html): đối chiếu access key với mật khẩu Console và hướng dẫn đăng nhập trong phiên rà soát.
 - [AWS — CloudWatchReadOnlyAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/CloudWatchReadOnlyAccess.html) và [quyền CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/permissions-reference-cw.html): tham khảo phương án quyền đọc dashboard; chưa xác nhận hay cấp policy trong phiên.
 
+
+### Mở rộng Test Lab từ local API 3.0 sang AWS API 4.1
+
+| Hạng mục | Trước | Kết quả |
+| --- | --- | --- |
+| Kết nối và contract | Runner chỉ nhận HTTP loopback, adapter 3.0/cookie cũ | Adapter 4.1, cookie event_session, login identifier/password; nhận HTTPS /api trên CloudFront, kiểm chính xác hostname/bảng/Lambda ARN. |
+| Đồng bộ triển khai | URL mẫu cố định, dễ cũ sau destroy/apply | Đọc tọa độ công khai từ Terraform state gốc mỗi lần khởi động; state thiếu thì dừng. Preflight health/SDK, kiểm hash và LastModified Lambda trước/sau bài đo. |
+| Môi trường và dữ liệu | Đề xuất nháp tách stack test | Phạm vi đã chốt là kiểm thử trên chính hạ tầng ứng dụng hiện tại, dùng event/User test có manifest theo run; không tạo stack song song, không reset bảng hoặc ghế có sẵn. |
+| Tải và kịch bản | hot/scarce/ramp giới hạn 100 User, 5.000 request | Giữ ba kịch bản đủ vé/tranh vé/tăng–giữ–giảm; tối đa 500 người, 50.000 request đo, trần thời gian và nút dừng. Phân biệt tạo dữ liệu, khoảng đo và kiểm tra bổ trợ. |
+| Chuẩn bị tài khoản | Mỗi bài đặt vé tạo User mới, không giữ mật khẩu | Pool mã hóa Windows DPAPI ngoài Git, dùng lại User còn hợp lệ và tạo thêm khi thiếu; login/CSRF/key riêng mỗi người, event mới mỗi lượt. User cũ không có credential pool không tự dùng lại/reset mật khẩu. |
+| Rate limit | Signup/login IP là 120/900 giây | Cập nhật hai giới hạn IP lên 2.000/900 giây, giữ login-account=10. Terraform fmt-check/validate đạt; người dùng apply, sau đó đọc AWS xác nhận giá trị thực. Không xóa counter hoặc giả IP. |
+| Lỗi giờ mở bán | Chờ dựa vào ước lượng clock và biên nhỏ | Phát hiện 10 POST đến trước mở bán; sửa runner chờ API xác nhận event mở trước k6. Đây không phải bài kiểm tra ranh giới mở bán chính xác. |
+| Dashboard | Giao diện local nhiều nhãn kỹ thuật | Tiếng Việt theo bước, mức tải chọn sẵn, phần chi tiết thu gọn; số dùng lại/tạo mới, lịch sử/JSON, biểu đồ request và CloudWatch. |
+| Trực quan luồng | Chưa có sơ đồ hoạt động | SVG k6 → CloudFront → API Gateway → Lambda → DynamoDB, tuyến runner chuẩn bị/audit; sáng theo tiến độ polling, dừng khi kết thúc/mất kết nối, hỗ trợ reduced motion/mobile. Ghi rõ không phải trace từng request. |
+| Cleanup | Cleanup bảng local riêng | Thêm xem kế hoạch và xóa đúng event/User sở hữu qua API versioned, tiếp tục202 có giới hạn; giữ User pool. Pending response/đổi môi trường/chủ sở hữu chặn dọn. Chưa chạy cleanup AWS thật. |
+
+### Kiểm tra và kết quả Test Lab
+
+- Kiểm tra cuối trước hợp nhất: **48 unit test đạt**; k6 2.3.0 inspect đã đạt, smoke k6 thật gửi 4 request tới HTTP stub localhost đạt. Dashboard TypeScript/Vite build và Oxlint đạt; diff whitespace đạt. Không chạy lại tải AWS trong bước rà soát/hợp nhất.
+- Chromium dùng response fixture chặn tại trình duyệt: 320/375/414/768/1280px không tràn ngang, chọn preset không tự chạy, khóa ghi, sơ đồ preview/preparing/running/failed/stopped/disconnected và reduced motion đạt, không có uncaught exception. Đây không phải dữ liệu nghiệm thu tải AWS.
+- Preflight AWS thật đã đọc health4.1, đúng bảng/Lambda, hash triển khai; DescribeTable/Scan giới hạn để kiểm quyền audit đạt. Không xuất record, credential, cookie hoặc mật khẩu vào nhật ký/Git.
+- Các bài do người dùng khởi động qua dashboard, kết quả được đối chiếu report/raw metric; số request dưới đây chỉ thuộc khoảng đo, không gồm signup/login/fixture hoặc kiểm tra bổ trợ.
+
+| Run ID | Bài AWS đã chạy | Kết quả |
+| --- | --- | --- |
+| 599b627372c94a16900116d5 | 2 người / 4 vé | Đạt: 2 vé, còn 2 chỗ; audit và kiểm tra bổ trợ đạt. |
+| 7dfc0319872547cdbed262db | 2 người / 1 vé | Đạt: 1 vé, 1 hết vé, còn 0; audit và kiểm tra bổ trợ đạt. |
+| 68dab9d49b9c425998c7a75f | Ramp đọc 10 người | Đạt: 522/522 request thành công. |
+| 47d1eb74a61348c9a2cef50f | Ramp đọc 100 người | Đạt: 5.281/5.281 request thành công. |
+| 5cd3993996d049d6a3d0042b | Ramp đọc 500 người | Không đạt: 13.430 thành công, 13.084 HTTP503 trên 26.514 request. |
+| b1490eda92cb4e09b3c451f1 | 10 người / 1 vé, trước sửa gate | Không đạt: 10 POST SALES_NOT_OPEN; chưa tạo vé, còn nguyên 1 chỗ. Đã sửa công cụ, giữ report lỗi gốc. |
+| 3a0152a880d3455a9a1a1ff6 | 10 người / 20 vé | Đạt: 10 vé mới; audit đạt. |
+| 68dbe7bad8eb4c69944ce28e | 10 người / 2 vé | Đạt: 2 vé, 8 hết vé; audit đạt. |
+| 62e12325812f45d9b8a0e184 | 10 người / 1 vé, sau sửa gate và pool | Đạt: 1 vé, 9 hết vé; dùng lại 10 User, tạo mới 0; audit đạt. |
+| 75428eac7d5146f9a40c94b0 | 20 người / 2 vé | Không đạt tải: 2 vé, 10 hết vé, 8 HTTP503; audit/kiểm tra bổ trợ đạt. Dùng lại 10 User, tạo thêm 10; CloudWatch phút đo concurrency10, Throttles8. |
+| 9e32825120184999bab6f449 | 15 người / 1 vé | Không đạt: 1 vé, 11 hết vé, 5 HTTP5xx tính trên cả GET/POST; audit đạt, dùng lại15 User, tạo mới0. |
+| 3745be907f8c459f91e0a7ed | Ramp đọc 110 người | Không đạt: 5.720 request, có30 HTTP5xx. Chưa đối chiếu nguyên nhân riêng của lượt này. |
+
+### Chẩn đoán và giới hạn còn lại
+
+- GetAccountSettings và Service Quotas xác nhận Lambda concurrency tài khoản us-east-1 là **10**, Adjustable=true, function không đặt reserved concurrency. Người dùng quyết định giữ mức10; không gửi yêu cầu tăng quota hoặc bật Provisioned Concurrency.
+- Bài500: CloudWatch các phút đo concurrency Maximum10, tổng Throttles13.087, LambdaErrors0; đếm log Database unavailable trong đúng khoảng đo là0. Số theo phút có thể gồm truy cập ngoài run, không đòi trùng hoàn toàn với13.084 HTTP503 phía k6. Bằng chứng cho thấy nút giới hạn Lambda; trần gọi đồng bộ theo quota là100 request/giây, không phải throughput được bảo đảm.
+- Audit đúng không đồng nghĩa toàn bài đạt: ví dụ20người vẫn giữ đúng2vé/0chỗ nhưng8request lỗi kỹ thuật. LambdaErrors không bao gồm throttled invocation; hai alarm Errors/Duration quan sát được làOK và chưa có AlarmActions. Chưa kiểm chứng SNS/email hoặc ngưỡng cảnh báo Throttles/API5xx.
+- Chưa xác nhận hệ thống phục vụ ổn định500người hoặc đủ toàn bộ tiêu chí autoscaling. Không giảm tải/bỏ lỗi để đổi report thất bại thành đạt. Pool chỉ tái sử dụng tài khoản, không nâng năng lực hạ tầng.
+- Report/raw metric/pool/browser profile giữ local tại tests/results và gitignore. Pool mã hóa phụ thuộc Windows user; chưa hỗ trợ kho bí mật đa máy. Không đưa mật khẩu Admin/User, session hoặc raw Terraform state vào Git. Dữ liệu thử AWS được giữ để đối chiếu, chưa tự dọn tài nguyên.
+
+### Tài liệu tham khảo cho phần kiểm thử
+
+- [AWS — Monitoring concurrency](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-concurrency.html): đọc ConcurrentExecutions Maximum theo phút, phân biệt concurrency với số môi trường giữ ấm.
+- [AWS — Types of Lambda metrics](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics-types.html): phân biệt Invocations, Errors, Throttles và Duration; áp dụng chẩn đoán bài500/20người.
+- [AWS — Understanding Lambda scaling](https://docs.aws.amazon.com/lambda/latest/dg/lambda-concurrency.html): quota tài khoản và giới hạn gọi đồng bộ, phân biệt reserved/provisioned concurrency.
+- [AWS — Requesting a quota increase](https://docs.aws.amazon.com/servicequotas/latest/userguide/request-quota-increase.html): hướng dẫn người dùng xem/yêu cầu quota; chưa gửi yêu cầu tăng trong đợt này.
+- [Grafana — Ramping VUs](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/ramping-vus/): lịch tăng/giữ/giảm và graceful ramp-down, không coi VU bằng request/giây.
+
+### Minh chứng phần kiểm thử
+
+- [Kế hoạch hiện hành](../tests/AWS-TEST-PLAN.md), [hướng dẫn runner](../tests/runner/README.md), [thiết kế dashboard](../tests/dashboard/DESIGN.md), [bootstrap](../tests/start-aws.ps1) và [guard](../tests/load/config.py).
+- [Fixture](../tests/load/fixtures.py), [pool mã hóa](../tests/load/account_pool.py), [audit](../tests/load/audit.py), [cleanup](../tests/load/cleanup.py), [CloudWatch](../tests/load/cloud_metrics.py), [sơ đồ](../tests/dashboard/src/FlowDiagram.tsx), [unit regression](../tests/runner/test_aws.py) và [browser fixture](../tests/dashboard/check-ui.mjs).
+- Report và metric gốc theo runId nằm tại tests/results trong máy kiểm thử; không commit các tệp đó. Bảng trên là tổng hợp đã đọc trực tiếp, không thay raw evidence khi cần phân tích sâu.
