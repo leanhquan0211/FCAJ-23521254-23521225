@@ -42,7 +42,7 @@ def main():
     parser.add_argument("--k6")
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("environment", help="Create a new empty test table and SAM env file; no existing table reset")
-    commands.add_parser("preflight", help="Read v3 readiness without creating accounts")
+    commands.add_parser("preflight", help="Read API 4.1 readiness without creating accounts")
     run_parser = commands.add_parser("run")
     run_parser.add_argument("--scenario", choices=["hot", "ramp", "scarce"], default="ramp")
     run_parser.add_argument("--mode", choices=["public", "purchase"], default="public")
@@ -71,10 +71,12 @@ def main():
             print(json.dumps({"table": table, "envFile": str(env_file), "manifest": str(manifest_path)}))
             return 0
         if args.command == "preflight":
-            data = health(settings, purchase=True)
-            print(json.dumps({"ready": True, "table": data["database"]["table"], "apiContractVersion": data["apiContractVersion"]}))
+            data = health(settings, purchase=False)
+            print(json.dumps({"ready": True, "scope": "read-only health; purchase readiness requires separate environment checks", "table": data["database"]["table"], "apiContractVersion": data["apiContractVersion"]}))
             return 0
         if args.command == "cleanup-environment":
+            if settings.environment == "aws":
+                raise LabError("UNSAFE_CLEANUP", "Không xóa bảng AWS qua CLI local. Dọn theo manifest riêng đã review.")
             manifest = json.loads(Path(args.manifest).read_text(encoding="utf-8"))
             table = guard_table(manifest.get("table"))
             if manifest.get("owner") != "event-test-lab" or table != args.confirm or not manifest.get("environmentId"):

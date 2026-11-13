@@ -15,10 +15,10 @@ SCENARIOS = {
     "scarce": "Tranh vé giới hạn",
 }
 DEFAULTS = dict(scenario="ramp", mode="public", users=2, capacity=200,
-                rampUp=3, hold=4, rampDown=3, maxRequests=30, timeout=30,
-                maxRetries=0, intervalMs=500, salesLead=5)
-BOUNDS = dict(users=(1, 100), capacity=(1, 100000), rampUp=(1, 60), hold=(1, 60),
-              rampDown=(1, 60), maxRequests=(1, 5000), timeout=(1, 75),
+                rampUp=30, hold=90, rampDown=30, maxRequests=300, timeout=30,
+                maxRetries=0, intervalMs=2000, salesLead=5)
+BOUNDS = dict(users=(1, 500), capacity=(1, 100000), rampUp=(1, 120), hold=(1, 300),
+              rampDown=(1, 120), maxRequests=(1, 50000), timeout=(1, 75),
               maxRetries=(0, 2), intervalMs=(100, 5000), salesLead=(2, 60))
 
 
@@ -49,8 +49,8 @@ def validate_config(values):
     for name, (minimum, maximum) in BOUNDS.items():
         if type(result[name]) is not int or not minimum <= result[name] <= maximum:
             raise LabError("INVALID_CONFIG", f"{name}: cần số nguyên {minimum}–{maximum}.")
-    if sum(result[k] for k in ("rampUp", "hold", "rampDown")) > 180:
-        raise LabError("INVALID_CONFIG", "Tổng thời gian ramp tối đa 180 giây.")
+    if sum(result[k] for k in ("rampUp", "hold", "rampDown")) > 540:
+        raise LabError("INVALID_CONFIG", "Tổng thời gian tăng/giữ/giảm tối đa 540 giây.")
     if result["mode"] == "purchase" and result["maxRequests"] < result["users"] * (2 + result["maxRetries"]):
         raise LabError("INVALID_CONFIG", "Trần request cần đủ cho một GET và POST/User, cộng retry đã chọn.")
     if result["scenario"] == "hot" and result["capacity"] < result["users"]:
@@ -60,13 +60,49 @@ def validate_config(values):
 
 class Settings:
     def __init__(self, api_url=None, app_root=None, results=None, k6=None, db_endpoint=None):
-        self.api_url = local_url(api_url or os.getenv("API_TEST_URL", "http://127.0.0.1:3002"), "API_TEST_URL")
+        self.environment = os.getenv("LAB_ENV", "local")
+        if self.environment not in {"local", "aws"}:
+            raise LabError("INVALID_CONFIG", "LAB_ENV: local hoặc aws.")
+        target = api_url or os.getenv("API_TEST_URL", "http://127.0.0.1:3002")
+        if self.environment == "aws":
+            parsed = urlparse(target)
+            allowed = os.getenv("LAB_ALLOWED_HOST", "")
+            if (parsed.scheme != "https" or not allowed or parsed.hostname != allowed
+                    or parsed.port not in {None, 443} or parsed.username or parsed.password
+                    or parsed.query or parsed.fragment or parsed.path.rstrip("/") not in {"", "/api"}):
+                raise LabError("INVALID_CONFIG", "AWS cần HTTPS và LAB_ALLOWED_HOST khớp chính xác; chỉ hỗ trợ base /api hoặc root.")
+            self.api_url = target.rstrip("/")
+        else:
+            self.api_url = local_url(target, "API_TEST_URL")
+        self.expected_table = os.getenv("LAB_EXPECTED_TABLE", "")
+        if self.environment == "aws" and not self.expected_table:
+            raise LabError("INVALID_CONFIG", "Cần LAB_EXPECTED_TABLE để kiểm tra đúng môi trường.")
+        self.allow_writes = self.environment == "local" or os.getenv("LAB_ALLOW_WRITES") == "true"
+        self.region = os.getenv("LAB_AWS_REGION", "us-east-1")
+        self.function_name = os.getenv("LAB_FUNCTION_NAME", "")
+        self.expected_function_arn = os.getenv("LAB_EXPECTED_FUNCTION_ARN", "")
+        self.write_target = os.getenv("LAB_WRITE_TARGET", "")
+        self.auth_limits = None
         self.db_endpoint = local_url(db_endpoint or os.getenv("DYNAMODB_ENDPOINT", "http://127.0.0.1:8000"), "DYNAMODB_ENDPOINT")
         self.app_root = Path(app_root or os.getenv("APP_SOURCE_ROOT", str(ROOT))).resolve()
         self.results = Path(results or os.getenv("LAB_RESULTS_DIR", str(ROOT / "tests/results"))).resolve()
         self.k6 = k6 or os.getenv("K6_BIN", str(ROOT / "tests/runner/.tools/k6.exe" if os.name == "nt" else "k6"))
-        self.origin = "http://127.0.0.1:5173"
+        self.origin = os.getenv("LAB_ORIGIN", "https://" + urlparse(self.api_url).netloc if self.environment == "aws" else "http://127.0.0.1:5173")
         self.results.mkdir(parents=True, exist_ok=True)
+
+    def check_table(self, table, purchase=False):
+        if self.environment == "local":
+            return guard_table(table)
+        if table != self.expected_table:
+            raise LabError("UNSAFE_TABLE", "Health không trỏ đúng LAB_EXPECTED_TABLE.")
+        if purchase and not self.writes_enabled():
+            raise LabError("WAITING_FOR_WRITE_CONFIRMATION", "Chưa xác nhận đúng Lambda/bảng được phép ghi. Mở runner bằng start-aws.ps1 -AllowWrites và nhập Admin kín.")
+        return table
+
+    def writes_enabled(self):
+        if self.environment == "local": return True
+        return bool(self.allow_writes and self.expected_function_arn and self.expected_table
+                    and self.write_target == self.expected_function_arn + "|" + self.expected_table)
 
 
 def guard_table(table):

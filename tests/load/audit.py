@@ -1,7 +1,7 @@
 """Read-only reconciliation scoped to one fresh event and the run's accounts/keys."""
 import time
 from config import LabError, PROFILE, guard_table
-from fixtures import app_modules
+from fixtures import database_table
 
 
 def inspect_items(items, event_id, capacity, sessions, receipt_ids):
@@ -9,12 +9,17 @@ def inspect_items(items, event_id, capacity, sessions, receipt_ids):
     event = next((i for i in items if i.get("PK") == model["eventPK"] and i.get("SK") == model["eventSKPrefix"] + event_id), None)
     tickets = [i for i in items if i.get("entityType") == model["ticketType"] and i.get("eventId") == event_id]
     users = {s["userId"] for s in sessions}
+    profiles = {i.get("userId") for i in items if i.get("SK") == "PROFILE"
+                and i.get("PK") == model["userPKPrefix"] + str(i.get("userId"))
+                and i.get("role") == "user" and not i.get("deleting")}
     ticket_ids = {i.get("id") for i in tickets}
     references = [i for i in items if i.get("PK") in {model["userPKPrefix"] + u for u in users}
                   and i.get("SK") == model["referenceSKPrefix"] + event_id]
     keys = {s["userId"]: (model["userPKPrefix"] + s["userId"], model["idempotencySKPrefix"] + s["idempotencyKey"]) for s in sessions}
     idem = [i for i in items if i.get("PK") in {model["userPKPrefix"] + u for u in users}
-            and str(i.get("SK", "")).startswith(model["idempotencySKPrefix"])]
+            and str(i.get("SK", "")).startswith(model["idempotencySKPrefix"])
+            and ((i.get("PK"), i.get("SK")) in set(keys.values()) or i.get("registrationId") in ticket_ids
+                 or not isinstance(i.get("registration"), dict) or i["registration"].get("eventId") == event_id)]
     owners = [i.get("userId") for i in tickets]
     remaining = event.get("remainingSeats") if event else None
     expected_refs = {(model["userPKPrefix"] + str(i.get("userId")), i.get("id")) for i in tickets}
@@ -28,6 +33,7 @@ def inspect_items(items, event_id, capacity, sessions, receipt_ids):
                 and all(field in snapshot and snapshot[field] == ticket.get(field) for field in fields)
                 and (item.get("PK"), item.get("SK")) == keys.get(ticket.get("userId")))
     checks = {
+        "activeUserProfiles": users <= profiles,
         "eventExists": event is not None,
         "capacityPreserved": bool(event) and event.get("capacity") == capacity,
         "seatsInRange": remaining is not None and 0 <= remaining <= capacity,
@@ -45,9 +51,8 @@ def inspect_items(items, event_id, capacity, sessions, receipt_ids):
 
 
 def reconcile(settings, prepared, capacity, receipt_ids):
-    table_name = guard_table(prepared["table"])
-    local_table, _, _ = app_modules(settings)
-    table = local_table(settings.db_endpoint, table_name)
+    table_name = settings.check_table(prepared["table"], purchase=True)
+    table = database_table(settings, table_name)
     previous = None
     # Two identical, consistently-read snapshots; late writes after a forced stop remain a stated limitation.
     for _ in range(4):

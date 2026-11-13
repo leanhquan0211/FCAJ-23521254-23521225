@@ -73,21 +73,21 @@ Khởi động và lệnh kiểm tra xem [Backend README](../backend/README.md),
 
 ## 6. Trạng thái và phần còn lại
 
-- Làm việc trên nhánh **phuc** tại `D:\aws-workshop\event-registration`. Mã ứng dụng, Terraform và tài liệu đã được tích hợp trên main/phuc; mốc đối chiếu khi thống nhất nhật ký ngày **13/11/2026** là **a01d9b8**. Quy trình Git xem [git-workflow.md](../docs/git-workflow.md).
+- Mã nguồn ứng dụng trên main; đợt nâng cấp Test Lab ngày13/11 làm riêng tại .worktrees/test-aws, nhánh feat/test-aws từ f39a5cd, rồi hợp nhất vào main theo yêu cầu. Các đường dẫn phuc/máy khác trong tài liệu cũ là bối cảnh lịch sử. Quy trình Git xem [git-workflow.md](../docs/git-workflow.md).
 - **Ngày 04/11/2026:** đã tạo IAM chuyên dụng, bổ sung Terraform và cấu hình ứng dụng cho AWS, triển khai thử rồi dùng Terraform thu hồi toàn bộ tài nguyên đã triển khai trong lượt thử cùng ngày. Kết quả triển khai/thu hồi được xác nhận bổ sung ngày **11/11**; phạm vi kết quả là môi trường của lượt thử đó.
 - Frontend sau tích hợp ngày **04/11** build thành công, lint exit 0 với hai cảnh báo Fast Refresh tại badge/button. Chưa kiểm thử lại tương tác giao diện mới bằng trình duyệt trong lượt tích hợp này.
 - Kiểm tra local ngày **11/11**: 63 bài backend không DB đạt, 12 bài integration bỏ qua theo chế độ opt-in; Terraform fmt/validate đạt. Các kết quả này tách biệt với lượt triển khai AWS ngày 04/11.
 - Kết quả đầy đủ với DynamoDB Local, HTTP/browser/SAM ngày **23/10** giữ đúng mốc lịch sử trong [WORKLOG](WORKLOG.md). Dữ liệu/bảng/volume local được giữ; không suy tình trạng process hiện tại từ kết quả cũ.
-- Bộ kiểm thử tải còn ghim health 3.0/cookie event_user_session, trong khi ứng dụng dùng contract 4.1/event_session; runner chỉ nhận HTTP loopback, fixture/audit phụ thuộc DB Local. Cần đồng bộ adapter và hỗ trợ AWS trước bài tải; giữ guard và bảng test riêng.
+- Bộ Test Lab đã cập nhật API4.1/AWS ngày13/11; hỗ trợ pool User, gate mở bán, manifest/cleanup và dashboard. Phạm vi hiện hành ở mục8, thay các hướng dẫn local/v3 cũ.
 - Bộ kiểm thử đã có hai lượt đặt vé nhỏ trên API 3.0 ngày **23/10** với audit khớp; [minh chứng](references/test-lab-local.md) giữ runId và số đo. Đây là dữ liệu lịch sử, chưa phải kết quả chạy lại API 4.1. Điều kiện tích hợp hiện hành ở mục 8.
-- **Điểm tiếp tục:** hoàn thiện kiểm thử chức năng AWS và bằng chứng kết quả, rà cấu hình triển khai, sau đó triển khai giám sát và kiểm thử tải theo kế hoạch. Chưa có kết quả 100 người hoặc số đo scaling AWS; Scan trong danh sách User/dọn dữ liệu còn là giới hạn cần đánh giá.
+- **Điểm tiếp tục:** kiểm thử trong quota Lambda10 đã chốt, đối chiếu HTTP/CloudWatch và toàn vẹn dữ liệu; bài đọc100người đã đạt,500người không đạt do throttling. Giám sát có dashboard/hai alarm, chưa kiểm chứng SNS/email. Scan danh sách User/audit/dọn dữ liệu còn là giới hạn cần đánh giá. Số đo chi tiết xem WORKLOG13/11 và mục8.
 
 ## 7. Kế hoạch AWS và trạng thái triển khai thử
 
 Kế hoạch được chốt ngày **30/10/2026** tại [aws-deployment-plan.md](../docs/aws-deployment-plan.md). Trạng thái dưới đây đã cập nhật theo công việc **04/11** và xác nhận ngày **11/11**; các mô tả chuẩn bị trong tài liệu kế hoạch/setup được đọc theo mốc lịch sử của chúng.
 
 - **Nhiệm vụ 1:** triển khai ứng dụng React User/Admin trên S3 riêng tư + CloudFront/OAC; cùng hostname HTTPS chuyển `/api` tới HTTP API payload v2, Lambda Python 3.13 và DynamoDB PK/SK On-demand. Đã có mã Terraform và hoàn thành vòng triển khai thử/thu hồi; kết quả nghiệm thu chi tiết từng luồng User/Admin/booking cần được ghi nhận thêm.
-- **Nhiệm vụ 2:** CloudWatch dashboard, metric/alarm và SNS email, kiểm chứng bằng request/cảnh báo thật. Terraform hiện có log Lambda cơ bản giữ 7 ngày; chưa có bằng chứng hoàn tất phần giám sát đầy đủ.
+- **Nhiệm vụ 2:** CloudWatch dashboard, metric/alarm và SNS email, kiểm chứng bằng request/cảnh báo thật. Terraform hiện có log Lambda cơ bản giữ 7 ngày; đã có dashboard và hai alarm Errors/Duration; chưa có bằng chứng SNS/email hoặc giám sát đầy đủ Throttles/API5xx.
 
 **Ứng dụng và hạ tầng đã có:** Terraform quản lý các thành phần AWS, IAM role/policy, log và xử lý đường dẫn CloudFront. Backend có chế độ AWS khi APP_ENV=aws hoặc chạy trong Lambda, dùng cơ chế credential chuẩn của SDK khi không chỉ định endpoint local; chế độ local giữ kiểm tra endpoint/bảng và credential giả. Origin/CORS, công cụ tạo Admin và script kiểm kê sau thu hồi đã được bổ sung. Các đường dẫn mã nguồn ở mục 5; nội dung công việc và nguồn hướng dẫn AWS/HashiCorp ở mục ngày 04/11 trong WORKLOG.
 
@@ -103,22 +103,23 @@ Kế hoạch được chốt ngày **30/10/2026** tại [aws-deployment-plan.md]
 
 Phạm vi kế hoạch đã chốt không cần xin duyệt lại; chỉ triển khai trong phạm vi được yêu cầu. Dự kiến kết thúc sử dụng AWS cho dự án sau **12/2026**; quản lý cả log/tài nguyên phụ và giữ dữ liệu cần thiết khi thu hồi, không tự đóng tài khoản hoặc xóa tài nguyên ngoài dự án. Chi phí đã sử dụng vẫn được tính, billing có độ trễ.
 
-## 8. Kiểm thử và điều kiện tích hợp
+## 8. Test Lab AWS — trạng thái hiện hành 13/11/2026
 
-Tổng hợp ngày **13/11/2026** từ bối cảnh kiểm thử trước đây và đối chiếu mã hiện tại. API/schema chuẩn vẫn là [contract 4.1](../docs/api-contract.md), [data model](../docs/data-model.md) và [security](../docs/security.md); cách chạy giữ ở [Runner README](../tests/runner/README.md), không dùng bản nháp API hoặc lệnh checkout nhánh đã xóa làm hướng dẫn hiện hành.
+Test Lab được nâng cấp trên feat/test-aws từ f39a5cd, tích hợp mã với ứng dụng trên main theo yêu cầu. Canonical API/schema vẫn là [contract4.1](../docs/api-contract.md), [data model](../docs/data-model.md), [security](../docs/security.md); không sửa chúng để khớp test. Hướng dẫn: [Runner README](../tests/runner/README.md), phạm vi: [AWS-TEST-PLAN](../tests/AWS-TEST-PLAN.md). Số đo theo từng run và nguồn ở mục13/11 trong WORKLOG.
 
-| Nội dung | Trạng thái và yêu cầu hiện hành |
+| Nội dung | Trạng thái |
 | --- | --- |
-| Thành phần | Dashboard 5174 gọi runner loopback 3100; runner điều phối fixture/k6/audit tới SAM test 3002 và bảng test riêng. Không trộn dashboard vào UI User/Admin hoặc để trình duyệt chạy shell. |
-| Contract còn lệch | Adapter ghim app a6ba0f2/API 3.0, cookie event_user_session và login email/password. Ứng dụng hiện là API 4.1, cookie event_session, login identifier/password và session có role. Fixtures/audit cần đối chiếu cả profile User hoạt động, Ticket/reference/idempotency; không chỉ đổi số version để vượt preflight. |
-| Phiên và danh tính | Chuẩn bị User/login ngoài khoảng đo; mỗi User có cookie jar, CSRF và key riêng. Tạo tài khoản qua API/factory được hỗ trợ, giữ Origin/CSRF/rate limit; không tạo session giả, lấy role từ client hoặc giả source IP để qua guard. |
-| Dữ liệu | Chỉ ghi bảng prefix fcaj-event-workshop-local-test- và kiểm tra health đúng bảng trước fixture. Audit chỉ đọc, gắn Ticket/reference/idempotency với đúng run/event/User; không gán owner legacy theo email hoặc dùng ghế mẫu không có vé làm số người thật. |
-| Giới hạn công cụ | Cấu hình hiện giới hạn 1–100 User, tối đa 5.000 request đo; runner chỉ nhận HTTP loopback. Pool purchase có một ý định mua/User/event, dùng hết pool không còn là tải ghi mới; muốn đo tải ghi kéo dài phải thiết kế thêm dữ liệu. AWS cần cấu hình và adapter phù hợp trước khi dùng. |
-| Phân loại kết quả | Tách vé mới 201, replay 200, hết vé và lỗi kỹ thuật/timeout; blocked là chưa đo, stopped/incomplete không phải passed. Dừng runner không bảo đảm hủy request phía server; chỉ kết luận toàn vẹn khi audit đủ điều kiện. |
-| Dữ liệu kết quả | Report/raw metric trong tests/results được Git bỏ qua; dashboard đọc qua runner. Không lưu password/cookie/CSRF trong report. Cleanup chỉ xóa dữ liệu do đúng manifest sở hữu, không áp dụng vào bảng test chuẩn bị thủ công hoặc bảng ứng dụng. |
+| Kiến trúc | Dashboard5174 → runner loopback3100 → k6 → CloudFront /api → API Gateway → Lambda → DynamoDB hiện tại. Dashboard không chạy shell hoặc giữ secret. SDK đọc metric/deployment/audit từ máy kiểm thử. |
+| Mục tiêu dữ liệu | Theo yêu cầu13/11, test trên CHÍNH AWS ứng dụng; không tạo stack/bảng riêng. Ghi chỉ mở bằng xác nhận chính xác API/table/Lambda ARN, manifest từng run; local vẫn giữ guard bảng test riêng. |
+| Khởi động | start-aws.ps1 đọc tọa độ từ Terraform state thư mục triển khai gốc, chỉ chọn output công khai; CheckOnly preflight không tạo dữ liệu. Sau destroy/apply chạy lại script, state trống không fallback URL cũ. |
+| Xác thực | AWS CLI profile default dùng IAM user terraform-deployer tại máy kiểm thử; Admin website nhập kín. Adapter4.1 dùng event_session, identifier/password, CSRF/Origin, role và User profile hoạt động. Không cung cấp Admin/password trong Git. |
+| Tài khoản | Pool Windows DPAPI trong tests/results, dùng lại User còn hợp lệ, thiếu tạo thêm. Mật khẩu User bản cũ chưa lưu không thể tự nhận lại. Event/key mới mỗi run; không dùng lại vé cũ để giả tải ghi mới. |
+| Giới hạn | Tối đa500 VU,50.000 request đo, ramp540giây. Đọc giới hạn signup/login từ Lambda; hai IP limit đã là2.000/900giây, login mỗi email10. Không bỏ auth/rate limit hay giả source IP. |
+| Đo và đối chiếu | Chuẩn bị/audit ngoài khoảng đo; gate API xác nhận event mở trước k6. Audit chỗ/vé/profile/reference/idempotency/ownership, lưu hash/LastModified trước-sau. Stopped/incomplete không phải passed. |
+| Dashboard | Tiếng Việt, preset không tự chạy, lịch sử/JSON, latency/request và CloudWatch. Sơ đồ SVG chuyển động theo tiến độ tổng hợp, không phải trace hop AWS; reduced motion/mobile và trạng thái mất kết nối có kiểm tra fixture. |
+| Cleanup | Theo manifest, xem kế hoạch trước, xác nhận runId/đúng môi trường, dừng runner và không có writer khác. API xóa event trước User với version và202; giữ User pool. Không truncate/xóa bảng/counter/ghế của dữ liệu khác; pending request chặn dọn. Chưa chạy cleanup AWS thật. |
+| Bằng chứng | 48 unit đạt, k6 stub4request đạt, build/lint đạt; Chromium fixture5độ rộng đạt. AWS đọc10/100người và các bài đặt vé nhỏ đạt;500đọc/20tranh2vé không đạt vì HTTP503 kèm Lambda throttling. Xem WORKLOG để không nhầm audit đúng với tải đạt. |
 
-Các lượt tiếp theo thực hiện theo giai đoạn:
+**Giới hạn hạ tầng quan sát được:** account Lambda concurrency us-east-1=10, không đặt reserved concurrency, trần sync theo quota100request/giây. Quyết định hiện tại giữ10; không yêu cầu tăng quota hoặc bật provisioned concurrency. Hai alarm Errors/Duration có trong Terraform, nhưng quan sát chưa có action/SNS; chưa nghiệm thu giao email hay alarm Throttles/API5xx. Không kết luận autoscaling500người đạt.
 
-1. Đồng bộ adapter với contract hiện hành, kiểm tra cấu hình và fixture trên môi trường test riêng; ghi app commit, contract, bảng, runId và giới hạn của lượt chạy.
-2. Thử 1–2 User trước: tạo/login, kiểm phiên, đặt vé, replay/duplicate, owner/cross-account và audit số chỗ/vé. Xử lý lỗi trước khi tăng tải.
-3. Sau đó mới chạy 100/200, 100/10, 100/1 hoặc ramp/spike/hold/overload/recovery theo phạm vi đã chốt. Kỳ vọng số vé không vượt chỗ là tiêu chí kiểm thử, không phải kết quả đã đạt; kết quả local không chứng minh scaling AWS.
+**Tiếp tục:** giữ deployment ổn định khi đo, test nhỏ trước; phân tích lỗi từ report + CloudWatch, không bỏ lỗi để báo đạt. Dữ liệu test/report/pool local cần giữ, không tự cleanup hoặc destroy. Các cửa sổ làm riêng thư mục/nhánh; tránh cùng sửa nhật ký chung.

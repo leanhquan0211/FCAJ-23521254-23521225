@@ -1,9 +1,9 @@
 {
-  "id": "buyer-v3-a6ba0f2",
+  "id": "unified-v4.1-f39a5cd",
   "status": "reviewed-against-application-contract",
-  "applicationCommit": "a6ba0f21e41cc73cfadb3242ff9bd9d30e2f234a",
+  "applicationCommit": "f39a5cd2044e7a8fdc45c5e6b6ffc2db2f08b967",
   "contractSource": "docs/api-contract.md",
-  "healthVersion": "3.0",
+  "healthVersion": "4.1",
   "paths": {
     "health": "/health", "events": "/events", "event": "/events/{eventId}",
     "register": "/auth/register", "login": "/auth/login", "session": "/auth/session",
@@ -11,7 +11,7 @@
     "ticket": "/registrations/{registrationId}", "myTickets": "/me/registrations",
     "adminLogin": "/admin/login", "adminEvents": "/admin/events"
   },
-  "userCookie": "event_user_session",
+  "userCookie": "event_session",
   "csrfHeader": "X-CSRF-Token",
   "idempotencyHeader": "Idempotency-Key",
   "replayHeader": "Idempotent-Replayed",

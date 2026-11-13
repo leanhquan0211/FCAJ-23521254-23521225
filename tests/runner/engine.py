@@ -14,9 +14,10 @@ import uuid
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "load"))
 from audit import reconcile
 from config import DEFAULTS, LabError, PROFILE, PROFILE_HASH, SCENARIOS, validate_config
-from fixtures import health, prepare
+from fixtures import health, prepare, await_sales
 from metrics import Metrics, TECHNICAL
 from supplemental import verify
+from cloud_metrics import collect, deployment, capacity
 
 FINAL = {"completed", "failed", "blocked", "stopped", "interrupted"}
 
@@ -42,6 +43,7 @@ class Engine:
         self.settings = settings
         self.lock = threading.RLock()
         self.runs, self.cancelled, self.processes, self.workers = {}, {}, {}, {}
+        self.cloud_cache = {}
         for path in settings.results.glob("*/report.json"):
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
@@ -56,8 +58,28 @@ class Engine:
 
     def metadata(self):
         return {"scenarios": SCENARIOS, "defaults": DEFAULTS, "apiUrl": self.settings.api_url,
-                "adapter": PROFILE["id"], "adapterStatus": PROFILE["status"], "maxUsers": 100,
-                "note": "Kết quả local không chứng minh autoscaling AWS."}
+                "adapter": PROFILE["id"], "adapterStatus": PROFILE["status"], "maxUsers": 500,
+                "environment": self.settings.environment,
+                "writesEnabled": self.settings.writes_enabled(),
+                "note": "CloudWatch cập nhật theo phút; số người mô phỏng không phải số Lambda đồng thời."}
+
+    def cloud(self, run_id):
+        run = self.get(run_id)
+        if run.get("environment") != "aws":
+            return {"status": "not_configured", "series": [], "note": "Lượt local/lịch sử cũ không có số đo AWS gắn với lượt này."}
+        if run.get("apiUrl") != self.settings.api_url or run.get("table") != self.settings.expected_table:
+            return run.get("cloudMetrics", {"status": "not_configured", "series": [], "note": "Lượt thuộc môi trường cũ; không truy vấn số đo bằng cấu hình hiện tại."})
+        with self.lock:
+            cached = self.cloud_cache.get(run_id)
+            if cached and time.monotonic() - cached[0] < 60: return copy.deepcopy(cached[1])
+        try:
+            result = collect(self.settings, run)
+        except Exception:
+            result = {"status": "unavailable", "series": [], "note": "Chưa đọc được CloudWatch. Kiểm tra quyền GetMetricData, region và tên Lambda."}
+        with self.lock:
+            self.cloud_cache[run_id] = (time.monotonic(), result)
+            self.update(run_id, cloudMetrics=result)
+        return copy.deepcopy(result)
 
     def list_runs(self):
         with self.lock:
@@ -76,6 +98,8 @@ class Engine:
 
     def start(self, values):
         config = validate_config(values)
+        if config["mode"] == "purchase" and self.settings.environment == "aws":
+            self.settings.check_table(self.settings.expected_table, purchase=True)
         with self.lock:
             if any(run["state"] not in FINAL for run in self.runs.values()):
                 raise LabError("RUN_ACTIVE", "Chỉ chạy một lượt tại một thời điểm.")
@@ -109,10 +133,20 @@ class Engine:
         prepared, metrics = None, Metrics()
         cancel = self.cancelled[run_id]
         began = time.monotonic()
-        self.settings.deadline = began + 900
+        self.settings.deadline = began + 7200
         try:
             version = subprocess.run([self.settings.k6, "version"], capture_output=True, text=True, timeout=10, check=True)
             self.update(run_id, k6Version=version.stdout.strip()[:120])
+            try: deployed = deployment(self.settings)
+            except Exception: deployed = {"status": "unavailable"}
+            self.update(run_id, deployment=deployed, environment=self.settings.environment, apiUrl=self.settings.api_url)
+            try: observed_capacity = capacity(self.settings)
+            except Exception: observed_capacity = {"status": "unavailable"}
+            self.update(run_id, capacity=observed_capacity)
+            if self.settings.environment == "aws" and config["mode"] == "purchase":
+                if not deployed.get("tableMatches") or not deployed.get("targetMatches"):
+                    raise LabError("WAITING_FOR_DEPLOYMENT", "Cần xác nhận Lambda ARN và bảng đang triển khai đúng mục tiêu trước khi ghi.")
+                self.settings.auth_limits = deployed.get("authLimits")
             observed = health(self.settings)
             self.update(run_id, table=observed["database"]["table"], observedContractVersion=observed.get("apiContractVersion", "unreported (v2 compatible)"))
             prepared = prepare(self.settings, config, run_id, lambda **v: self.update(run_id, **v), cancel)
@@ -120,10 +154,10 @@ class Engine:
                         preparationSeconds=round(time.monotonic() - began, 2),
                         clockRttMs=prepared.get("clockRttMs"), clockOffsetMs=prepared.get("clockOffsetMs"))
             if cancel.is_set(): raise LabError("STOPPED", "Đã dừng trước khoảng đo.")
-            if config["scenario"] == "ramp" and config["mode"] == "purchase":
-                # A gradual arrival schedule starts after sales open, not a barrier release of every VU.
-                while time.time() < prepared["startAt"]:
-                    if cancel.wait(.1): raise LabError("STOPPED", "Đã dừng trước mở bán.")
+            if config["mode"] == "purchase":
+                self.update(run_id, preparationNote="Chờ API xác nhận sự kiện đã mở trước khoảng đo.")
+                await_sales(self.settings, prepared, cancel)
+                self.update(run_id, salesGate="API confirmed open before k6; exact opening boundary not tested")
             input_data = {k: v for k, v in prepared.items() if k != "clients"}
             input_data.update(config=config, profile=PROFILE, baseUrl=self.settings.api_url, origin=self.settings.origin)
             script = "const LAB_INPUT = " + json.dumps(input_data, ensure_ascii=True) + ";\n" + (Path(__file__).parents[1] / "load/scenarios.js").read_text(encoding="utf-8")
@@ -131,7 +165,7 @@ class Engine:
             raw = directory / "metrics.ndjson"
             # No credentials in environment/argv, no shell=True, no untrusted executable from HTTP.
             command = [self.settings.k6, "run", "--quiet", "--no-color", "--log-output=none", "--out", f"json={raw}", "-"]
-            child_env = {k: v for k, v in os.environ.items() if not k.startswith("K6_") and k.lower() not in {"http_proxy", "https_proxy", "all_proxy", "no_proxy"}}
+            child_env = {k: v for k, v in os.environ.items() if not k.startswith(("K6_", "LAB_", "AWS_")) and k.lower() not in {"http_proxy", "https_proxy", "all_proxy", "no_proxy"}}
             child_env["K6_NO_USAGE_REPORT"] = "true"
             child_env["NO_PROXY"] = "*"
             with self.lock:
@@ -156,7 +190,7 @@ class Engine:
                 pass
             self.update(run_id, state="stopping" if cancel.is_set() else "running", measurementStartedAt=utc_now())
             offset, pending = 0, b""
-            watchdog = time.monotonic() + 360
+            watchdog = time.monotonic() + 900
             def consume():
                 nonlocal offset, pending
                 if not raw.exists(): return
@@ -196,9 +230,26 @@ class Engine:
             else:
                 self.update(run_id, verification={"status": "not_applicable", "note": "Bài chỉ đọc, không có fixture ghi hoặc đối chiếu vé."})
             snapshot = metrics.snapshot()
+            if config["mode"] == "public" and snapshot["requests"] >= config["maxRequests"]:
+                self.update(run_id, issues=self.get(run_id)["issues"] + [{"code": "REQUEST_CAP_REACHED", "message": "Đã chạm trần yêu cầu. Phần thời gian còn lại có thể không có tải; chưa thể kết luận tải duy trì hoặc scaling từ đoạn đó."}])
             expected = min(config["users"], config["capacity"])
             technical = sum(snapshot["counts"][key] for key in TECHNICAL)
+            if technical:
+                descriptions = {"server": "response HTTP 5xx", "rateLimited": "response HTTP 429",
+                                "timeout": "request quá thời gian chờ", "auth": "request lỗi quyền",
+                                "busy": "request đang tranh chỗ", "other": "request lỗi khác"}
+                detail = "; ".join(f"{snapshot['counts'][key]} {descriptions[key]}" for key in TECHNICAL if snapshot["counts"][key])
+                self.update(run_id, issues=self.get(run_id)["issues"] + [{"code": "HTTP_FAILURES", "message": "Bài đo không đạt: " + detail + ". Đối chiếu Throttles, quota và log; không suy nguyên nhân chỉ từ mã HTTP."}])
             ok = snapshot["requests"] > 0 and technical == 0
+            if self.settings.environment == "aws":
+                try: after = deployment(self.settings)
+                except Exception: after = {"status": "unavailable"}
+                self.update(run_id, deploymentAfter=after)
+                if (not deployed.get("CodeSha256") or after.get("CodeSha256") != deployed.get("CodeSha256")
+                        or after.get("LastModified") != deployed.get("LastModified") or not after.get("tableMatches")
+                        or (self.settings.expected_function_arn and not after.get("targetMatches"))):
+                    ok = False
+                    self.update(run_id, issues=self.get(run_id)["issues"] + [{"code": "DEPLOYMENT_NOT_STABLE", "message": "Không xác nhận được Lambda giữ nguyên phiên bản trong lượt đo. Kiểm tra quyền đọc và việc triển khai đồng thời trước khi kết luận."}])
             if config["mode"] == "purchase":
                 ok = ok and audit["status"] == "passed" and audit["tickets"] == expected
                 ok = ok and snapshot["counts"]["new"] == expected and snapshot["counts"]["full"] == config["users"] - expected
