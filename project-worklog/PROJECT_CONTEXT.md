@@ -73,7 +73,7 @@ Khởi động và lệnh kiểm tra xem [Backend README](../backend/README.md),
 
 ## 6. Trạng thái và phần còn lại
 
-- Làm việc trên nhánh **phuc** tại `D:\aws-workshop\event-registration`. Mã ứng dụng, Terraform và tài liệu đã được tích hợp trên main/phuc; mốc đối chiếu khi thống nhất nhật ký ngày **13/11/2026** là **a01d9b8**. Quy trình Git xem [git-workflow.md](../docs/git-workflow.md).
+- Làm việc trên nhánh **phuc** tại `D:\aws-workshop\event-registration`. Cập nhật từ `origin/main` ngày **13/11/2026** đưa nhánh local tới **f39a5cd**; trạng thái remote có thể thay đổi, cần kiểm tra lại. Quy trình Git xem [git-workflow.md](../docs/git-workflow.md).
 - **Ngày 04/11/2026:** đã tạo IAM chuyên dụng, bổ sung Terraform và cấu hình ứng dụng cho AWS, triển khai thử rồi dùng Terraform thu hồi toàn bộ tài nguyên đã triển khai trong lượt thử cùng ngày. Kết quả triển khai/thu hồi được xác nhận bổ sung ngày **11/11**; phạm vi kết quả là môi trường của lượt thử đó.
 - Frontend sau tích hợp ngày **04/11** build thành công, lint exit 0 với hai cảnh báo Fast Refresh tại badge/button. Chưa kiểm thử lại tương tác giao diện mới bằng trình duyệt trong lượt tích hợp này.
 - Kiểm tra local ngày **11/11**: 63 bài backend không DB đạt, 12 bài integration bỏ qua theo chế độ opt-in; Terraform fmt/validate đạt. Các kết quả này tách biệt với lượt triển khai AWS ngày 04/11.
@@ -87,7 +87,7 @@ Khởi động và lệnh kiểm tra xem [Backend README](../backend/README.md),
 Kế hoạch được chốt ngày **30/10/2026** tại [aws-deployment-plan.md](../docs/aws-deployment-plan.md). Trạng thái dưới đây đã cập nhật theo công việc **04/11** và xác nhận ngày **11/11**; các mô tả chuẩn bị trong tài liệu kế hoạch/setup được đọc theo mốc lịch sử của chúng.
 
 - **Nhiệm vụ 1:** triển khai ứng dụng React User/Admin trên S3 riêng tư + CloudFront/OAC; cùng hostname HTTPS chuyển `/api` tới HTTP API payload v2, Lambda Python 3.13 và DynamoDB PK/SK On-demand. Đã có mã Terraform và hoàn thành vòng triển khai thử/thu hồi; kết quả nghiệm thu chi tiết từng luồng User/Admin/booking cần được ghi nhận thêm.
-- **Nhiệm vụ 2:** CloudWatch dashboard, metric/alarm và SNS email, kiểm chứng bằng request/cảnh báo thật. Terraform hiện có log Lambda cơ bản giữ 7 ngày; chưa có bằng chứng hoàn tất phần giám sát đầy đủ.
+- **Nhiệm vụ 2:** Terraform hiện khai báo log Lambda giữ 7 ngày, [dashboard và hai alarm](../infra/cloudwatch.tf). Nhật ký ngày 13/11 báo cáo đã triển khai, thử health/đăng ký/đăng nhập và thấy metric Invocations/Duration; phiên rà soát chưa trực tiếp kiểm chứng AWS hiện tại. Chưa có bằng chứng thử alarm kích hoạt hoặc SNS/email; hai alarm chưa khai báo hành động SNS. Script kiểm kê hiện kiểm tra log group, chưa thấy kiểm tra dashboard/alarm.
 
 **Ứng dụng và hạ tầng đã có:** Terraform quản lý các thành phần AWS, IAM role/policy, log và xử lý đường dẫn CloudFront. Backend có chế độ AWS khi APP_ENV=aws hoặc chạy trong Lambda, dùng cơ chế credential chuẩn của SDK khi không chỉ định endpoint local; chế độ local giữ kiểm tra endpoint/bảng và credential giả. Origin/CORS, công cụ tạo Admin và script kiểm kê sau thu hồi đã được bổ sung. Các đường dẫn mã nguồn ở mục 5; nội dung công việc và nguồn hướng dẫn AWS/HashiCorp ở mục ngày 04/11 trong WORKLOG.
 

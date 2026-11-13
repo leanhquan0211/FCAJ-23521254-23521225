@@ -243,9 +243,9 @@ Các nguồn dưới đây là tài liệu chính thức do **AWS** và **HashiC
 | --- | --- | --- |
 | Thiết kế Dashboard giám sát | Chưa có dashboard trực quan, cần dùng AWS CLI hoặc vào từng service riêng lẻ | Thiết kế CloudWatch Dashboard (`fcaj-event-workshop-dashboard`) thân thiện với sinh viên/người dùng phổ thông: 3 widget chỉ số chính (Tổng lượt gọi, Số lỗi, Tốc độ phản hồi ms); 3 biểu đồ chuỗi thời gian (Thời gian xử lý Lambda, Lưu lượng API Gateway theo mã lỗi 4xx/5xx, Đơn vị đọc/ghi DynamoDB); 1 bảng nhật ký lỗi tự động lọc log qua CloudWatch Logs Insights. |
 | Tự động hóa cảnh báo (Alarms) | Chưa có cảnh báo khi hệ thống gặp sự cố | Khởi tạo 2 CloudWatch Metric Alarms tự động: cảnh báo khi Backend phát sinh lỗi $\ge 1$ lỗi / 5 phút (`fcaj-event-workshop-lambda-errors`) và cảnh báo khi độ trễ trung bình $\ge 3000\text{ ms}$ (`fcaj-event-workshop-lambda-high-latency`). Trạng thái tự đánh giá `OK`. |
-| Mã hóa hạ tầng Terraform | Chưa có cấu hình CloudWatch trong `infra/` | Viết mới `infra/cloudwatch.tf`, cập nhật `infra/outputs.tf` xuất ra tên Dashboard và đường link trực tiếp truy cập trên AWS Console (`cloudwatch_dashboard_url`). Đạt chuẩn Free Tier (3 dashboard, 10 alarms miễn phí). |
+| Mã hóa hạ tầng Terraform | Chưa có cấu hình CloudWatch trong `infra/` | Viết mới `infra/cloudwatch.tf`, cập nhật `infra/outputs.tf` xuất ra tên Dashboard và đường link trực tiếp truy cập trên AWS Console (`cloudwatch_dashboard_url`). Chi phí thực tế và điều kiện ưu đãi của tài khoản chưa được phiên rà soát xác minh. |
 | Triển khai & Kiểm thử thực tế | Chưa kết nối metrics với lưu lượng thực | Chạy `terraform apply` thành công toàn bộ hạ tầng. Kiểm thử gọi API `/health`, đăng ký tài khoản mới và đăng nhập. Kiểm tra dữ liệu metrics thực tế ghi nhận qua AWS CLI `aws cloudwatch get-metric-data`. |
-| Cập nhật quy trình thu hồi (Teardown) | `verify_cleanup.ps1` chưa kiểm tra CloudWatch Dashboards & Alarms | Bổ sung hàm kiểm tra dọn sạch CloudWatch Dashboards và Metric Alarms vào `infra/verify_cleanup.ps1`. |
+| Quy trình thu hồi (Teardown) | Cần kiểm tra CloudWatch Dashboards & Alarms | Rà code sau cập nhật ngày 13/11: `infra/verify_cleanup.ps1` có kiểm tra log group, chưa thấy kiểm tra dashboard hoặc alarm; cần bổ sung hoặc kiểm tra riêng khi thu hồi. |
 
 ### Kiểm tra và bằng chứng
 
@@ -255,10 +255,15 @@ Các nguồn dưới đây là tài liệu chính thức do **AWS** và **HashiC
   - Lambda Errors Alarm: `arn:aws:cloudwatch:us-east-1:059898286806:alarm:fcaj-event-workshop-lambda-errors` (Trạng thái: `OK`)
   - Lambda Latency Alarm: `arn:aws:cloudwatch:us-east-1:059898286806:alarm:fcaj-event-workshop-lambda-high-latency` (Trạng thái: `OK`)
 - Bằng chứng ghi nhận dữ liệu: Gọi API đăng ký/đăng nhập sinh ra các data points Invocations và Duration hiển thị trực tiếp trên Dashboard.
+- Rà soát bổ sung trong phiên ngày 13/11: người dùng xác nhận IAM user đã đăng nhập Console; chưa xác nhận mở dashboard hay quyền CloudWatch. Nhật ký triển khai và metric ở trên là báo cáo đã có, chưa được phiên này kiểm chứng trực tiếp trên AWS; trạng thái `OK` chưa chứng minh alarm đã kích hoạt. Hai alarm trong code chưa khai báo hành động SNS.
+- Tổng hợp danh mục test chức năng, dữ liệu, bảo mật, CloudWatch và tải; các bài 100/200, 100/10, 100/1 chưa có bằng chứng đạt. Test lab cần đồng bộ API 4.1 và hỗ trợ AWS trước khi chạy tải AWS. Đã chuẩn bị prompt tự chứa thông tin kiến trúc để tạo sơ đồ draw.io chỉnh sửa được, không có tiêu đề; chưa tạo sơ đồ.
+- Không chạy test, gọi AWS hay thay đổi hạ tầng trong lượt rà soát này. Chi tiết trạng thái và điều kiện test xem [PROJECT_CONTEXT](PROJECT_CONTEXT.md).
 
 ### Tài liệu tham khảo
 
 - [AWS — Amazon CloudWatch Dashboards](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Dashboards.html): hướng dẫn cấu hình widget, single-value number và biểu đồ thời gian.
 - [AWS — Using CloudWatch Alarms](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html): hướng dẫn tạo cảnh báo theo ngưỡng số lỗi và độ trễ.
 - [AWS — CloudWatch Logs Insights Query Syntax](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData-insights.html): cú pháp truy vấn lọc log lỗi tự động hiển thị lên dashboard widget.
+- [AWS — IAM users and credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users.html), [quản lý mật khẩu IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_admin-change-user.html) và [đăng nhập IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_sign-in.html): đối chiếu access key với mật khẩu Console và hướng dẫn đăng nhập trong phiên rà soát.
+- [AWS — CloudWatchReadOnlyAccess](https://docs.aws.amazon.com/aws-managed-policy/latest/reference/CloudWatchReadOnlyAccess.html) và [quyền CloudWatch](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/permissions-reference-cw.html): tham khảo phương án quyền đọc dashboard; chưa xác nhận hay cấp policy trong phiên.
 
