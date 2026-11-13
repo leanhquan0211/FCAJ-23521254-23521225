@@ -76,7 +76,8 @@ Nhật ký gốc ghi nhận các nguồn này được dùng và kiểm tra ngà
 | Xóa sự kiện | Chặn xóa khi có chỗ đã dùng | Cho Admin xóa cả sự kiện có người; dọn vé, ghi danh và idempotency của sự kiện, giữ tài khoản và dữ liệu sự kiện khác. |
 | Quản lý User | Chưa có trang quản lý | Thêm danh sách hiện tên/email, tìm theo tên/email, sửa thông tin và xóa User. Sửa email có kiểm tra trùng và version để tránh ghi đè; vé cũ giữ thông tin lúc đăng ký. |
 | Xóa User | Chưa hỗ trợ | Khóa truy cập trước, hủy vé và trả chỗ cho sự kiện còn hoạt động; gửi lại thao tác không trả chỗ hai lần, không ảnh hưởng người khác. |
-| Tổ chức mã nguồn và bàn giao | Ứng dụng và bộ kiểm thử ở nhiều nhánh riêng | Chuẩn hóa API contract/data model, hợp nhất các nhánh vào phuc, giữ main và xóa nhánh feature đã gộp. Bộ test lab của bên kiểm thử được giữ nguyên, chưa tự đổi adapter. |
+| Bộ kiểm thử tải local | Chưa có công cụ điều khiển và tổng hợp lượt tải riêng | Xây fixture tài khoản/sự kiện, kịch bản k6 hot/ramp/scarce, runner HTTP/CLI, metric và audit DB chỉ đọc. Thêm dashboard riêng để cấu hình, start/stop, theo dõi số đo và xem lại lịch sử. |
+| Tổ chức mã nguồn và bàn giao | Ứng dụng và bộ kiểm thử ở nhiều nhánh riêng | Chuẩn hóa API contract/data model, hợp nhất các nhánh vào phuc, giữ main và xóa nhánh feature đã gộp. Bộ kiểm thử giữ cấu hình API 3.0; còn cần đồng bộ adapter với API 4.1. |
 
 Đã sửa các lỗi tìm thấy khi kiểm tra: vé còn sót sau khi xóa sự kiện bị gián đoạn; vùng bấm icon sai khi ghép tooltip với menu; thông báo lỗi xóa bị mất sau tải lại; form sửa tài khoản giữ version cũ. Các trường hợp này đã được kiểm tra lại.
 
@@ -87,9 +88,10 @@ Nhật ký gốc ghi nhận các nguồn này được dùng và kiểm tra ngà
 | Backend với DynamoDB Local | 75/75 bài đạt, gồm 63 bài không cần DB và 12 integration. Có tranh chỗ cuối, chống trùng, replay, quyền xem vé, xóa đồng thời và tiếp tục sau gián đoạn. |
 | HTTP và trình duyệt | Luồng tài khoản, đặt/xem vé, quản lý sự kiện/User và sidebar đạt. Đã thử mất phản hồi sau khi lưu để xác nhận không tạo thêm vé; kiểm tra giao diện ở 320/375/414/768/1280px. |
 | Build và cấu hình | SAM build/validate, frontend build/lint đạt; còn hai cảnh báo Fast Refresh có sẵn. |
+| Tích hợp lab trên API 3.0 | Lượt 2 User/4 chỗ tạo 2 vé, còn 2 chỗ; lượt 2 User/1 chỗ tạo 1 vé, 1 EVENT_FULL, còn 0 chỗ. Audit Ticket/reference/idempotency và kiểm tra bổ trợ đạt. Dashboard build/lint và browser smoke đạt; harness từ 26 bài ban đầu lên 28 bài sau bổ sung. Chi tiết runId trong minh chứng kiểm thử local. |
 | Sau hợp nhất Git | 63 bài backend và 28 bài unit test lab đạt; build/lint cả web sản phẩm và dashboard đạt. 12 bài DB được bỏ qua ở lượt này vì Docker đã tắt, không phải chạy lại toàn bộ 75 bài. |
 
-Các bài ghi/xóa dùng bảng test riêng. Bài tranh chỗ đã kiểm tra ở quy mô 8 người/1 chỗ; **chưa phải kết quả 100 người hoặc bằng chứng scaling AWS**. Unit/build của test lab chỉ xác nhận phần công cụ được kiểm tra, không thay bài tích hợp với ứng dụng hiện hành.
+Các bài ghi/xóa dùng bảng test riêng. Ứng dụng đã kiểm tra tranh chỗ ở quy mô 8 người/1 chỗ; lab có hai lượt nhỏ trên API 3.0 nêu trên. **Chưa phải kết quả 100 người hoặc bằng chứng scaling AWS.** Kết quả lab được chọn lọc bổ sung ngày **13/11/2026** khi thống nhất nhật ký; adapter vẫn ghim API 3.0, chưa được xác nhận tương thích API 4.1. Unit/build không thay bài tích hợp với ứng dụng hiện hành.
 
 ### Tài liệu tham khảo
 
@@ -100,14 +102,21 @@ Các bài ghi/xóa dùng bảng test riêng. Bài tranh chỗ đã kiểm tra �
 - [OWASP — Session Management Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html): áp dụng cookie HttpOnly, kiểm tra và thu hồi phiên phía server khi thống nhất đăng nhập User/Admin. Quyết định dùng một cookie chung trong browser/profile đến từ yêu cầu dự án.
 - [OWASP — CSRF Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html): tiếp tục kiểm tra Origin và CSRF token khi đặt vé, sửa/xóa sự kiện và quản lý User.
 - [Git — git-worktree](https://git-scm.com/docs/git-worktree): tham khảo cách tạo thư mục làm việc riêng để phát triển ứng dụng song song với bộ kiểm thử. Sau đó các nhánh được hợp nhất vào phuc theo yêu cầu; giữ thư mục detached có dữ liệu local cần bảo toàn.
+- [Grafana k6 — Cookies](https://grafana.com/docs/k6/latest/using-k6/cookies/): đối chiếu cơ chế cookie jar riêng theo User ảo trong kịch bản có phiên đăng nhập.
+- [Grafana k6 — Metrics](https://grafana.com/docs/k6/latest/using-k6/metrics/): đối chiếu cách ghi nhận số request, lỗi và thời gian phản hồi; không dùng mẫu nhỏ để kết luận năng lực tối đa.
+- [Grafana k6 — Per VU iterations](https://grafana.com/docs/k6/latest/using-k6/scenarios/executors/per-vu-iterations/): đối chiếu kịch bản hữu hạn theo số User và số vòng chạy, phù hợp với tập tài khoản/sự kiện chuẩn bị trước.
 
 Nguồn transaction, idempotency, session, CSRF và worktree đã được ghi nhận trong tài liệu phối hợp của phiên 23/10; nguồn phân quyền và mật khẩu được kế thừa từ đợt 16/10. Đây là cơ sở giải pháp, không phải xác nhận từ AWS/OWASP rằng hệ thống đã vượt qua kiểm thử.
+
+Ba tài liệu chính thức Grafana k6 được đọc và đối chiếu bổ sung ngày **13/11/2026** cho phần kiểm thử ngày 23/10; không gán mốc đối chiếu này thành ngày xây dựng hoặc chạy lại công cụ.
 
 ### Minh chứng thực hiện
 
 - [Commit tài khoản và đặt vé](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/1688c9809ec27eed1a03a01cde262b6afce0f8c3): thay đổi User, lịch mở bán, quyền sở hữu vé và idempotency.
 - [Commit phiên chung và xóa ghi danh](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/a10907f0287acd7c664b3902b55968565e66042b): đăng nhập chung, điều hướng theo vai trò và xóa sự kiện kèm ghi danh.
 - [Commit quản lý User và sidebar](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/9d47cff71a8f75e9c42845700d497cf029a56b16): quản lý tài khoản, hủy vé/trả chỗ và thu gọn sidebar.
+- [Minh chứng kiểm thử local](references/test-lab-local.md): giữ runId, số đo và phiên bản API của các lượt public, blocked/stopped và hai lượt đặt vé nhỏ trên API 3.0 ngày 23/10.
+- [Commit bộ kiểm thử 9e00d5a](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/9e00d5a8757f60c6516e1bdbb2b4406bb3d05cad): fixture/k6/runner/dashboard và báo cáo kiểm thử gốc.
 - [booking.py](../backend/lambda/booking.py): quy tắc đặt vé, chống trùng, gửi lại và quyền xem vé.
 - [session.py](../backend/lambda/session.py): cookie chung, kiểm tra phiên và phân quyền.
 - [event_deletion.py](../backend/lambda/event_deletion.py): khóa và dọn dữ liệu theo sự kiện.
@@ -124,28 +133,35 @@ Kết quả đạt ở trên dựa trên đầu ra kiểm tra trong phiên phát
 
 ### Công việc chính
 
-| Hạng mục | Trước nghiên cứu | Kết quả |
+| Hạng mục | Trước thực hiện | Kết quả |
 | --- | --- | --- |
 | Đối chiếu bối cảnh và mã nguồn | Hướng AWS trong README ở mức dự kiến, chưa có quy trình triển khai cụ thể | Rà frontend/backend, contract/data model, cấu hình và lab; xác định các điểm đang khóa local, phần proxy Vite cần thay trên AWS và giới hạn tích hợp bộ test. Không sửa chức năng hoặc adapter. |
 | Kế hoạch triển khai | Chưa có tài liệu cho lần triển khai đầu dành cho người mới | Tạo kế hoạch với sơ đồ, phần mã nguồn cần chuẩn bị, bước build/deploy, đầu ra và điều kiện nghiệm thu. Làm rõ hosting frontend và vai trò build/deploy của GitHub Actions. |
 | Phân chia công việc | Ứng dụng và giám sát cùng nằm trong hướng tổng thể | Chốt hai nhiệm vụ: triển khai ứng dụng trước; CloudWatch/giám sát và SNS sau. Giữ log Lambda kỹ thuật tối thiểu ở nhiệm vụ 1 để tìm lỗi, chưa dựng dashboard/alarm/SNS. |
-| Dự toán và kiểm soát chi phí | Chưa có dự toán theo nhu cầu học/demo | Tra nguồn chính thức cho bảy dịch vụ, lập kịch bản có giả định và ngân sách 5–10 USD/tháng; phân biệt giá gốc, allowance/credit và phí còn lại khi ít truy cập. Chưa xác minh billing tài khoản thực tế. |
-| Vòng đời lab | Chưa có cách thu hồi gắn với lần test ngắn | Lập quy trình test vài giờ, lưu bằng chứng về máy, destroy và kiểm kê tài nguyên còn sót; nêu cách xử lý S3 versions, log, backup nếu có, state và độ trễ billing. Chưa tạo hoặc xóa tài nguyên AWS. |
+| Dự toán và kiểm soát chi phí | Chưa có dự toán và cấu hình theo dõi phù hợp ngân sách | Tra nguồn chính thức, lập kịch bản giả định theo ngân sách 5–10 USD/tháng. Đối chiếu tài khoản cá nhân Paid, credit còn 40 USD/hạn 05/2027 theo thông tin cung cấp. Hướng dẫn sửa budget hiện có từ 100 xuống 10 USD/tháng, actual 3/5/8 USD, forecast 10 USD; loại Credit/Refund và giữ email. Cấu hình ngưỡng/scope có ảnh, việc lưu có xác nhận; chưa thử gửi/nhận email. |
+| Chuẩn bị máy triển khai | AWS CLI/Terraform chưa nhận diện; chưa kiểm tra build trên máy triển khai | Hoàn tất cài AWS CLI/Terraform qua winget trên máy Windows triển khai, cập nhật PATH terminal, kiểm tra Node/npm/SAM/Docker Linux. Có hướng dẫn setup riêng; tách kết quả máy triển khai được cung cấp khỏi lượt kiểm tra trực tiếp trong workspace máy khác. |
+| Danh tính và phiên AWS | Ban đầu dùng root; tài khoản thử cấu hình chưa phải tài khoản triển khai cuối | Hướng dẫn tạo IAM user `fcaj-project`, MFA và đăng nhập browser bằng credential tạm thời. Chốt dùng tài khoản cá nhân; profile `fcaj-project-login` và cầu nối `fcaj-project` đã trả STS đúng tài khoản/user sau chuyển phiên. Chưa cấp/xác minh quyền triển khai tài nguyên. |
+| Build và dependency | Chưa có kết quả kiểm tra trên máy triển khai | `npm ci`, frontend build và SAM Python 3.13/x86_64 container build thành công. Kiểm tra npm audit chỉ đọc, xác định 4 mục liên quan chuỗi shadcn; chưa sửa dependency hoặc tự áp dụng fix có thay đổi major. |
+| Vòng đời triển khai thử | Chưa có cách thu hồi gắn với lần test ngắn | Lập quy trình test vài giờ, lưu bằng chứng, destroy/kiểm kê S3, log, backup nếu có và state. Dùng state local trên một máy; hai người cùng một phiên, không cần remote state/Actions cho lần đầu. Dự kiến dừng dùng AWS sau 12/2026; chưa tạo/xóa tài nguyên ứng dụng AWS. |
 | Tài liệu tiếp tục | Chưa có handoff trong thư mục hiện tại | Tạo và theo dõi handoff theo yêu cầu đầu phiên; Checkpoint cập nhật nhật ký, bối cảnh và trạng thái kế hoạch đã chốt. |
 
-Kiến trúc/trạng thái hiện hành xem [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md); luồng triển khai, dự toán và cách thu hồi chi tiết nằm trong [kế hoạch AWS](../docs/aws-deployment-plan.md). Hoàn thành phần nghiên cứu và chốt kế hoạch; chưa thực hiện hai nhiệm vụ triển khai.
+Kiến trúc/trạng thái hiện hành xem [PROJECT_CONTEXT.md](PROJECT_CONTEXT.md); luồng triển khai/dự toán/thu hồi nằm trong [kế hoạch AWS](../docs/aws-deployment-plan.md), lệnh cài đặt và xác thực nằm trong [hướng dẫn setup](../docs/aws-environment-setup.md). Tên dự án/profile/tài nguyên mới dùng `fcaj-project`. Đã hoàn thành nghiên cứu và phần chuẩn bị công cụ/build/đăng nhập/budget của nhiệm vụ 1; chưa triển khai ứng dụng hoặc giám sát AWS. Không đưa credit hoặc dữ liệu billing của tài khoản đã bỏ vào tài khoản triển khai hiện tại.
 
 ### Kiểm tra và giới hạn bằng chứng
 
-- Kiểm tra Git: nhánh `phuc`, HEAD `e356eb6`; khi bắt đầu repo sạch trên `main`, main/phuc cùng commit, sau đó chuyển sang `phuc`. Các thay đổi trong phiên là tài liệu, chưa commit/push.
+- Đối chiếu các file thay đổi tại Checkpoint: chỉ tài liệu WORKLOG/PROJECT_CONTEXT/kế hoạch/setup/handoff; không sửa ứng dụng, lockfile hoặc AI_RULE.
 - Đối chiếu code xác nhận backend vẫn dùng DB Local/credentials giả, SAM là template local, chưa có Terraform triển khai. App trả contract 4.1; lab còn health 3.0/cookie cũ, chỉ nhận HTTP loopback và giới hạn 5.000 request đo. Chưa dùng được lab hiện tại để kết luận tải AWS.
-- Checkpoint kiểm tra 71 liên kết nội bộ và whitespace/code fence trong bốn file WORKLOG/PROJECT_CONTEXT/kế hoạch/handoff, không thiếu đích; xác nhận lịch sử WORKLOG được giữ, chỉ có một mục ngày 30/10, AI_RULE và code không đổi. Tính lại ví dụ API/Lambda/DB request units ở 100.000 và 1 triệu lượt được subtotal 0,62 và 6,20 USD. Đây là kiểm tra tài liệu/phép tính với duration/RRU/WRU giả định, chưa phải kết quả đo ứng dụng hoặc bill; chưa render Mermaid.
-- Chưa chạy lại unit/integration, frontend build/lint, SAM, HTTP/browser hoặc test tải trong phiên; các kết quả 23/10 ở trên là lịch sử. Chưa truy cập tài khoản AWS, xác minh Free Tier/credit, tạo cảnh báo, deploy hoặc destroy. Không bật/tắt môi trường local và không ghi/xóa dữ liệu.
-- Điểm tiếp tục là xác minh tài khoản/quyền/region/ngân sách và công cụ trước khi chuẩn bị cấu hình/IaC theo nhiệm vụ 1; giữ phạm vi kế hoạch đã chốt. Thông số tài khoản/quota/ngưỡng tải và kết quả AWS vẫn cần bằng chứng ở giai đoạn tương ứng.
+- Checkpoint nghiên cứu trước đó đã kiểm tra 71 liên kết và phép tính subtotal API/Lambda/DB 0,62/6,20 USD cho hai kịch bản giả định. Đây là lịch sử kiểm tra tài liệu, không phải đo ứng dụng/bill; chưa render Mermaid. Checkpoint hiện tại tiếp tục kiểm tra liên kết, whitespace, code fence và giữ nguyên lịch sử trước ngày 30/10; không chạy lại build chỉ để ghi chép.
+- Checkpoint cập nhật setup đạt **72 liên kết nội bộ trong 5 file**, code fence/whitespace hợp lệ, không có Account ID hoặc URL authorize trong tài liệu. Đối chiếu hash xác nhận nội dung WORKLOG trước 30/10 và AI_RULE không đổi; số handoff vẫn là 1, không tạo file bàn giao mới.
+- Đầu ra từ máy triển khai xác nhận AWS CLI **2.39.2**, Terraform **1.17.1 windows_amd64**, Node **24.14.0**, npm **11.9.0**, SAM **1.167.0**, Docker **Linux 29.4.3**, Compose **5.1.4**; `npm ci`/frontend Vite 8.3.4 build và SAM Python 3.13 container build thành công. STS qua `fcaj-project` đã đúng tài khoản cá nhân mới. Python SDK đã gọi STS qua credential_process trước lúc đổi tài khoản; chưa chạy lại SDK/Terraform provider trên tài khoản cuối.
+- Trong workspace Codex cũng đã kiểm tra công cụ, bật Docker và chạy frontend/SAM build thành công; lint exit 0 với hai cảnh báo Fast Refresh. Không dùng kết quả workspace máy khác thay cho đầu ra máy triển khai. Không khởi động DB/API, không sửa/xóa dữ liệu local hoặc volume.
+- `npm audit --json` tại workspace trả **4 mục: 1 low, 3 high**, gồm shadcn/registry/zod/deepmerge; `npm explain` truy vết qua shadcn 4.21.4. Chưa xác định mức ảnh hưởng tới bundle AWS, chưa sửa dependency; không tự downgrade shadcn theo đề xuất `audit fix --force`.
+- Budget đã lưu theo xác nhận, ngưỡng và filter có ảnh; credit/hạn do thông tin được cung cấp, không phải Codex trực tiếp đọc billing tài khoản cuối. Chưa xác minh giao email, quyền deploy/quota hoặc tình trạng tài nguyên từ hoạt động kiếm credit. Không lưu Account ID, ARN đầy đủ hoặc thông tin đăng nhập.
+- Chưa chạy lại unit/integration/HTTP/browser hoặc test tải; kết quả chức năng 23/10 là lịch sử. Chưa Terraform/plan/apply/destroy, chưa deploy/smoke/đo scaling AWS. Tiếp tục quyền triển khai/quota, tách local/AWS và xử lý dependency trong phạm vi nhiệm vụ 1 đã chốt.
 
 ### Tài liệu tham khảo
 
-Các nguồn sau được đọc trong phiên **30/10/2026** để nghiên cứu, giải thích và lập kế hoạch; các ứng dụng vào AWS dưới đây **chưa triển khai**.
+Các nguồn sau được đọc trong phiên **30/10/2026** để nghiên cứu, giải thích, lập kế hoạch và chuẩn bị môi trường. Phần cài công cụ/đăng nhập/budget đã áp dụng theo bằng chứng nêu trên; kiến trúc ứng dụng AWS, IaC và giám sát vẫn chưa triển khai.
 
 - [AWS — CloudFront với S3 origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/GettingStarted.SimpleDistribution.html) và [OAC cho S3](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html): cơ sở đề xuất lưu bản build frontend trên bucket riêng tư và phân phối qua HTTPS.
 - [AWS — Managed origin request policies](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-origin-request-policies.html) và [managed cache policies](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/using-managed-cache-policies.html): cơ sở đề xuất chuyển cookie/header tới API Gateway và không cache API có phiên đăng nhập.
@@ -164,38 +180,85 @@ Các nguồn sau được đọc trong phiên **30/10/2026** để nghiên cứu
 - [AWS — Empty S3 bucket](https://docs.aws.amazon.com/AmazonS3/latest/userguide/empty-bucket.html) và [DeleteLogGroup](https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_DeleteLogGroup.html): đề xuất kiểm tra object versions/delete markers/upload dở và dọn log group trong teardown.
 - [AWS — DynamoDB TTL](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/TTL.html) và [PITR](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Point-in-time-recovery.html): đề xuất dọn session/counter có kiểm soát, giữ kiểm tra hạn ở backend và phân biệt backup/PITR khi tính phí/thu hồi.
 - [AWS — Cost Explorer data](https://docs.aws.amazon.com/cost-management/latest/userguide/ce-exploring-data.html): làm rõ dữ liệu phí có thể trễ hơn 24 giờ, cần kiểm tra lại sau thu hồi và vẫn tính phần sử dụng trước đó.
+- [AWS CLI installation](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html), [HashiCorp Terraform installation](https://developer.hashicorp.com/terraform/install) và [Microsoft winget install](https://github.com/microsoft/winget-cli/blob/master/doc/windows/package-manager/winget/install.md): áp dụng cài công cụ Windows, đối chiếu chữ ký MSI/checksum Terraform ở workspace và hướng dẫn cài qua winget trên máy triển khai.
+- [Docker Desktop Windows](https://docs.docker.com/desktop/setup/install/windows-install/) và [SAM CLI installation](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html): kiểm tra vị trí Docker per-user, WSL/Linux engine và công cụ build Lambda bằng container.
+- [Create IAM user](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html), [assign MFA](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_virtual.html) và [AWS CLI browser login](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-sign-in.html): áp dụng user làm việc/MFA, phiên tạm thời và credential_process, hướng dẫn chuyển phiên giữa hai tài khoản.
+- [AWS CLI agent-toolkit](https://docs.aws.amazon.com/cli/latest/reference/configure/agent-toolkit.html): giải thích và bỏ qua wizard skills/MCP tùy chọn, không coi là yêu cầu triển khai.
+- [Choosing an account plan](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/free-tier-plans.html), [Free Tier FAQ](https://aws.amazon.com/free/free-tier-faqs/) và [credit activities](https://docs.aws.amazon.com/en_en/awsaccountbilling/latest/aboutv2/free-tier-plans-activities.html): phân biệt Paid/Free, credit kiếm được và số dư; không đồng nhất hai tài khoản hoặc tự thực hiện thêm hoạt động kiếm credit.
+- [GetAccountPlanState CLI](https://docs.aws.amazon.com/cli/latest/reference/freetier/get-account-plan-state.html) và [Free Tier IAM actions](https://docs.aws.amazon.com/service-authorization/latest/reference/list_freetier.html): chuẩn bị quyền chỉ đọc để đối chiếu tài khoản thử cấu hình trước khi đổi tài khoản triển khai; không cấp quyền nâng gói.
+- [Viewing credits](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/useconsolidatedbilling-credits.html), [Bills](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/getting-viewing-bill.html), [edit budget](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-edit.html), [cost budget](https://docs.aws.amazon.com/cost-management/latest/userguide/create-cost-budget.html) và [budget filters](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-create-filters.html): hướng dẫn đọc thông tin chi phí, sửa budget và loại Credit/Refund; không tự đổi tên hoặc tạo budget trùng.
+- [Budget best practices](https://docs.aws.amazon.com/cost-management/latest/userguide/budgets-best-practices.html) và [pricing](https://aws.amazon.com/aws-cost-management/aws-budgets/pricing/): áp dụng actual/forecast/email, làm rõ độ trễ và cảnh báo không tự chặn chi phí; chưa cấu hình Budget Actions/Reports/SNS.
+- [Zod advisory](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5), [deepmerge advisory](https://github.com/advisories/GHSA-gcqx-w48m-w2h4) và [shadcn CLI](https://ui.shadcn.com/docs/cli): tham khảo phân loại audit và vai trò dependency; chưa triển khai bản sửa.
 
 ### Minh chứng thực hiện
 
 - [Kế hoạch AWS đã chốt](../docs/aws-deployment-plan.md): sơ đồ, hai nhiệm vụ, bước triển khai, giả định chi phí, kiểm tra và thu hồi; là tài liệu chuẩn bị, không phải bằng chứng đã deploy.
 - [Handoff đang theo dõi](handoffs/2026-10-30-0956.md): mục tiêu, quyết định và điểm tiếp tục của phiên; được tạo theo yêu cầu riêng đầu phiên và cập nhật tại Checkpoint.
+- [Hướng dẫn setup và kết quả xác minh](../docs/aws-environment-setup.md): phân biệt máy/tài khoản, phiên bản, nhóm lệnh build/CLI, budget và điểm còn lại; không chứa credential hoặc Account ID.
 - [Cấu hình DB](../backend/lambda/configuration.py), [handler](../backend/lambda/app.py), [SAM local](../backend/template.yaml), [profile lab](../tests/load/contract-v3-draft.json) và [guard lab](../tests/load/config.py): minh chứng cho hiện trạng local và phần cần chuẩn bị; chưa thay đổi các file này trong phiên.
 
-## 04/11/2026 — Tuần 6 (02/11–08/11)
+## 04/11/2026 — Tuần 6 (02–08/11)
+
+Dự án được bổ sung hạ tầng AWS quản lý bằng Terraform và hoàn thành một vòng triển khai thử, sau đó thu hồi toàn bộ tài nguyên đã triển khai trong lần thử.
+
+### Công việc chính
+
+| Hạng mục | Trước thực hiện | Kết quả |
+| --- | --- | --- |
+| Danh tính triển khai AWS | Cần tài khoản làm việc riêng cho hoạt động triển khai | Tạo tài khoản IAM chuyên dụng phục vụ triển khai hạ tầng AWS. |
+| Hạ tầng bằng Terraform | Dự án mới có kế hoạch AWS và môi trường chạy local | Bổ sung cấu hình Terraform cho S3 lưu frontend, CloudFront/OAC phân phối website, HTTP API Gateway kết nối Lambda, DynamoDB lưu dữ liệu, IAM role/policy và log Lambda. |
+| Ứng dụng chạy trên AWS | Backend và công cụ tạo Admin phục vụ môi trường local | Bổ sung lựa chọn môi trường local/AWS, sử dụng cơ chế credential của SDK khi chạy AWS; điều chỉnh Origin/CORS và công cụ tạo Admin cho môi trường triển khai. |
+| Tích hợp giao diện | Các cập nhật giao diện chưa được đồng bộ vào nhánh làm việc | Tích hợp tùy chỉnh màu sắc, bo góc, điều hướng danh mục và lưu tùy chọn giao diện; kiểm tra frontend build/lint sau tích hợp. |
+| Triển khai thử và thu hồi | Chưa thực hiện vòng triển khai ứng dụng lên AWS | Triển khai thử ngày 04/11, sau đó dùng Terraform thu hồi toàn bộ tài nguyên đã triển khai trong lần thử cùng ngày. Bổ sung script kiểm kê tài nguyên sau thu hồi. |
+
+### Kiểm tra và kết quả
+
+- Frontend build thành công; lint exit 0, còn hai cảnh báo Fast Refresh tại badge/button.
+- Đã triển khai thử và thu hồi toàn bộ tài nguyên của lượt thử ngày **04/11/2026**. Kết quả thu hồi được xác nhận bổ sung ngày **11/11/2026**.
+- Chưa có kết quả kiểm thử tải lớn hoặc số đo scaling AWS trong báo cáo tuần này. Giám sát đầy đủ bằng dashboard/alarm/SNS vẫn thuộc giai đoạn tiếp theo.
+
+### Tài liệu tham khảo
+
+Các nguồn dưới đây là tài liệu chính thức do **AWS** và **HashiCorp** phát hành, được đọc và đối chiếu ngày **11/11/2026** để bổ sung cơ sở kỹ thuật cho công việc ngày 04/11.
+
+- [AWS — Create an IAM user in your AWS account](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_create.html): hướng dẫn tạo IAM user, lựa chọn phương thức truy cập và gán quyền; đối chiếu việc tạo danh tính chuyên dụng cho triển khai.
+- [HashiCorp — Create infrastructure](https://developer.hashicorp.com/terraform/tutorials/aws-get-started/aws-create): hướng dẫn khai báo provider/resource, khởi tạo, kiểm tra cấu hình và áp dụng thay đổi; đối chiếu cách tổ chức Terraform và quy trình tạo hạ tầng AWS của dự án.
+- [AWS — Restrict access to an Amazon S3 origin](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/private-content-restricting-access-to-s3.html): hướng dẫn CloudFront OAC và bucket policy; đối chiếu cấu hình phân phối frontend từ S3 riêng tư.
+- [AWS — Create AWS Lambda proxy integrations for HTTP APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html): hướng dẫn kết nối HTTP API với Lambda và payload v2; đối chiếu cấu hình API Gateway của dự án.
+- [AWS — Lambda execution role](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html): hướng dẫn IAM role để Lambda truy cập dịch vụ AWS và ghi log; đối chiếu quyền DynamoDB/CloudWatch Logs trong cấu hình hạ tầng.
+- [HashiCorp — terraform destroy](https://developer.hashicorp.com/terraform/cli/commands/destroy): hướng dẫn thu hồi các tài nguyên do cấu hình Terraform quản lý; đối chiếu bước dọn môi trường sau triển khai thử.
+
+### Minh chứng thực hiện
+
+- [Commit hạ tầng d4611f1](https://github.com/leanhquan0211/FCAJ-23521254-23521225/commit/d4611f127e64757ae7a5160136a09c0790139e86), ngày **04/11/2026**: mã Terraform, thay đổi backend hỗ trợ AWS và công cụ kiểm kê sau thu hồi.
+- [Cấu hình hạ tầng](../infra/providers.tf), [cấu hình local/AWS](../backend/lambda/configuration.py), [công cụ tạo Admin](../backend/tools/create_admin.py) và [script kiểm kê](../infra/verify_cleanup.ps1): các phần mã nguồn được bổ sung trong đợt triển khai.
+- [Thiết kế giao diện](../frontend/DESIGN.md) và [lưu tùy chọn giao diện](../frontend/src/lib/appearance-preferences.ts): phần frontend được tích hợp và kiểm tra build/lint.
+- Xác nhận ngày **11/11/2026** về kết quả ngày **04/11/2026**: đã tạo IAM chuyên dụng, triển khai thử lên AWS và dùng Terraform thu hồi toàn bộ tài nguyên đã triển khai trong lần thử.
+
+## 13/11/2026 — Tuần 7 (Nhiệm vụ 2: Tích hợp giám sát CloudWatch)
 
 ### Công việc chính
 
 | Hạng mục | Trước triển khai | Kết quả |
 | --- | --- | --- |
-| Cấu hình AWS & Bảo mật | Chưa cấu hình danh tính AWS, credentials dễ rủi ro | Cấu hình IAM user `terraform-deployer` (Region `us-east-1`, Account `059898286806`). Cập nhật `.gitignore` loại trừ `Bangiao.md`, `*.csv`, `*.tfstate`, `build/`, `dist/`. |
-| Bộ điều hợp Backend & CORS | Backend chỉ nhận DynamoDB Local (`127.0.0.1:8000`), credentials giả | Cập nhật `configuration.py`, `app.py`, `auth.py`: hỗ trợ cờ `APP_ENV=aws`, tự nhận diện Lambda IAM Role, kết nối bảng AWS thật `fcaj-project-events`; mở rộng CORS cho phép CloudFront domain. Giữ an toàn guard local. |
-| Build Frontend tương thích CloudFront | Frontend ghim localhost `127.0.0.1:3001` | Cập nhật `.env.local` sang `VITE_API_BASE_URL=/api`. Biên dịch bản build mới `frontend/dist`. |
-| Xây dựng hạ tầng Terraform (IaC) | Thư mục `infra/` chưa có mã triển khai | Viết hoàn chỉnh 8 file Terraform: S3 (OAC private), CloudFront (2 origins, functions strip prefix và SPA rewrite), API Gateway HTTP API v2 (20 routes), Lambda Python 3.13, DynamoDB On-Demand (TTL `expiresAt`). |
-| Xử lý sự cố Permissions Boundary | Bị lỗi 503 "Cơ sở dữ liệu chưa sẵn sàng" do IAM chặn quyền | Điều tra và phát hiện Permissions Boundary (`fcaj-project-lambda-boundary`) bắt buộc tên DynamoDB và Lambda phải có tiền tố `fcaj-project-*`. Cập nhật tên bảng thành `fcaj-project-events` và hàm Lambda thành `fcaj-project-backend`. |
-| Nghiệm thu & Kiểm thử thực tế | Chưa có URL chạy thật | Trang web hoạt động ổn định qua HTTPS tại CloudFront: `https://d3ivrbu39ywhul.cloudfront.net`. Đăng ký tài khoản User, đăng nhập, đọc/ghi dữ liệu DynamoDB thành công 100%. |
-| Dọn dẹp tài nguyên (Teardown) | Chưa có quy trình tự động kiểm tra dọn lab | Chạy `terraform destroy`. Xử lý ngoại lệ `iam:ListInstanceProfilesForRole` bằng cách xóa role qua AWS CLI và gỡ khỏi state. Viết kịch bản `verify_cleanup.ps1` kiểm tra 7 dịch vụ AWS: xác nhận 100% `[CLEAN]`. |
-| Đóng gói Git | Đang nằm rời rạc trên nhánh làm việc `quan` | Xóa sạch thư mục build/dist tạm thời. Commit trên `quan` và merge Fast-Forward an toàn vào nhánh `main`. |
+| Thiết kế Dashboard giám sát | Chưa có dashboard trực quan, cần dùng AWS CLI hoặc vào từng service riêng lẻ | Thiết kế CloudWatch Dashboard (`fcaj-event-workshop-dashboard`) thân thiện với sinh viên/người dùng phổ thông: 3 widget chỉ số chính (Tổng lượt gọi, Số lỗi, Tốc độ phản hồi ms); 3 biểu đồ chuỗi thời gian (Thời gian xử lý Lambda, Lưu lượng API Gateway theo mã lỗi 4xx/5xx, Đơn vị đọc/ghi DynamoDB); 1 bảng nhật ký lỗi tự động lọc log qua CloudWatch Logs Insights. |
+| Tự động hóa cảnh báo (Alarms) | Chưa có cảnh báo khi hệ thống gặp sự cố | Khởi tạo 2 CloudWatch Metric Alarms tự động: cảnh báo khi Backend phát sinh lỗi $\ge 1$ lỗi / 5 phút (`fcaj-event-workshop-lambda-errors`) và cảnh báo khi độ trễ trung bình $\ge 3000\text{ ms}$ (`fcaj-event-workshop-lambda-high-latency`). Trạng thái tự đánh giá `OK`. |
+| Mã hóa hạ tầng Terraform | Chưa có cấu hình CloudWatch trong `infra/` | Viết mới `infra/cloudwatch.tf`, cập nhật `infra/outputs.tf` xuất ra tên Dashboard và đường link trực tiếp truy cập trên AWS Console (`cloudwatch_dashboard_url`). Đạt chuẩn Free Tier (3 dashboard, 10 alarms miễn phí). |
+| Triển khai & Kiểm thử thực tế | Chưa kết nối metrics với lưu lượng thực | Chạy `terraform apply` thành công toàn bộ hạ tầng. Kiểm thử gọi API `/health`, đăng ký tài khoản mới và đăng nhập. Kiểm tra dữ liệu metrics thực tế ghi nhận qua AWS CLI `aws cloudwatch get-metric-data`. |
+| Cập nhật quy trình thu hồi (Teardown) | `verify_cleanup.ps1` chưa kiểm tra CloudWatch Dashboards & Alarms | Bổ sung hàm kiểm tra dọn sạch CloudWatch Dashboards và Metric Alarms vào `infra/verify_cleanup.ps1`. |
 
 ### Kiểm tra và bằng chứng
 
-- Chạy kiểm thử tự động backend: 63 bài passed, 12 bài skipped (do Docker local tắt).
-- Kiểm thử thực tế trên CloudFront: kiểm tra trang web, API `/health` qua CDN và API Gateway.
-- Bằng chứng dọn dẹp sạch sẽ: script `infra/verify_cleanup.ps1` quét 7 dịch vụ AWS (DynamoDB, Lambda, API Gateway, S3, CloudFront, CloudWatch Logs, IAM Roles) đều trả về `[CLEAN]`.
-- Báo cáo tổng kết đầy đủ được lưu tại [Báo cáo tổng kết triển khai AWS](../docs/aws-deployment-report-2026-11-04.md).
+- Kiểm tra cú pháp và validate Terraform: `terraform validate` và `terraform fmt` đạt chuẩn.
+- Bằng chứng triển khai CloudWatch:
+  - Dashboard ARN: `arn:aws:cloudwatch::059898286806:dashboard/fcaj-event-workshop-dashboard`
+  - Lambda Errors Alarm: `arn:aws:cloudwatch:us-east-1:059898286806:alarm:fcaj-event-workshop-lambda-errors` (Trạng thái: `OK`)
+  - Lambda Latency Alarm: `arn:aws:cloudwatch:us-east-1:059898286806:alarm:fcaj-event-workshop-lambda-high-latency` (Trạng thái: `OK`)
+- Bằng chứng ghi nhận dữ liệu: Gọi API đăng ký/đăng nhập sinh ra các data points Invocations và Duration hiển thị trực tiếp trên Dashboard.
 
 ### Tài liệu tham khảo
 
-- [AWS — IAM Permissions Boundaries](https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html): tham khảo cơ chế giới hạn quyền tối đa cho IAM Role; áp dụng xử lý lỗi 503 và quy tắc đặt tên tiền tố `fcaj-project-*`.
-- [HashiCorp — Terraform AWS Provider CloudFront Distribution](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/cloudfront_distribution): cấu hình OAC, cache behavior và custom origin cho API Gateway.
-- [AWS — CloudFront Functions](https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cloudfront-functions.html): hàm JavaScript runtime 2.0 rewrite URL loại bỏ prefix `/api` tại Edge.
+- [AWS — Amazon CloudWatch Dashboards](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Dashboards.html): hướng dẫn cấu hình widget, single-value number và biểu đồ thời gian.
+- [AWS — Using CloudWatch Alarms](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html): hướng dẫn tạo cảnh báo theo ngưỡng số lỗi và độ trễ.
+- [AWS — CloudWatch Logs Insights Query Syntax](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_AnalyzeLogData-insights.html): cú pháp truy vấn lọc log lỗi tự động hiển thị lên dashboard widget.
 

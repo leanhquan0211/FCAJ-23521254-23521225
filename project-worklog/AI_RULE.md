@@ -15,6 +15,7 @@
 - Khi đã duyệt rõ phạm vi, tiếp tục hoàn tất mà không hỏi lại từng thao tác. Nếu thay đổi đáng kể giải pháp/phạm vi, mô tả lại phần mới trước khi code.
 - Ưu tiên code đơn giản, dễ đọc, ngăn nắp và đúng lớp; tái sử dụng thiết kế/component sẵn có, không thêm dependency hoặc kiến trúc chỉ để làm cầu kỳ.
 - Đọc/kiểm tra chỉ đọc và sắp xếp tài liệu đã được yêu cầu được làm trong phạm vi đó; không tự sửa tính năng dưới danh nghĩa chỉnh nhật ký.
+- **Quy định triển khai hạ tầng Cloud (bắt buộc):** Tuyệt đối **KHÔNG** tự ý chạy `terraform apply`. AI chỉ được phép viết cấu hình, chạy `terraform validate`, `terraform fmt` và hiển thị `terraform plan`; việc thực thi `terraform apply` phải để người dùng tự chạy trong terminal của họ (xem chi tiết tại [agent.md](../agent.md)).
 
 ## 3. Kiểm tra và dùng bằng chứng
 
@@ -27,6 +28,8 @@
 
 ## 4. Phân chia ba tài liệu
 
+Thư mục nhật ký chung duy nhất là **project-worklog/**, áp dụng cho toàn bộ ứng dụng, hạ tầng và kiểm thử. Ghi công việc theo ngày thực hiện trong WORKLOG.md, không tách nhật ký theo người hoặc tạo thêm luồng ghi chép song song. [README](README.md) chỉ dẫn nơi đọc/cập nhật; references/ chỉ giữ minh chứng lịch sử được dẫn từ nhật ký.
+
 | Tài liệu | Nội dung và cách cập nhật |
 | --- | --- |
 | WORKLOG.md | Công việc chính đã thực hiện, thay đổi trước–sau, kết quả kiểm tra và nguồn. Chia mục theo ngày; sửa cùng ngày thì cập nhật mục đó. Không tạo thêm file ngày/tuần hoặc kể lại hội thoại. |
@@ -34,8 +37,9 @@
 | AI_RULE.md | Luật cộng tác và quy cách ghi chép/bàn giao được người dùng thống nhất. Chỉ thay quy tắc khi có căn cứ từ yêu cầu mới. |
 
 - Mặc định **không tự ghi nhật ký** nếu chưa được yêu cầu. Hai lệnh **Checkpoint** và **Kết phiên** là yêu cầu cập nhật rõ ràng theo mục 5; không cần xin xác nhận lại việc ghi chép/bàn giao đó. Sau khi hoàn tất lệnh, không bật tự ghi cho mọi lượt sau.
-- Nhật ký phục vụ báo cáo đóng góp, viết trung tính, không gọi tên người dùng, không ghi các lần xin duyệt/lỗi dán lệnh hoặc quy công việc bên đồng hành thành phần ứng dụng.
+- Nhật ký phục vụ báo cáo tiến độ dự án, viết trung tính và tập trung vào thay đổi chính: đã thêm hoặc sửa gì, kết quả và mốc ngày thực hiện. Viết để người ngoài dự án đọc hiểu; không kể hội thoại, phân công cá nhân, các lần xin duyệt/lỗi dán lệnh hoặc chi tiết thao tác Git không làm thay đổi sản phẩm.
 - **Mỗi giai đoạn/mục ngày trong WORKLOG.md phải có phần “Tài liệu tham khảo” riêng, viết thành danh sách gạch đầu dòng.** Đây là các tài liệu trên internet AI thực sự đã tham khảo để giải thích, gợi ý giải pháp và áp dụng vào dự án; ưu tiên tài liệu chính thức. Mỗi mục nêu tên tài liệu, liên kết trực tiếp và phần cụ thể đã áp dụng; nếu mới dùng để đề xuất thì ghi rõ chưa triển khai.
+- Nguồn tham khảo phải có cơ quan hoặc tác giả chịu trách nhiệm rõ ràng và nội dung có thể kiểm chứng; ưu tiên hướng dẫn chính thức của AWS cho IAM/dịch vụ AWS và HashiCorp cho Terraform. Đọc và đối chiếu nội dung trước khi dẫn, nêu rõ nguồn hướng dẫn phần nào; nội dung AI tự tổng hợp hoặc lời xác nhận hoàn thành công việc không thay thế nguồn kỹ thuật.
 - Mã nguồn của dự án, commit, nhật ký cũ và báo cáo kiểm tra là **minh chứng thực hiện**, không thay thế tài liệu tham khảo dù được đặt trên GitHub. Nếu cần dẫn, đặt riêng dưới mục “Minh chứng thực hiện”. Tài liệu bên ngoài không chứng minh dự án đã chạy đạt.
 - Không thêm nguồn chưa đọc cho đủ danh sách hoặc gán nguồn vừa tìm được thành nguồn đã dùng trong quá khứ. Khi bổ sung/kiểm tra lại nguồn sau đợt thực hiện, ghi rõ thời điểm đó; nếu chưa xác định được nguồn lịch sử thì nêu đúng phần thiếu.
 - Không lặp kiến trúc/trạng thái vào WORKLOG; dẫn PROJECT_CONTEXT. Schema/lệnh khởi động chi tiết giữ trong docs/README tương ứng. Phiên bản cũ tra Git, không tạo bản lưu trùng trong thư mục.

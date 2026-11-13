@@ -38,10 +38,10 @@ Nếu có thay đổi local, branch chưa tồn tại hoặc pull không fast-fo
 
 Đã đọc phần cấu hình/giao tiếp này và chạy unit test lab; chưa thực hiện migration adapter hoặc bài tải trên app4.1. Bước tiếp cần mô tả/duyệt plan đồng bộ adapter với [contract hiện hành](api-contract.md), chạy 1–2 User rồi mới 100/200,100/10,100/1. Kết quả 2 User/v3 trong nhật ký bên test là lịch sử do bên đó bàn giao, chưa phải được chạy lại trên4.1.
 
-Đường dẫn chức năng: app ở backend/frontend, lab ở tests/load + tests/runner + tests/dashboard; nhật ký ứng dụng thuộc phuc-worklog, nhật ký test lab do bên đồng hành bàn giao giữ tại quan-worklog. Cùng nằm nhánh phuc không chuyển tác giả của hai phần.
+Đường dẫn chức năng: app ở backend/frontend, lab ở tests/load + tests/runner + tests/dashboard. Từ **13/11/2026**, toàn bộ nhật ký ứng dụng, hạ tầng và kiểm thử dùng chung [project-worklog/](../project-worklog/README.md); công việc theo ngày ở WORKLOG, trạng thái hiện hành ở PROJECT_CONTEXT, minh chứng kiểm thử lịch sử ở references/. Không tách thêm thư mục nhật ký theo người.
 
 ## 4. Giữ dữ liệu và khả năng truy nguyên
 
 Trước hợp nhất đã tạo Git bundle có kiểm tra tại `.local-data/git-backups/before-consolidate-20261023-223538.bundle`, chỉ local/ignored. Bundle chứa lịch sử và các ref trước khi gộp; không cần giữ thêm nhánh backup. Toàn bộ đầu nhánh phải là ancestor của phuc trước khi xóa tên nhánh trên GitHub/local. Nếu nhánh remote có commit mới trong lúc dọn, dừng xóa và tích hợp phần đó trước.
 
-Lượt gộp không bật lại Docker hoặc sửa/reset DynamoDB. Các hướng dẫn kiểm thử thật vẫn dùng bảng test riêng; không suy kết quả unit/build thành bài 100 người hoặc AWS scaling. Phiên bản tài liệu cũ tra trong lịch sử Git. [WORKLOG.md](../phuc-worklog/WORKLOG.md) ghi công việc theo mục ngày; bối cảnh và luật cộng tác tách sang PROJECT_CONTEXT.md/AI_RULE.md, không tự tạo thêm file nhật ký ngoài yêu cầu.
+Lượt gộp không bật lại Docker hoặc sửa/reset DynamoDB. Các hướng dẫn kiểm thử thật vẫn dùng bảng test riêng; không suy kết quả unit/build thành bài 100 người hoặc AWS scaling. Phiên bản tài liệu cũ tra trong lịch sử Git. [WORKLOG.md](../project-worklog/WORKLOG.md) ghi công việc theo mục ngày; bối cảnh và luật cộng tác tách sang PROJECT_CONTEXT.md/AI_RULE.md, không tự tạo thêm file nhật ký ngoài yêu cầu.
