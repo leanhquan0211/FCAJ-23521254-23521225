@@ -18,4 +18,7 @@ export interface Run {
   source: { appCommit: string | null; appDirty: boolean | null; adapter: string; adapterHash: string };
   metrics: Metrics; verification: Audit; supplemental: Audit; preparationSeconds?: number;
   issues: { code: string; message: string }[]; k6Version?: string;
+  measurementStartedAt?: string; measurementFinishedAt?: string; preparationNote?: string;
+  reusedUsers?: number; createdUsers?: number;
+  capacity?: { status: string; accountConcurrency?: number; functionReserved?: number | null; syncRpsCeiling?: number };
 }
